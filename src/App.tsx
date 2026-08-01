@@ -1,8 +1,24 @@
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "./components/ui/card";
+
 function App() {
   return (
-    <div className="min-h-screen bg-blue-600 flex items-center justify-center">
-      <h1 className="text-5xl font-bold text-white">Tailwind CSS Working 🚀</h1>
-    </div>
+    <Card className="max-w-sm mx-auto mt-10">
+      <CardHeader>
+        <CardTitle>Project Overview</CardTitle>
+        <CardDescription>
+          Track progress and recent activity for your Vite app.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        Your design system is ready. Start building your next component.
+      </CardContent>
+    </Card>
   );
 }
 
