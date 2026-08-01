@@ -1,7 +1,7 @@
 function App() {
   return (
-    <div>
-      <p className="text-5xl bg-green-200">this ems tailwindcss setup done</p>
+    <div className="min-h-screen bg-blue-600 flex items-center justify-center">
+      <h1 className="text-5xl font-bold text-white">Tailwind CSS Working 🚀</h1>
     </div>
   );
 }
