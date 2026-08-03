@@ -87,7 +87,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
       logo = (
         <img src={safariLogo || safariLogo} alt="Logo" className="h-8 w-auto" />
       ),
-      brandName = "shadcn.io",
+
       logoHref = "/",
       navigationLinks = defaultNavigationLinks,
       signInText = "Sign In",
