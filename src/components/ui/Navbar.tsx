@@ -249,7 +249,6 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
 
 Navbar.displayName = "Navbar";
 
-// Only export what is actually defined in the file
 export { HamburgerIcon };
 
 // Demo
