@@ -1,4 +1,5 @@
 import Safarilogo from "@/assets/imgs/safari.png";
+
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -97,8 +98,8 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: NavbarNavLink[] = [
-  { href: "/", label: "Home" },
-  { href: "/Employee", label: "employee" },
+  { href: "#", label: "Home", active: true },
+  { href: "#features", label: "Features" },
   { href: "#pricing", label: "Pricing" },
   { href: "#about", label: "About" },
 ];
@@ -208,25 +209,17 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
             <div className="flex items-center gap-6">
               <button
                 type="button"
-                className="flex items-center space-x-3 text-primary hover:text-primary/90 transition-colors cursor-pointer"
+                className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer"
                 onClick={(e) => e.preventDefault()}
               >
-                {/* Logo container with controlled height to match navbar */}
-                <div className="flex items-center gap-2 h-9">
-                  {/* <img
-                    src={DACOlogo}
-                    alt="DACO Logo"
-                    className="h-full w-auto object-contain rounded-md"
-                  /> */}
-                  {/* <span className="text-xl font-bold">G&L</span> */}
-                  <Link to="/">
-                    <img
-                      src={Safarilogo}
-                      alt="Safari Logo"
-                      className="h-full w-auto object-contain rounded-md"
-                    />
-                  </Link>
-                </div>
+                {/* Fixed: Rendered Safarilogo inside an img tag with proper size and rounding */}
+                <Link to="/">
+                  <img
+                    src={Safarilogo}
+                    alt="Safari Logo"
+                    className="h-15 w-50 "
+                  />
+                </Link>
               </button>
               {/* Navigation menu */}
               {!isMobile && (
