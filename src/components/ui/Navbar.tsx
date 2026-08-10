@@ -1,4 +1,3 @@
-import DACOlogo from "@/assets/imgs/dammam.jpg";
 import Safarilogo from "@/assets/imgs/safari.png";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +13,8 @@ import {
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router";
+import { ModeToggle } from "../layout/ModeToggler";
 
 // Simple logo component for the navbar (fallback)
 const Logo = (props: React.SVGAttributes<SVGElement>) => {
@@ -96,8 +97,8 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 
 // Default navigation links
 const defaultNavigationLinks: NavbarNavLink[] = [
-  { href: "#", label: "Home", active: true },
-  { href: "#features", label: "Features" },
+  { href: "/", label: "Home" },
+  { href: "/Employee", label: "employee" },
   { href: "#pricing", label: "Pricing" },
   { href: "#about", label: "About" },
 ];
@@ -212,17 +213,19 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               >
                 {/* Logo container with controlled height to match navbar */}
                 <div className="flex items-center gap-2 h-9">
-                  <img
+                  {/* <img
                     src={DACOlogo}
                     alt="DACO Logo"
                     className="h-full w-auto object-contain rounded-md"
-                  />
-                  <span className="text-muted-foreground font-light">/</span>
-                  <img
-                    src={Safarilogo}
-                    alt="Safari Logo"
-                    className="h-full w-auto object-contain rounded-md"
-                  />
+                  /> */}
+                  {/* <span className="text-xl font-bold">G&L</span> */}
+                  <Link to="/">
+                    <img
+                      src={Safarilogo}
+                      alt="Safari Logo"
+                      className="h-full w-auto object-contain rounded-md"
+                    />
+                  </Link>
                 </div>
               </button>
               {/* Navigation menu */}
@@ -277,22 +280,10 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
             >
               {ctaText}
             </Button>
+            <ModeToggle />
           </div>
         </div>
       </header>
     );
   },
 );
-
-Navbar.displayName = "Navbar";
-
-export { HamburgerIcon, Logo };
-
-// Demo
-export function Demo() {
-  return (
-    <div className="fixed inset-0">
-      <Navbar />
-    </div>
-  );
-}
