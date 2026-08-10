@@ -1,14 +1,9 @@
-<<<<<<< HEAD
-export default function Navbar() {
-  return <div></div>;
-=======
 "use client";
 
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
   NavigationMenuItem,
-  NavigationMenuLink,
   NavigationMenuList,
 } from "@/components/ui/navigation-menu";
 import {
@@ -20,11 +15,36 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 
+// Simple logo component for the navbar
+const Logo = (props: React.SVGAttributes<SVGElement>) => {
+  return (
+    <svg
+      aria-label="Logo"
+      role="img"
+      fill="none"
+      height="1em"
+      viewBox="0 0 324 323"
+      width="1em"
+      xmlns="http://www.w3.org/2000/svg"
+      {...(props as any)}
+    >
+      <rect fill="currentColor" height="323" rx="161.5" width="323" x="0.5" />
+      <circle
+        cx="162"
+        cy="161.5"
+        fill="white"
+        r="60"
+        className="dark:fill-black"
+      />
+    </svg>
+  );
+};
+
 // Hamburger icon component
 const HamburgerIcon = ({
   className,
   ...props
-}: React.SVGProps<SVGSVGElement>) => (
+}: React.SVGAttributes<SVGElement>) => (
   <svg
     aria-label="Menu"
     className={cn("pointer-events-none", className)}
@@ -38,7 +58,7 @@ const HamburgerIcon = ({
     viewBox="0 0 24 24"
     width={16}
     xmlns="http://www.w3.org/2000/svg"
-    {...props}
+    {...(props as any)}
   >
     <path
       className="origin-center -translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-x-0 group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[315deg]"
@@ -64,15 +84,14 @@ export interface NavbarNavLink {
 
 export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
   logo?: React.ReactNode;
-  brandName?: string;
   logoHref?: string;
   navigationLinks?: NavbarNavLink[];
   signInText?: string;
   signInHref?: string;
   ctaText?: string;
   ctaHref?: string;
-  onSignInClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
-  onCtaClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+  onSignInClick?: () => void;
+  onCtaClick?: () => void;
 }
 
 // Default navigation links
@@ -87,9 +106,8 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
   (
     {
       className,
-      logo,
-      brandName = "MyBrand",
-      logoHref = "/",
+      logo = <Logo />,
+      logoHref = "#",
       navigationLinks = defaultNavigationLinks,
       signInText = "Sign In",
       signInHref = "#signin",
@@ -131,7 +149,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
         if (typeof ref === "function") {
           ref(node);
         } else if (ref) {
-          (ref as React.MutableRefObject<HTMLElement | null>).current = node;
+          ref.current = node;
         }
       },
       [ref],
@@ -140,11 +158,11 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
     return (
       <header
         className={cn(
-          "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6",
+          "sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6 [&_*]:no-underline",
           className,
         )}
         ref={combinedRef}
-        {...props}
+        {...(props as any)}
       >
         <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between gap-4">
           {/* Left side */}
@@ -166,17 +184,18 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                     <NavigationMenuList className="flex-col items-start gap-1">
                       {navigationLinks.map((link, index) => (
                         <NavigationMenuItem className="w-full" key={index}>
-                          <a
-                            href={link.href}
+                          <button
+                            type="button"
                             className={cn(
                               "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground cursor-pointer no-underline",
                               link.active
                                 ? "bg-accent text-accent-foreground"
                                 : "text-foreground/80",
                             )}
+                            onClick={(e) => e.preventDefault()}
                           >
                             {link.label}
-                          </a>
+                          </button>
                         </NavigationMenuItem>
                       ))}
                     </NavigationMenuList>
@@ -186,36 +205,34 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
             )}
             {/* Main nav */}
             <div className="flex items-center gap-6">
-              <a
-                href={logoHref}
-                className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer no-underline"
+              <button
+                type="button"
+                className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer"
+                onClick={(e) => e.preventDefault()}
               >
-                {logo && <div className="text-2xl flex items-center">{logo}</div>}
-                {brandName && (
-                  <span className="font-bold text-xl inline-block">
-                    {brandName}
-                  </span>
-                )}
-              </a>
+                <div className="text-2xl">{logo}</div>
+                <span className="hidden font-bold text-xl sm:inline-block">
+                  shadcn.io
+                </span>
+              </button>
               {/* Navigation menu */}
               {!isMobile && (
                 <NavigationMenu className="flex">
                   <NavigationMenuList className="gap-1">
                     {navigationLinks.map((link, index) => (
                       <NavigationMenuItem key={index}>
-                        <NavigationMenuLink asChild>
-                          <a
-                            href={link.href}
-                            className={cn(
-                              "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
-                              link.active
-                                ? "bg-accent text-accent-foreground"
-                                : "text-foreground/80 hover:text-foreground",
-                            )}
-                          >
-                            {link.label}
-                          </a>
-                        </NavigationMenuLink>
+                        <button
+                          type="button"
+                          className={cn(
+                            "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground focus:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer no-underline",
+                            link.active
+                              ? "bg-accent text-accent-foreground"
+                              : "text-foreground/80 hover:text-foreground",
+                          )}
+                          onClick={(e) => e.preventDefault()}
+                        >
+                          {link.label}
+                        </button>
                       </NavigationMenuItem>
                     ))}
                   </NavigationMenuList>
@@ -226,23 +243,29 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
           {/* Right side */}
           <div className="flex items-center gap-3">
             <Button
-              asChild
               className="text-sm font-medium hover:bg-accent hover:text-accent-foreground"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onSignInClick) {
+                  onSignInClick();
+                }
+              }}
               size="sm"
               variant="ghost"
             >
-              <a href={signInHref} onClick={onSignInClick}>
-                {signInText}
-              </a>
+              {signInText}
             </Button>
             <Button
-              asChild
               className="text-sm font-medium px-4 h-9 rounded-md shadow-sm"
+              onClick={(e) => {
+                e.preventDefault();
+                if (onCtaClick) {
+                  onCtaClick();
+                }
+              }}
               size="sm"
             >
-              <a href={ctaHref} onClick={onCtaClick}>
-                {ctaText}
-              </a>
+              {ctaText}
             </Button>
           </div>
         </div>
@@ -253,14 +276,13 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
 
 Navbar.displayName = "Navbar";
 
-export { HamburgerIcon };
+export { HamburgerIcon, Logo };
 
 // Demo
 export function Demo() {
   return (
     <div className="fixed inset-0">
-      <Navbar brandName="Acme Inc" />
+      <Navbar />
     </div>
   );
->>>>>>> 299f4f7693ae87179de4feede84a0e008e0bbba2
 }
