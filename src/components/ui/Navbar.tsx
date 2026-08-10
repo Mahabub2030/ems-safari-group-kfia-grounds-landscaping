@@ -1,5 +1,5 @@
-"use client";
-
+import DACOlogo from "@/assets/imgs/dammam.jpg";
+import Safarilogo from "@/assets/imgs/safari.png";
 import { Button } from "@/components/ui/button";
 import {
   NavigationMenu,
@@ -15,7 +15,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 
-// Simple logo component for the navbar
+// Simple logo component for the navbar (fallback)
 const Logo = (props: React.SVGAttributes<SVGElement>) => {
   return (
     <svg
@@ -207,13 +207,23 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
             <div className="flex items-center gap-6">
               <button
                 type="button"
-                className="flex items-center space-x-2 text-primary hover:text-primary/90 transition-colors cursor-pointer"
+                className="flex items-center space-x-3 text-primary hover:text-primary/90 transition-colors cursor-pointer"
                 onClick={(e) => e.preventDefault()}
               >
-                <div className="text-2xl">{logo}</div>
-                <span className="hidden font-bold text-xl sm:inline-block">
-                  shadcn.io
-                </span>
+                {/* Logo container with controlled height to match navbar */}
+                <div className="flex items-center gap-2 h-9">
+                  <img
+                    src={DACOlogo}
+                    alt="DACO Logo"
+                    className="h-full w-auto object-contain rounded-md"
+                  />
+                  <span className="text-muted-foreground font-light">/</span>
+                  <img
+                    src={Safarilogo}
+                    alt="Safari Logo"
+                    className="h-full w-auto object-contain rounded-md"
+                  />
+                </div>
               </button>
               {/* Navigation menu */}
               {!isMobile && (
