@@ -1,5 +1,6 @@
 import DACOlogo from "@/assets/imgs/dammam.jpg";
 import Safarilogo from "@/assets/imgs/safari.png";
+import DACOlogo from "@/assets/imgs/dammam.jpg";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +17,11 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router";
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
 import { ModeToggle } from "./ModeToggler";
+=======
+import { ModeToggle } from "../layout/ModeToggler";
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
 
 // Hamburger icon component
 const HamburgerIcon = ({
@@ -157,10 +162,14 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                     <HamburgerIcon />
                   </Button>
                 </PopoverTrigger>
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
                 <PopoverContent
                   align="start"
                   className="w-48 p-2 bg-[oklch(0.35_0.12_290)] border-white/10 text-white"
                 >
+=======
+                <PopoverContent align="start" className="w-48 p-2 bg-[oklch(0.35_0.12_290)] border-white/10 text-white">
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
                   <NavigationMenu className="max-w-none">
                     <NavigationMenuList className="flex-col items-start gap-1">
                       {navigationLinks.map((link, index) => (
@@ -169,8 +178,12 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                             to={link.href}
                             className={cn(
                               "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 text-white/90 hover:text-white cursor-pointer no-underline",
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
                               link.active &&
                                 "bg-white/20 text-white font-semibold",
+=======
+                              link.active && "bg-white/20 text-white font-semibold"
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
                             )}
                           >
                             {link.label}
@@ -186,7 +199,11 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
             {/* Logo & Desktop Nav */}
             <div className="flex items-center gap-6">
               <Link
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
                 to="/"
+=======
+                to='/'
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
                 className="flex items-center space-x-3 bg-white pl-2 pr-12 py-2 rounded-l-2xl [clip-path:polygon(0_0,_100%_0,_85%_100%,_0%_100%)] transition-opacity hover:opacity-95 cursor-pointer"
               >
                 {/* First Logo */}
@@ -201,7 +218,11 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
 
                 {/* Second Logo */}
                 <img
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
                   src={DACOlogo}
+=======
+              src={DACOlogo}
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
                   alt="Second Logo"
                   className="h-10 w-auto object-contain"
                 />
@@ -217,8 +238,12 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                           to={link.href}
                           className={cn(
                             "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10 text-white/90 hover:text-white focus:outline-none cursor-pointer no-underline",
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
                             link.active &&
                               "bg-white/20 text-white font-semibold",
+=======
+                            link.active && "bg-white/20 text-white font-semibold"
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
                           )}
                         >
                           {link.label}
@@ -240,11 +265,15 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               variant="ghost"
               asChild={!onSignInClick}
             >
+<<<<<<< HEAD:src/components/layout/Navbar.tsx
               {onSignInClick ? (
                 signInText
               ) : (
                 <Link to={signInHref}>{signInText}</Link>
               )}
+=======
+              {onSignInClick ? signInText : <Link to={signInHref}>{signInText}</Link>}
+>>>>>>> 64a67ba42a458da5aecce76a7976545c2e638f19:src/components/ui/Navbar.tsx
             </Button>
             <Button
               className="text-sm font-medium px-4 h-9 rounded-md bg-white text-[oklch(0.35_0.12_290)] hover:bg-white/90 shadow-sm"
@@ -261,3 +290,4 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
     );
   },
 );
+
