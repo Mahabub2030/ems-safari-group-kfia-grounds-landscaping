@@ -1,5 +1,5 @@
 import App from "@/App";
-import Employee from "@/pages/employee";
+import Employees from "@/components/layout/Employees";
 
 import Home from "@/pages/Home";
 import { createBrowserRouter } from "react-router";
@@ -14,9 +14,9 @@ export const router = createBrowserRouter([
         index: true,
       },
       {
-        path:"Employee",
-        Component: Employee,
-      }
+        path: "Employees",
+        Component: Employees,
+      },
     ],
   },
 ]);
