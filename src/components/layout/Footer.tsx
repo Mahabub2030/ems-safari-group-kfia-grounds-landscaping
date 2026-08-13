@@ -6,7 +6,7 @@ export default function Footer() {
       <div className="container mx-auto flex flex-col items-center justify-between gap-4 px-4 sm:flex-row">
         {/* Copyright */}
         <p className="text-xs text-muted-foreground text-center sm:text-left">
-          &copy; Company Name. All rights reserved.
+          &copy; Safari group limited (G&L). Developed by Mahabub Alam, Full-Stack Developer.
         </p>
 
         {/* Footer Navigation Links */}
