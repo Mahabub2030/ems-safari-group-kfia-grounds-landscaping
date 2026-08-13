@@ -10,6 +10,7 @@ import Dashboard from "@/pages/Dashboard/Dashboard";
 import Vacation from "@/pages/Vacation";
 import Expiration from "@/pages/Expiration";
 import Documents from "@/pages/Documents";
+import AboutOperations from "@/pages/AboutOperations";
 
 export const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ export const router = createBrowserRouter([
       {
         path: "Documents",
         Component: Documents,
+      },
+      {
+        path: "AboutOperations",
+        Component: AboutOperations,
       },
       {
         path: "Dashboard",

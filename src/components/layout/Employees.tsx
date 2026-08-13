@@ -22,6 +22,7 @@ import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
+  Briefcase,
   Building2,
   Download,
   FileText,
@@ -42,7 +43,7 @@ export interface MockEmployee {
   jobTitle: string;
   idNumber: string;
   employeeId: string;
-  dacoId?: string;
+  dacoId?: string | null;
   group: string;
   joiningDate: string;
   nationality: string;
@@ -55,58 +56,52 @@ export interface MockEmployee {
 
 const MOCK_DATA: MockEmployee[] = [
   {
-    _id: "6a40b233a377d5283b7c44a2",
-    name: "Eman AlNasser",
-    email: "eman.alnasser@safari.com.sa",
-    phoneNumber: "+966 50 123 4567",
-    jobTitle: "Administrator",
-    idNumber: "1063800229",
-    employeeId: "67712",
-    dacoId: "DAC-9011",
-    group: "Administrative / Management",
+    _id: "33",
+    name: "Shafiqul Islam",
+    email: "shafiqul@example.com",
+    phoneNumber: "+966 50 000 0000",
+    jobTitle: "DRIVER HD",
+    idNumber: "2231024064",
+    employeeId: "68567",
+    dacoId: null,
+    group: "Landscaping",
     joiningDate: "2026-04-01T00:00:00.000Z",
-    nationality: "Saudi",
-    companyName: "Safari Group",
+    nationality: "Bangladeshi",
+    companyName: "Nabatat",
     status: "ACTIVE",
-    workLocation: "Dammam",
-    remark: "Primary Admin Contact",
-    updatedAt: "2026-07-03T12:52:52.551Z",
+    remark: "Transfer Pending",
   },
   {
-    _id: "7b51c344b488e6394c8d55b3",
-    name: "Tariq Al-Mansoor",
-    email: "tariq.m@safari.com.sa",
-    phoneNumber: "+966 55 987 6543",
-    jobTitle: "MERN Stack Developer",
-    idNumber: "1098234711",
-    employeeId: "68823",
-    dacoId: "DAC-8842",
-    group: "Engineering & IT",
-    joiningDate: "2025-11-15T00:00:00.000Z",
-    nationality: "Saudi",
-    companyName: "Safari Contracting",
+    _id: "36",
+    name: "Sonam Pashang",
+    email: "sonam@example.com",
+    phoneNumber: "+966 50 000 0001",
+    jobTitle: "Technician",
+    idNumber: "2363702099",
+    employeeId: "68578",
+    dacoId: null,
+    group: "Landscaping",
+    joiningDate: "2026-04-01T00:00:00.000Z",
+    nationality: "Nepali",
+    companyName: "Nabatat",
     status: "ACTIVE",
-    workLocation: "Dammam Site",
-    remark: "Lead Frontend Developer",
-    updatedAt: "2026-06-10T09:12:00.000Z",
+    remark: "Complted",
   },
   {
-    _id: "8c62d455c599f7405d9e66c4",
-    name: "Rahul Sharma",
-    email: "rahul.sharma@safari.com.sa",
-    phoneNumber: "+966 53 444 3210",
-    jobTitle: "Full Stack Developer",
-    idNumber: "2389102938",
-    employeeId: "69001",
-    dacoId: "DAC-3021",
-    group: "Engineering & IT",
-    joiningDate: "2026-01-10T00:00:00.000Z",
-    nationality: "Indian",
-    companyName: "Safari Contracting",
-    status: "ON_LEAVE",
-    workLocation: "Khobar Branch",
-    remark: "Annual Vacation",
-    updatedAt: "2026-08-01T10:00:00.000Z",
+    _id: "41",
+    name: "MD Sohag",
+    email: "sohag@example.com",
+    phoneNumber: "+966 50 000 0002",
+    jobTitle: "labor",
+    idNumber: "2523266126",
+    employeeId: "67490",
+    dacoId: null,
+    group: "Irrigation",
+    joiningDate: "2026-04-01T00:00:00.000Z",
+    nationality: "Bangladeshi",
+    companyName: "Nabatat",
+    status: "ACTIVE",
+    remark: "",
   },
 ];
 
@@ -134,6 +129,7 @@ export default function Employees() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
+  const [positionFilter, setPositionFilter] = useState("all");
   const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -145,19 +141,19 @@ export default function Employees() {
     name: "",
     email: "",
     phoneNumber: "",
-    jobTitle: "Administrator",
+    jobTitle: "labor",
     employeeId: "",
     idNumber: "",
     dacoId: "",
-    group: "Administrative / Management",
-    nationality: "Saudi",
-    companyName: "Safari Group",
+    group: "Landscaping",
+    nationality: "Bangladeshi",
+    companyName: "Nabatat",
     status: "ACTIVE",
     workLocation: "",
     remark: "",
   });
 
-  // Extract unique groups dynamically for the Group Filter
+  // Extract unique departments/groups
   const groupOptions = useMemo(() => {
     const uniqueGroups = Array.from(
       new Set(employees.map((e) => e.group).filter(Boolean))
@@ -165,27 +161,36 @@ export default function Employees() {
     return uniqueGroups.map((g) => ({ label: g, value: g }));
   }, [employees]);
 
-  // Search + Group + Status Filter Logic
+  // Extract unique positions/job titles
+  const positionOptions = useMemo(() => {
+    const uniquePositions = Array.from(
+      new Set(employees.map((e) => e.jobTitle).filter(Boolean))
+    );
+    return uniquePositions.map((p) => ({ label: p, value: p }));
+  }, [employees]);
+
   const filtered = useMemo(() => {
     return employees.filter((e) => {
       const q = search.toLowerCase();
       const matchSearch =
         e.name.toLowerCase().includes(q) ||
-        e.email.toLowerCase().includes(q) ||
+        (e.email && e.email.toLowerCase().includes(q)) ||
         e.employeeId.toLowerCase().includes(q) ||
         e.idNumber.includes(q) ||
         (e.dacoId && e.dacoId.toLowerCase().includes(q)) ||
+        e.jobTitle.toLowerCase().includes(q) ||
         e.group.toLowerCase().includes(q) ||
         e.companyName.toLowerCase().includes(q);
 
       const matchStatus = statusFilter === "all" || e.status === statusFilter;
       const matchGroup = groupFilter === "all" || e.group === groupFilter;
+      const matchPosition =
+        positionFilter === "all" || e.jobTitle === positionFilter;
 
-      return matchSearch && matchStatus && matchGroup;
+      return matchSearch && matchStatus && matchGroup && matchPosition;
     });
-  }, [employees, search, statusFilter, groupFilter]);
+  }, [employees, search, statusFilter, groupFilter, positionFilter]);
 
-  // Pagination Logic (Supports 10, 50, 100, All)
   const paginated = useMemo(() => {
     if (pageSize === 0) return filtered;
     return filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -197,13 +202,13 @@ export default function Employees() {
       name: "",
       email: "",
       phoneNumber: "",
-      jobTitle: "Administrator",
+      jobTitle: "labor",
       employeeId: "",
       idNumber: "",
       dacoId: "",
-      group: "Administrative / Management",
-      nationality: "Saudi",
-      companyName: "Safari Group",
+      group: "Landscaping",
+      nationality: "Bangladeshi",
+      companyName: "Nabatat",
       status: "ACTIVE",
       workLocation: "",
       remark: "",
@@ -218,8 +223,8 @@ export default function Employees() {
   };
 
   const handleSave = () => {
-    if (!form.name?.trim() || !form.email?.trim() || !form.employeeId?.trim()) {
-      toast.error("Name, Email, and Employee ID are required");
+    if (!form.name?.trim() || !form.employeeId?.trim()) {
+      toast.error("Name and Employee ID are required");
       return;
     }
 
@@ -261,19 +266,16 @@ export default function Employees() {
         "ID/Iqama": e.idNumber,
         "DACO ID": e.dacoId || "",
         Name: e.name,
-        Email: e.email,
-        Phone: e.phoneNumber,
-        "Job Title": e.jobTitle,
-        Group: e.group,
+        Email: e.email || "",
+        Phone: e.phoneNumber || "",
+        Position: e.jobTitle,
+        Department: e.group,
         Company: e.companyName,
         Nationality: e.nationality,
         Status: e.status,
         Remark: e.remark || "",
         "Joining Date": e.joiningDate
           ? new Date(e.joiningDate).toLocaleDateString()
-          : "",
-        "Updated At": e.updatedAt
-          ? new Date(e.updatedAt).toLocaleString()
           : "",
       }))
     );
@@ -286,7 +288,7 @@ export default function Employees() {
   const exportPDF = () => {
     const doc = new jsPDF("landscape");
     doc.setFontSize(15);
-    doc.text("Safari Group - Employee Directory", 14, 15);
+    doc.text("Employee Directory Report", 14, 15);
     autoTable(doc, {
       startY: 22,
       head: [
@@ -295,8 +297,8 @@ export default function Employees() {
           "ID/Iqama",
           "DACO ID",
           "Name",
-          "Job Title",
-          "Group",
+          "Position",
+          "Department",
           "Company",
           "Status",
           "Remark",
@@ -342,19 +344,10 @@ export default function Employees() {
       ),
     },
     {
-      key: "dacoId",
-      label: "DACO ID",
-      render: (emp) => (
-        <span className="text-xs font-mono text-muted-foreground">
-          {emp.dacoId || "—"}
-        </span>
-      ),
-    },
-    {
       key: "name",
       label: "Employee",
       render: (emp) => (
-        <div className="flex items-center gap-2.5 min-w-[180px]">
+        <div className="flex items-center gap-2.5 min-w-[170px]">
           <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-xs border border-primary/20">
             {emp.name.slice(0, 2).toUpperCase()}
           </div>
@@ -363,7 +356,7 @@ export default function Employees() {
               {emp.name}
             </p>
             <p className="text-[11px] text-muted-foreground truncate mt-1">
-              {emp.email}
+              {emp.email || "—"}
             </p>
           </div>
         </div>
@@ -371,13 +364,22 @@ export default function Employees() {
     },
     {
       key: "jobTitle",
-      label: "Job Title & Group",
+      label: "Position / Role",
       render: (emp) => (
-        <div className="min-w-[150px]">
-          <p className="text-xs font-medium text-foreground">{emp.jobTitle}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {emp.group}
-          </p>
+        <div className="flex items-center gap-1.5 min-w-[130px]">
+          <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+          <span className="text-xs font-semibold text-foreground bg-accent/50 px-2 py-0.5 rounded-md border border-accent">
+            {emp.jobTitle}
+          </span>
+        </div>
+      ),
+    },
+    {
+      key: "group",
+      label: "Department",
+      render: (emp) => (
+        <div className="min-w-[130px]">
+          <p className="text-xs font-medium text-foreground">{emp.group}</p>
         </div>
       ),
     },
@@ -385,21 +387,9 @@ export default function Employees() {
       key: "companyName",
       label: "Company",
       render: (emp) => (
-        <div className="flex items-center gap-1.5 min-w-[130px]">
+        <div className="flex items-center gap-1.5 min-w-[120px]">
           <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
           <span className="text-xs font-medium">{emp.companyName}</span>
-        </div>
-      ),
-    },
-    {
-      key: "phoneNumber",
-      label: "Phone & Location",
-      render: (emp) => (
-        <div className="min-w-[120px]">
-          <p className="text-xs font-mono">{emp.phoneNumber}</p>
-          <p className="text-[11px] text-muted-foreground">
-            {emp.workLocation || "—"}
-          </p>
         </div>
       ),
     },
@@ -429,21 +419,6 @@ export default function Employees() {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
-              })
-            : "—"}
-        </span>
-      ),
-    },
-    {
-      key: "updatedAt",
-      label: "Updated At",
-      render: (emp) => (
-        <span className="text-[11px] text-muted-foreground font-mono whitespace-nowrap">
-          {emp.updatedAt
-            ? new Date(emp.updatedAt).toLocaleDateString("en-US", {
-                month: "short",
-                day: "2-digit",
-                year: "2-digit",
               })
             : "—"}
         </span>
@@ -505,7 +480,7 @@ export default function Employees() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
-            Employee Management
+            Employee Directory
           </h1>
           <p className="text-muted-foreground text-xs mt-0.5">
             Showing{" "}
@@ -517,11 +492,9 @@ export default function Employees() {
         </div>
       </div>
 
-      {/* Filter Control Bar: Group Filter & Rows Per Page */}
+      {/* Filter Control Bar */}
       <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 border rounded-xl shadow-sm">
-
-
-        {/* Rows Per Page Controls */}
+        {/* Rows Per Page */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span>Rows per page:</span>
           <Select
@@ -542,36 +515,66 @@ export default function Employees() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Group Filter Dropdown */}
-          <span className="text-xs text-muted-foreground font-medium">
-            Filter Group:
-          </span>
-          <Select
-            value={groupFilter}
-            onValueChange={(v) => {
-              setGroupFilter(v);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-8 text-xs w-[200px]">
-              <SelectValue placeholder="All Groups" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Groups</SelectItem>
-              {groupOptions.map((g) => (
-                <SelectItem key={g.value} value={g.value}>
-                  {g.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+
+        {/* Filters Section */}
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Position Filter Dropdown */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground font-medium">
+              Position:
+            </span>
+            <Select
+              value={positionFilter}
+              onValueChange={(v) => {
+                setPositionFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs w-[160px]">
+                <SelectValue placeholder="All Positions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Positions</SelectItem>
+                {positionOptions.map((p) => (
+                  <SelectItem key={p.value} value={p.value}>
+                    {p.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Department Filter Dropdown */}
+          <div className="flex items-center gap-1.5">
+            <span className="text-xs text-muted-foreground font-medium">
+              Department:
+            </span>
+            <Select
+              value={groupFilter}
+              onValueChange={(v) => {
+                setGroupFilter(v);
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs w-[170px]">
+                <SelectValue placeholder="All Departments" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Departments</SelectItem>
+                {groupOptions.map((g) => (
+                  <SelectItem key={g.value} value={g.value}>
+                    {g.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
-      {/* Data Table */}
+      {/* Table Container */}
       <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
-        <div className="w-full overflow-x-auto overflow-y-auto max-h-[550px] scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <div className="w-full overflow-x-auto">
           <DataTable<MockEmployee>
             data={paginated}
             columns={columns}
@@ -581,7 +584,7 @@ export default function Employees() {
               setSearch(v);
               setPage(1);
             }}
-            searchPlaceholder="Search Name, ID, Iqama, Group, Company..."
+            searchPlaceholder="Search Name, ID, Iqama, Position, Group..."
             filterValue={statusFilter}
             onFilterChange={(v) => {
               setStatusFilter(v);
@@ -593,7 +596,7 @@ export default function Employees() {
             pageSize={pageSize === 0 ? filtered.length || 1 : pageSize}
             total={filtered.length}
             onPageChange={setPage}
-            emptyMessage="No employee records found"
+            emptyMessage="No matching employee records found"
             actions={
               <div className="flex items-center gap-2">
                 <Button
@@ -644,18 +647,18 @@ export default function Employees() {
                 <Input
                   value={form.name || ""}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
-                  placeholder="e.g. Eman AlNasser"
+                  placeholder="e.g. Shafiqul Islam"
                 />
               </div>
               <div>
                 <label className="font-medium text-muted-foreground mb-1 block">
-                  Email *
+                  Email
                 </label>
                 <Input
                   value={form.email || ""}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
                   type="email"
-                  placeholder="eman@safari.com.sa"
+                  placeholder="shafiqul@example.com"
                 />
               </div>
             </div>
@@ -670,7 +673,7 @@ export default function Employees() {
                   onChange={(e) =>
                     setForm({ ...form, employeeId: e.target.value })
                   }
-                  placeholder="67712"
+                  placeholder="68567"
                 />
               </div>
               <div>
@@ -682,7 +685,7 @@ export default function Employees() {
                   onChange={(e) =>
                     setForm({ ...form, idNumber: e.target.value })
                   }
-                  placeholder="1063800229"
+                  placeholder="2231024064"
                 />
               </div>
               <div>
@@ -692,7 +695,7 @@ export default function Employees() {
                 <Input
                   value={form.dacoId || ""}
                   onChange={(e) => setForm({ ...form, dacoId: e.target.value })}
-                  placeholder="DAC-102"
+                  placeholder="Optional"
                 />
               </div>
             </div>
@@ -700,13 +703,14 @@ export default function Employees() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="font-medium text-muted-foreground mb-1 block">
-                  Job Title
+                  Position / Job Title
                 </label>
                 <Input
                   value={form.jobTitle || ""}
                   onChange={(e) =>
                     setForm({ ...form, jobTitle: e.target.value })
                   }
+                  placeholder="e.g. DRIVER HD, Technician, labor"
                 />
               </div>
               <div>
@@ -716,6 +720,7 @@ export default function Employees() {
                 <Input
                   value={form.group || ""}
                   onChange={(e) => setForm({ ...form, group: e.target.value })}
+                  placeholder="e.g. Landscaping, Irrigation"
                 />
               </div>
             </div>
@@ -767,7 +772,7 @@ export default function Employees() {
                   onChange={(e) =>
                     setForm({ ...form, workLocation: e.target.value })
                   }
-                  placeholder="Dammam Site"
+                  placeholder="Optional"
                 />
               </div>
               <div>
