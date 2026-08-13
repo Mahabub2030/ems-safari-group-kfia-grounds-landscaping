@@ -5,8 +5,10 @@ import Employees from "@/components/layout/Employees";
 import Home from "@/pages/Home";
 
 import { createBrowserRouter } from "react-router";
-import DocumentExpiration from "@/pages/DocumentExpiration";
+
 import Dashboard from "@/pages/Dashboard/Dashboard";
+import Vacation from "@/pages/Vacation";
+import Expiration from "@/pages/Expiration";
 
 export const router = createBrowserRouter([
   {
@@ -22,8 +24,12 @@ export const router = createBrowserRouter([
         Component: Employees,
       },
       {
-        path: "DocumentExpiration",
-        Component: DocumentExpiration,
+        path: "Vacation",
+        Component: Vacation,
+      },
+      {
+        path: "Expiration",
+        Component: Expiration,
       },
       {
         path: "Dashboard",

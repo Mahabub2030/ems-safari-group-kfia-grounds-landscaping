@@ -15,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router";
+import { Link, useLocation } from "react-router";
 
 import { ModeToggle } from "../layout/ModeToggler";
 
@@ -77,8 +77,9 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
 const defaultNavigationLinks: NavbarNavLink[] = [
   { href: "/", label: "Home" },
   { href: "/employees", label: "Employees" },
-  { href: "/DocumentExpiration", label: "DocumentExpiration" },
+  { href: "/Expiration", label: "Expiration" },
   { href: "/Dashboard", label: "Dashboard" },
+  { href: "/Vacation", label: "Vacation" },
   { href: "#about", label: "About" },
 ];
 
@@ -101,6 +102,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
   ) => {
     const [isMobile, setIsMobile] = useState(false);
     const containerRef = useRef<HTMLElement>(null);
+    const location = useLocation();
 
     useEffect(() => {
       const checkWidth = () => {
@@ -135,6 +137,14 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
       [ref],
     );
 
+    // Helper to check active route
+    const checkIsActive = (href: string, activeProp?: boolean) => {
+      if (activeProp !== undefined) return activeProp;
+      if (href === "/") return location.pathname === "/";
+      if (href.startsWith("#")) return location.hash === href;
+      return location.pathname.toLowerCase().startsWith(href.toLowerCase());
+    };
+
     return (
       <header
         className={cn(
@@ -165,20 +175,24 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                 >
                   <NavigationMenu className="max-w-none">
                     <NavigationMenuList className="flex-col items-start gap-1">
-                      {navigationLinks.map((link, index) => (
-                        <NavigationMenuItem className="w-full" key={index}>
-                          <Link
-                            to={link.href}
-                            className={cn(
-                              "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-white/10 text-white/90 hover:text-white cursor-pointer no-underline",
-                              link.active &&
-                                "bg-white/20 text-white font-semibold",
-                            )}
-                          >
-                            {link.label}
-                          </Link>
-                        </NavigationMenuItem>
-                      ))}
+                      {navigationLinks.map((link, index) => {
+                        const isActive = checkIsActive(link.href, link.active);
+                        return (
+                          <NavigationMenuItem className="w-full" key={index}>
+                            <Link
+                              to={link.href}
+                              className={cn(
+                                "flex w-full items-center rounded-md px-3 py-2 text-sm font-medium transition-colors cursor-pointer no-underline",
+                                isActive
+                                  ? "bg-white text-emerald-600 font-semibold shadow-sm"
+                                  : "text-white/90 hover:bg-white/10 hover:text-white",
+                              )}
+                            >
+                              {link.label}
+                            </Link>
+                          </NavigationMenuItem>
+                        );
+                      })}
                     </NavigationMenuList>
                   </NavigationMenu>
                 </PopoverContent>
@@ -213,20 +227,24 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               {!isMobile && (
                 <NavigationMenu className="flex">
                   <NavigationMenuList className="gap-1">
-                    {navigationLinks.map((link, index) => (
-                      <NavigationMenuItem key={index}>
-                        <Link
-                          to={link.href}
-                          className={cn(
-                            "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors hover:bg-white/10 text-white/90 hover:text-white focus:outline-none cursor-pointer no-underline",
-                            link.active &&
-                              "bg-white/20 text-white font-semibold",
-                          )}
-                        >
-                          {link.label}
-                        </Link>
-                      </NavigationMenuItem>
-                    ))}
+                    {navigationLinks.map((link, index) => {
+                      const isActive = checkIsActive(link.href, link.active);
+                      return (
+                        <NavigationMenuItem key={index}>
+                          <Link
+                            to={link.href}
+                            className={cn(
+                              "group inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none cursor-pointer no-underline",
+                              isActive
+                                ? "bg-white text-emerald-600 font-semibold shadow-sm"
+                                : "text-white/90 hover:bg-white/10 hover:text-white",
+                            )}
+                          >
+                            {link.label}
+                          </Link>
+                        </NavigationMenuItem>
+                      );
+                    })}
                   </NavigationMenuList>
                 </NavigationMenu>
               )}

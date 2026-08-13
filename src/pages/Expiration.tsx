@@ -151,7 +151,7 @@ const filterStatusOptions: FilterOption[] = [
   { label: "Valid", value: "VALID" },
 ];
 
-export default function DocumentExpiration() {
+export default function Expiration() {
   const [data, setData] = useState<MockDocumentExpiry[]>(MOCK_EXPIRY_DATA);
   const [search, setSearch] = useState("");
   const [groupFilter, setGroupFilter] = useState("all");

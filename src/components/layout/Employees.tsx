@@ -68,7 +68,7 @@ const MOCK_DATA: MockEmployee[] = [
     nationality: "Saudi",
     companyName: "Safari Group",
     status: "ACTIVE",
-    workLocation: "Dammam HQ",
+    workLocation: "Dammam",
     remark: "Primary Admin Contact",
     updatedAt: "2026-07-03T12:52:52.551Z",
   },

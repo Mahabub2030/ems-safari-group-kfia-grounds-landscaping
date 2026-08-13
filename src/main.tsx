@@ -9,9 +9,9 @@ import { TooltipProvider } from "./components/ui/tooltip";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <TooltipProvider>
- <ThemeProvider>
-      <RouterProvider router={router} />
-    </ThemeProvider>
+      <ThemeProvider>
+        <RouterProvider router={router} />
+      </ThemeProvider>
     </TooltipProvider>
 
   </StrictMode>,
