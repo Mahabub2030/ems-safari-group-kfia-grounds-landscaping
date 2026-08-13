@@ -64,11 +64,11 @@ export default function Herosections() {
 
               {/* Hero Overlay Content */}
               <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-                <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-md">
-                  Welcome to EMS
+                <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight drop-shadow-md">
+                 WELCOME TO SAFARI GROUP   GROUNDS & LADDCAPING (EMS)
                 </h1>
-                <p className="mt-2 text-sm sm:text-base md:text-lg text-gray-200 max-w-xl drop-shadow">
-                  Grounds &amp; Landscaping Management System
+                <p className="mt-2 text-md sm:text-base md:text-lg text-gray-200 max-w-xl drop-shadow">
+                  Grounds &amp; Landscaping Management System (kfia daco m-319-2025)
                 </p>
               </div>
             </div>

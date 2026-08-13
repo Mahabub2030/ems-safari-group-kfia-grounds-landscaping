@@ -9,6 +9,7 @@ import { createBrowserRouter } from "react-router";
 import Dashboard from "@/pages/Dashboard/Dashboard";
 import Vacation from "@/pages/Vacation";
 import Expiration from "@/pages/Expiration";
+import Documents from "@/pages/Documents";
 
 export const router = createBrowserRouter([
   {
@@ -30,6 +31,10 @@ export const router = createBrowserRouter([
       {
         path: "Expiration",
         Component: Expiration,
+      },
+      {
+        path: "Documents",
+        Component: Documents,
       },
       {
         path: "Dashboard",
