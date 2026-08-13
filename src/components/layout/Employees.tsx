@@ -53,7 +53,6 @@ export interface MockEmployee {
   updatedAt?: string;
 }
 
-// Sample JSON Data aligned with your provided structure
 const MOCK_DATA: MockEmployee[] = [
   {
     _id: "6a40b233a377d5283b7c44a2",
@@ -88,7 +87,7 @@ const MOCK_DATA: MockEmployee[] = [
     companyName: "Safari Contracting",
     status: "ACTIVE",
     workLocation: "Dammam Site",
-    remark: "",
+    remark: "Lead Frontend Developer",
     updatedAt: "2026-06-10T09:12:00.000Z",
   },
   {
@@ -99,7 +98,7 @@ const MOCK_DATA: MockEmployee[] = [
     jobTitle: "Full Stack Developer",
     idNumber: "2389102938",
     employeeId: "69001",
-    dacoId: "",
+    dacoId: "DAC-3021",
     group: "Engineering & IT",
     joiningDate: "2026-01-10T00:00:00.000Z",
     nationality: "Indian",
@@ -110,8 +109,6 @@ const MOCK_DATA: MockEmployee[] = [
     updatedAt: "2026-08-01T10:00:00.000Z",
   },
 ];
-
-const PAGE_SIZE = 10;
 
 const statusBadge: Record<string, string> = {
   ACTIVE:
@@ -132,16 +129,16 @@ const statusFilterOptions: FilterOption[] = [
 ];
 
 export default function Employees() {
-  // const { user } = useAuth();
-  // const canEdit = user?.role === "admin" || user?.role === "superadmin";
-  const canEdit = true; // For demonstration purposes, allow editing for all users
+  const canEdit = true;
   const [employees, setEmployees] = useState<MockEmployee[]>(MOCK_DATA);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [groupFilter, setGroupFilter] = useState("all");
+  const [pageSize, setPageSize] = useState<number>(10);
   const [page, setPage] = useState(1);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<MockEmployee | null>(
-    null,
+    null
   );
 
   const [form, setForm] = useState<Partial<MockEmployee>>({
@@ -157,9 +154,18 @@ export default function Employees() {
     companyName: "Safari Group",
     status: "ACTIVE",
     workLocation: "",
+    remark: "",
   });
 
-  // Search & Filter
+  // Extract unique groups dynamically for the Group Filter
+  const groupOptions = useMemo(() => {
+    const uniqueGroups = Array.from(
+      new Set(employees.map((e) => e.group).filter(Boolean))
+    );
+    return uniqueGroups.map((g) => ({ label: g, value: g }));
+  }, [employees]);
+
+  // Search + Group + Status Filter Logic
   const filtered = useMemo(() => {
     return employees.filter((e) => {
       const q = search.toLowerCase();
@@ -168,16 +174,22 @@ export default function Employees() {
         e.email.toLowerCase().includes(q) ||
         e.employeeId.toLowerCase().includes(q) ||
         e.idNumber.includes(q) ||
+        (e.dacoId && e.dacoId.toLowerCase().includes(q)) ||
+        e.group.toLowerCase().includes(q) ||
         e.companyName.toLowerCase().includes(q);
 
       const matchStatus = statusFilter === "all" || e.status === statusFilter;
-      return matchSearch && matchStatus;
-    });
-  }, [employees, search, statusFilter]);
+      const matchGroup = groupFilter === "all" || e.group === groupFilter;
 
+      return matchSearch && matchStatus && matchGroup;
+    });
+  }, [employees, search, statusFilter, groupFilter]);
+
+  // Pagination Logic (Supports 10, 50, 100, All)
   const paginated = useMemo(() => {
-    return filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  }, [filtered, page]);
+    if (pageSize === 0) return filtered;
+    return filtered.slice((page - 1) * pageSize, page * pageSize);
+  }, [filtered, page, pageSize]);
 
   const openAdd = () => {
     setEditingEmployee(null);
@@ -194,6 +206,7 @@ export default function Employees() {
       companyName: "Safari Group",
       status: "ACTIVE",
       workLocation: "",
+      remark: "",
     });
     setDialogOpen(true);
   };
@@ -214,9 +227,13 @@ export default function Employees() {
       setEmployees((prev) =>
         prev.map((emp) =>
           emp._id === editingEmployee._id
-            ? ({ ...emp, ...form } as MockEmployee)
-            : emp,
-        ),
+            ? ({
+                ...emp,
+                ...form,
+                updatedAt: new Date().toISOString(),
+              } as MockEmployee)
+            : emp
+        )
       );
       toast.success("Employee updated successfully");
     } else {
@@ -242,6 +259,7 @@ export default function Employees() {
       filtered.map((e) => ({
         "Employee ID": e.employeeId,
         "ID/Iqama": e.idNumber,
+        "DACO ID": e.dacoId || "",
         Name: e.name,
         Email: e.email,
         Phone: e.phoneNumber,
@@ -250,10 +268,14 @@ export default function Employees() {
         Company: e.companyName,
         Nationality: e.nationality,
         Status: e.status,
+        Remark: e.remark || "",
         "Joining Date": e.joiningDate
           ? new Date(e.joiningDate).toLocaleDateString()
           : "",
-      })),
+        "Updated At": e.updatedAt
+          ? new Date(e.updatedAt).toLocaleString()
+          : "",
+      }))
     );
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Employees");
@@ -271,23 +293,25 @@ export default function Employees() {
         [
           "Emp ID",
           "ID/Iqama",
+          "DACO ID",
           "Name",
           "Job Title",
-          "Department/Group",
+          "Group",
           "Company",
-          "Phone",
           "Status",
+          "Remark",
         ],
       ],
       body: filtered.map((e) => [
         e.employeeId,
         e.idNumber,
+        e.dacoId || "—",
         e.name,
         e.jobTitle,
         e.group,
         e.companyName,
-        e.phoneNumber,
         e.status,
+        e.remark || "—",
       ]),
       styles: { fontSize: 8 },
     });
@@ -295,14 +319,13 @@ export default function Employees() {
     toast.success("PDF report downloaded");
   };
 
-  // Dense Multi-Column Layout Configuration
   const columns: Column<MockEmployee>[] = [
     {
       key: "sr",
       label: "#",
       render: (_r, i) => (
         <span className="text-xs text-muted-foreground font-mono">
-          {(page - 1) * PAGE_SIZE + i + 1}
+          {pageSize === 0 ? i + 1 : (page - 1) * pageSize + i + 1}
         </span>
       ),
     },
@@ -316,6 +339,15 @@ export default function Employees() {
             {emp.idNumber}
           </p>
         </div>
+      ),
+    },
+    {
+      key: "dacoId",
+      label: "DACO ID",
+      render: (emp) => (
+        <span className="text-xs font-mono text-muted-foreground">
+          {emp.dacoId || "—"}
+        </span>
       ),
     },
     {
@@ -379,6 +411,15 @@ export default function Employees() {
       ),
     },
     {
+      key: "remark",
+      label: "Remark",
+      render: (emp) => (
+        <span className="text-xs text-muted-foreground italic truncate max-w-[140px] block">
+          {emp.remark || "—"}
+        </span>
+      ),
+    },
+    {
       key: "joiningDate",
       label: "Joining Date",
       render: (emp) => (
@@ -388,6 +429,21 @@ export default function Employees() {
                 day: "2-digit",
                 month: "short",
                 year: "numeric",
+              })
+            : "—"}
+        </span>
+      ),
+    },
+    {
+      key: "updatedAt",
+      label: "Updated At",
+      render: (emp) => (
+        <span className="text-[11px] text-muted-foreground font-mono whitespace-nowrap">
+          {emp.updatedAt
+            ? new Date(emp.updatedAt).toLocaleDateString("en-US", {
+                month: "short",
+                day: "2-digit",
+                year: "2-digit",
               })
             : "—"}
         </span>
@@ -412,7 +468,7 @@ export default function Employees() {
             key: "actions",
             label: "Actions",
             className:
-              "text-right sticky right-0 bg-background/95 backdrop-blur-sm",
+              "text-right sticky right-0 bg-background/95 backdrop-blur-sm z-10",
             render: (emp: MockEmployee) => (
               <div
                 className="flex items-center justify-end gap-1"
@@ -445,7 +501,7 @@ export default function Employees() {
       animate={{ opacity: 1 }}
       className="space-y-4 p-4 md:p-6"
     >
-      {/* Top Header Section */}
+      {/* Header Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">
@@ -461,20 +517,71 @@ export default function Employees() {
         </div>
       </div>
 
-      {/* Styled DataTable with Horizontal and Vertical Overflow Containers */}
+      {/* Filter Control Bar: Group Filter & Rows Per Page */}
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 border rounded-xl shadow-sm">
+
+
+        {/* Rows Per Page Controls */}
+        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+          <span>Rows per page:</span>
+          <Select
+            value={String(pageSize)}
+            onValueChange={(v) => {
+              setPageSize(Number(v));
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs w-[80px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+              <SelectItem value="0">All</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {/* Group Filter Dropdown */}
+          <span className="text-xs text-muted-foreground font-medium">
+            Filter Group:
+          </span>
+          <Select
+            value={groupFilter}
+            onValueChange={(v) => {
+              setGroupFilter(v);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="h-8 text-xs w-[200px]">
+              <SelectValue placeholder="All Groups" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Groups</SelectItem>
+              {groupOptions.map((g) => (
+                <SelectItem key={g.value} value={g.value}>
+                  {g.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Data Table */}
       <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
-        <div className="w-full overflow-x-auto overflow-y-auto max-h-[600px] scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <div className="w-full overflow-x-auto overflow-y-auto max-h-[550px] scrollbar-thin scrollbar-thumb-muted-foreground/20">
           <DataTable<MockEmployee>
             data={paginated}
             columns={columns}
             rowKey={(e) => e._id}
-            // onRowClick={(e) => navigate(`/employees/${e._id}`)}
             search={search}
             onSearchChange={(v) => {
               setSearch(v);
               setPage(1);
             }}
-            searchPlaceholder="Search Name, ID, Iqama, Company..."
+            searchPlaceholder="Search Name, ID, Iqama, Group, Company..."
             filterValue={statusFilter}
             onFilterChange={(v) => {
               setStatusFilter(v);
@@ -483,7 +590,7 @@ export default function Employees() {
             filterOptions={statusFilterOptions}
             filterPlaceholder="All Statuses"
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize === 0 ? filtered.length || 1 : pageSize}
             total={filtered.length}
             onPageChange={setPage}
             emptyMessage="No employee records found"
@@ -520,7 +627,7 @@ export default function Employees() {
         </div>
       </div>
 
-      {/* Add / Edit Dialog Form */}
+      {/* Dialog Form */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -682,6 +789,17 @@ export default function Employees() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div>
+              <label className="font-medium text-muted-foreground mb-1 block">
+                Remark
+              </label>
+              <Input
+                value={form.remark || ""}
+                onChange={(e) => setForm({ ...form, remark: e.target.value })}
+                placeholder="Optional remark..."
+              />
             </div>
 
             <Button onClick={handleSave} className="w-full mt-3 bg-primary">
