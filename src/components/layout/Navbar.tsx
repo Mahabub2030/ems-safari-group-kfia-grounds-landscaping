@@ -67,9 +67,12 @@ export interface NavbarProps extends React.HTMLAttributes<HTMLElement> {
   navigationLinks?: NavbarNavLink[];
   signInText?: string;
   signInHref?: string;
+  registerText?: string;
+  registerHref?: string;
   ctaText?: string;
   ctaHref?: string;
   onSignInClick?: () => void;
+  onRegisterClick?: () => void;
   onCtaClick?: () => void;
 }
 
@@ -91,11 +94,14 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
       logo,
       logoHref = "/",
       navigationLinks = defaultNavigationLinks,
-      signInText = "Sign In",
-      signInHref = "#signin",
-      ctaText = "Get Started",
-      ctaHref = "#get-started",
+      signInText = "Login",
+      signInHref = "/login",
+      registerText = "Register",
+      registerHref = "/register",
+      ctaText,
+      ctaHref,
       onSignInClick,
+      onRegisterClick,
       onCtaClick,
       ...props
     },
@@ -145,6 +151,9 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
       if (href.startsWith("#")) return location.hash === href;
       return location.pathname.toLowerCase().startsWith(href.toLowerCase());
     };
+
+    const isLoginActive = checkIsActive(signInHref);
+    const isRegisterActive = checkIsActive(registerHref);
 
     return (
       <header
@@ -206,17 +215,17 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
                 to={logoHref}
                 className="flex items-center space-x-3 bg-white pl-2 pr-12 py-2 rounded-l-2xl [clip-path:polygon(0_0,_100%_0,_85%_100%,_0%_100%)] transition-opacity hover:opacity-95 cursor-pointer"
               >
-                {/* First Logo */}
+                {/* Safari Logo */}
                 <img
                   src={Safarilogo}
                   alt="Safari Logo"
                   className="h-10 w-auto object-contain"
                 />
 
-                {/* Optional Divider Line */}
+                {/* Divider Line */}
                 <div className="h-6 w-[1px] bg-gray-300" />
 
-                {/* Second Logo */}
+                {/* DACO Logo */}
                 <img
                   src={DACOlogo}
                   alt="DACO Logo"
@@ -253,28 +262,63 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
           </div>
 
           {/* Right side Actions */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Login Button with Dynamic Active Color */}
             <Button
-              className="text-sm font-medium text-white hover:bg-white/10 hover:text-white"
+              className={cn(
+                "text-sm font-medium h-9 px-4 transition-colors",
+                isLoginActive
+                  ? "bg-white text-emerald-600 font-semibold shadow-sm hover:bg-white/90"
+                  : "text-white hover:bg-white/10 hover:text-white",
+              )}
               onClick={onSignInClick}
               size="sm"
               variant="ghost"
               asChild={!onSignInClick}
             >
               {onSignInClick ? (
-                signInText
+                <span>{signInText}</span>
               ) : (
                 <Link to={signInHref}>{signInText}</Link>
               )}
             </Button>
+
+            {/* Register Button with Dynamic Active Color */}
             <Button
-              className="text-sm font-medium px-4 h-9 rounded-md bg-white text-[oklch(0.35_0.12_290)] hover:bg-white/90 shadow-sm"
-              onClick={onCtaClick}
+              className={cn(
+                "text-sm font-medium h-9 px-4 transition-colors",
+                isRegisterActive
+                  ? "bg-white text-emerald-600 font-semibold shadow-sm hover:bg-white/90"
+                  : "text-white hover:bg-white/10 hover:text-white",
+              )}
+              onClick={onRegisterClick}
               size="sm"
-              asChild={!onCtaClick}
+              variant="ghost"
+              asChild={!onRegisterClick}
             >
-              {onCtaClick ? ctaText : <Link to={ctaHref}>{ctaText}</Link>}
+              {onRegisterClick ? (
+                <span>{registerText}</span>
+              ) : (
+                <Link to={registerHref}>{registerText}</Link>
+              )}
             </Button>
+
+            {/* Optional CTA Button */}
+            {(ctaText || onCtaClick) && (
+              <Button
+                className="text-sm font-medium px-4 h-9 rounded-md bg-white text-[oklch(0.35_0.12_290)] hover:bg-white/90 shadow-sm"
+                onClick={onCtaClick}
+                size="sm"
+                asChild={!onCtaClick}
+              >
+                {onCtaClick ? (
+                  <span>{ctaText}</span>
+                ) : (
+                  <Link to={ctaHref || "#"}>{ctaText}</Link>
+                )}
+              </Button>
+            )}
+
             <ModeToggle />
           </div>
         </div>

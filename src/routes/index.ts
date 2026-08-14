@@ -1,16 +1,17 @@
 import App from "@/App";
 import Employees from "@/components/layout/Employees";
 
-
 import Home from "@/pages/Home";
 
 import { createBrowserRouter } from "react-router";
 
-import Dashboard from "@/pages/Dashboard/Dashboard";
-import Vacation from "@/pages/Vacation";
-import Expiration from "@/pages/Expiration";
-import Documents from "@/pages/Documents";
 import AboutOperations from "@/pages/AboutOperations";
+import Login from "@/pages/Authentication/Login";
+import Register from "@/pages/Authentication/Register";
+import Dashboard from "@/pages/Dashboard/Dashboard";
+import Documents from "@/pages/Documents";
+import Expiration from "@/pages/Expiration";
+import Vacation from "@/pages/Vacation";
 
 export const router = createBrowserRouter([
   {
@@ -44,6 +45,14 @@ export const router = createBrowserRouter([
       {
         path: "Dashboard",
         Component: Dashboard,
+      },
+      {
+        path: "Login",
+        Component: Login,
+      },
+      {
+        path: "Register",
+        Component: Register,
       },
     ],
   },
