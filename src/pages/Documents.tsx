@@ -151,97 +151,10 @@ const initialDocumentsJSON: EmployeeDocument[] = [
       fileFormat: "PDF",
     },
   },
-  {
-    srNo: 2,
-    docId: "DOC-IQM-002",
-    docName: "Resident_Iqama_Card_2026.pdf",
-    docType: "Iqama",
-    employeeName: "Mahabub Alam",
-    employeeId: "EMP-001",
-    group: "Software & Tech",
-    iqamaNumber: "2450981234",
-    issueDate: "2025-01-15",
-    expiryDate: "2027-01-14",
-    fileSize: "1.1 MB",
-    fileFormat: "PDF",
-    downloadUrl:
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    imgUrl:
-      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=60",
-    cvDoc: {
-      docName: "Mahabub_Developer_CV.pdf",
-      downloadUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      imgUrl:
-        "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&auto=format&fit=crop&q=60",
-      fileSize: "900 KB",
-      fileFormat: "PDF",
-    },
-    jobOfferDoc: {
-      docName: "Offer_Letter_2025.pdf",
-      downloadUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      fileSize: "1.2 MB",
-      fileFormat: "PDF",
-    },
-  },
-  {
-    srNo: 3,
-    docId: "DOC-PASS-003",
-    docName: "John_Doe_Passport.pdf",
-    docType: "Passport",
-    employeeName: "John Doe",
-    employeeId: "EMP-002",
-    group: "Operations",
-    passportNumber: "B98765432",
-    issueDate: "2022-03-14",
-    expiryDate: "2032-03-13",
-    fileSize: "2.1 MB",
-    fileFormat: "PDF",
-    downloadUrl:
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    imgUrl:
-      "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60",
-    cvDoc: {
-      docName: "John_Doe_CV.pdf",
-      downloadUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      imgUrl:
-        "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&auto=format&fit=crop&q=60",
-      fileSize: "750 KB",
-      fileFormat: "PDF",
-    },
-    otherDoc: {
-      docName: "John_Doe_Experience_Letter.pdf",
-      downloadUrl:
-        "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      fileSize: "1.5 MB",
-      fileFormat: "PDF",
-    },
-  },
-  {
-    srNo: 4,
-    docId: "DOC-IQM-004",
-    docName: "Sarah_Smith_Iqama.pdf",
-    docType: "Iqama",
-    employeeName: "Sarah Smith",
-    employeeId: "EMP-003",
-    group: "HR & Administration",
-    iqamaNumber: "2390812345",
-    issueDate: "2024-06-01",
-    expiryDate: "2026-06-01",
-    fileSize: "1.3 MB",
-    fileFormat: "PDF",
-    downloadUrl:
-      "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    imgUrl:
-      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=500&auto=format&fit=crop&q=60",
-  },
 ];
 
 export default function Documents() {
-  const [documents, setDocuments] =
-    useState<EmployeeDocument[]>(initialDocumentsJSON);
+  const [documents] = useState<EmployeeDocument[]>(initialDocumentsJSON);
   const [searchTerm, setSearchTerm] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("all");
@@ -250,11 +163,11 @@ export default function Documents() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState("10");
 
-  const [selectedDoc, setSelectedDoc] = useState<EmployeeDocument | null>(null);
-  const [isViewOpen, setIsViewOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [isAddOpen, setIsAddOpen] = useState(false);
+  const [, setSelectedDoc] = useState<EmployeeDocument | null>(null);
+  const [, setIsViewOpen] = useState(false);
+  const [, setIsEditOpen] = useState(false);
+  const [, setIsDeleteOpen] = useState(false);
+  const [, setIsAddOpen] = useState(false);
 
   // Preview state for Drive, PDFs, and Images
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
@@ -264,7 +177,7 @@ export default function Documents() {
     type: "drive" | "pdf" | "image";
   } | null>(null);
 
-  const [formData, setFormData] = useState<Partial<EmployeeDocument>>({});
+  const [, setFormData] = useState<Partial<EmployeeDocument>>({});
 
   const availableGroups = useMemo(() => {
     const set = new Set<string>();

@@ -40,7 +40,7 @@ const HamburgerIcon = ({
     {...(props as any)}
   >
     <path
-      className="origin-center -translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-x-0 group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[315deg]"
+      className="origin-center -translate-y-1.75 transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-x-0 group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[315deg]"
       d="M4 12L20 12"
     />
     <path
@@ -48,7 +48,7 @@ const HamburgerIcon = ({
       d="M4 12H20"
     />
     <path
-      className="origin-center translate-y-[7px] transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[135deg]"
+      className="origin-center translate-y-1.75 transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.1)] group-aria-expanded:translate-y-0 group-aria-expanded:rotate-[135deg]"
       d="M4 12H20"
     />
   </svg>
@@ -158,13 +158,13 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
     return (
       <header
         className={cn(
-          "sticky top-0 z-50 w-full border-b border-white/10 bg-[oklch(0.35_0.12_290)] text-white px-4 md:px-6 [&_*]:no-underline",
+          "sticky top-0 z-50 w-full border-b border-white/10 bg-[oklch(0.35_0.12_290)] text-white px-4 md:px-8 [&_*]:no-underline",
           className,
         )}
         ref={combinedRef}
         {...(props as any)}
       >
-        <div className="container mx-auto flex h-16 max-w-screen-2xl items-center justify-between gap-4">
+        <div className="w-full flex h-16 items-center justify-between gap-4">
           {/* Left side */}
           <div className="flex items-center gap-2">
             {/* Mobile menu trigger */}
@@ -263,7 +263,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
 
           {/* Right side Actions */}
           <div className="flex items-center gap-2">
-            {/* Login Button with Dynamic Active Color */}
+            {/* Login Button */}
             <Button
               className={cn(
                 "text-sm font-medium h-9 px-4 transition-colors",
@@ -283,7 +283,7 @@ export const Navbar = React.forwardRef<HTMLElement, NavbarProps>(
               )}
             </Button>
 
-            {/* Register Button with Dynamic Active Color */}
+            {/* Register Button */}
             <Button
               className={cn(
                 "text-sm font-medium h-9 px-4 transition-colors",

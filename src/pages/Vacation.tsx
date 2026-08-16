@@ -1,506 +1,638 @@
-import React, { useState, useMemo } from "react";
-import {
-  Search,
-  Palmtree,
-  Clock,
-  CheckCircle2,
-  FileText,
-  UserCheck,
-  Filter,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
-  Download,
-  FileSpreadsheet
-} from "lucide-react";
-
-import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Briefcase,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  FileSpreadsheet,
+  FileText,
+  Plus,
+  RefreshCw,
+  Search,
+  UserCheck,
+  UserX,
+} from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import * as XLSX from "xlsx";
 
-// Employee Vacation Interface
-interface EmployeeVacation {
-  id: string;
+// ==========================================
+// TYPES & INTERFACES
+// ==========================================
+
+export interface RawEmployeeData {
+  _id: string;
+  employeeId: string;
   name: string;
-  role: string;
-  department: string;
-  avatarUrl?: string;
+  email: string;
+  jobTitle: string;
+  group: string;
+  status: "Active" | "ON_LEAVE" | "UPCOMING" | string;
   totalAllowance: number;
   usedDays: number;
   pendingDays: number;
   remainingDays: number;
-  status: "Active" | "On Leave" | "Upcoming";
-  nextLeaveDate?: string;
+  nextLeaveDate: string;
+  avatarUrl?: string;
 }
 
-// Generates sample mock data
-const generateMockData = (): EmployeeVacation[] => {
-  const departments = ["Engineering", "Design", "Operations", "HR", "Marketing"];
-  const statuses: ("Active" | "On Leave" | "Upcoming")[] = ["Active", "On Leave", "Upcoming"];
-  const roles = ["Developer", "Designer", "Manager", "Analyst", "Lead"];
+export interface EmployeeVacationRecord extends RawEmployeeData {
+  formattedStatus: "Active" | "On Leave" | "Upcoming";
+}
 
-  return Array.from({ length: 120 }, (_, i) => {
-    const idNum = String(i + 1).padStart(3, "0");
-    const total = 25;
-    const used = Math.floor(Math.random() * 15);
-    const pending = Math.floor(Math.random() * 4);
-    const remaining = total - used;
-    const status = statuses[i % 3];
+interface EmployeeVacationTablePageProps {
+  dataUrl?: string;
+  onAssignVacation?: () => void;
+}
 
-    return {
-      id: `EMP-${idNum}`,
-      name: `Employee ${i + 1}`,
-      role: `${roles[i % roles.length]}`,
-      department: departments[i % departments.length],
-      totalAllowance: total,
-      usedDays: used,
-      pendingDays: pending,
-      remainingDays: remaining,
-      status: status,
-      nextLeaveDate: status === "On Leave" ? "Currently On Leave" : `2026-09-${(i % 28) + 1}`,
-    };
-  });
+// ==========================================
+// MOCK FALLBACK DATA
+// ==========================================
+
+const MOCK_EMPLOYEE_DATA: RawEmployeeData[] = [
+  {
+    _id: "65f01a9b1c2d3e4f5a6b7c01",
+    employeeId: "EMP-1001",
+    name: "Aamir Al-Mansoor",
+    email: "aamir.mansoor@safari.com",
+    jobTitle: "Lead Full Stack Developer",
+    group: "Engineering",
+    status: "Active",
+    totalAllowance: 30,
+    usedDays: 8,
+    pendingDays: 2,
+    remainingDays: 20,
+    nextLeaveDate: "Sep 15, 2026",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+  },
+  {
+    _id: "65f01a9b1c2d3e4f5a6b7c02",
+    employeeId: "EMP-1002",
+    name: "Tariq Mahmood",
+    email: "tariq.m@safari.com",
+    jobTitle: "Administrative Officer",
+    group: "Administrative",
+    status: "ON_LEAVE",
+    totalAllowance: 30,
+    usedDays: 15,
+    pendingDays: 0,
+    remainingDays: 15,
+    nextLeaveDate: "Returns Aug 28, 2026",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150",
+  },
+  {
+    _id: "65f01a9b1c2d3e4f5a6b7c03",
+    employeeId: "EMP-1003",
+    name: "Sarah Jenkins",
+    email: "sarah.j@safari.com",
+    jobTitle: "UI/UX Designer",
+    group: "Design",
+    status: "UPCOMING",
+    totalAllowance: 25,
+    usedDays: 5,
+    pendingDays: 5,
+    remainingDays: 15,
+    nextLeaveDate: "Oct 01, 2026",
+    avatarUrl:
+      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150",
+  },
+  {
+    _id: "65f01a9b1c2d3e4f5a6b7c04",
+    employeeId: "EMP-1004",
+    name: "Khaled Nabil",
+    email: "khaled.n@safari.com",
+    jobTitle: "DevOps Engineer",
+    group: "Engineering",
+    status: "Active",
+    totalAllowance: 30,
+    usedDays: 12,
+    pendingDays: 0,
+    remainingDays: 18,
+    nextLeaveDate: "Dec 10, 2026",
+  },
+  {
+    _id: "65f01a9b1c2d3e4f5a6b7c05",
+    employeeId: "EMP-1005",
+    name: "Fatima Hassan",
+    email: "fatima.h@safari.com",
+    jobTitle: "HR Specialist",
+    group: "HR",
+    status: "Active",
+    totalAllowance: 30,
+    usedDays: 22,
+    pendingDays: 0,
+    remainingDays: 8,
+    nextLeaveDate: "None",
+  },
+  {
+    _id: "65f01a9b1c2d3e4f5a6b7c06",
+    employeeId: "EMP-1006",
+    name: "Youssef Al-Harbi",
+    email: "youssef.h@safari.com",
+    jobTitle: "Operations Manager",
+    group: "Operations",
+    status: "ON_LEAVE",
+    totalAllowance: 30,
+    usedDays: 18,
+    pendingDays: 0,
+    remainingDays: 12,
+    nextLeaveDate: "Returns Sep 02, 2026",
+  },
+];
+
+// DATA TRANSFORMER
+const transformEmployeeData = (
+  raw: RawEmployeeData,
+): EmployeeVacationRecord => {
+  let formattedStatus: "Active" | "On Leave" | "Upcoming" = "Active";
+  const upperStatus = raw.status?.toUpperCase() || "";
+
+  if (upperStatus === "ON_LEAVE" || upperStatus === "ON LEAVE") {
+    formattedStatus = "On Leave";
+  } else if (upperStatus === "UPCOMING") {
+    formattedStatus = "Upcoming";
+  }
+
+  return {
+    ...raw,
+    formattedStatus,
+  };
 };
 
-const allEmployees = generateMockData();
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
 
-export default function EmployeeVacationTablePage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
+export const EmployeeVacationTablePage: React.FC<
+  EmployeeVacationTablePageProps
+> = ({ dataUrl = "/api/em.json", onAssignVacation }) => {
+  const [allEmployees, setAllEmployees] = useState<EmployeeVacationRecord[]>(
+    [],
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [, setError] = useState<string | null>(null);
 
-  // Pagination States ("10" | "50" | "100" | "all")
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState<string>("10");
+  // Filters & Pagination State
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedGroup, setSelectedGroup] = useState<string>("All");
+  const [selectedStatus, setSelectedStatus] = useState<string>("All");
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 5;
 
-  // Filter Logic
+  // ------------------------------------------
+  // Data Fetching
+  // ------------------------------------------
+  const fetchEmployeeData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch(dataUrl);
+      if (!response.ok) {
+        throw new Error(`Failed to load data (Status: ${response.status})`);
+      }
+      const rawData: RawEmployeeData[] = await response.json();
+      setAllEmployees(rawData.map(transformEmployeeData));
+    } catch (err: any) {
+      console.warn("API load failed, using fallback dataset:", err.message);
+      setAllEmployees(MOCK_EMPLOYEE_DATA.map(transformEmployeeData));
+    } finally {
+      setIsLoading(false);
+    }
+  }, [dataUrl]);
+
+  useEffect(() => {
+    fetchEmployeeData();
+  }, [fetchEmployeeData]);
+
+  // Reset pagination on filter change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedGroup, selectedStatus]);
+
+  // ------------------------------------------
+  // Memoized Metrics & Department Options
+  // ------------------------------------------
+  const departments = useMemo(() => {
+    const groups = Array.from(new Set(allEmployees.map((e) => e.group)));
+    return ["All", ...groups.sort()];
+  }, [allEmployees]);
+
+  const metrics = useMemo(() => {
+    return {
+      total: allEmployees.length,
+      active: allEmployees.filter((e) => e.formattedStatus === "Active").length,
+      onLeave: allEmployees.filter((e) => e.formattedStatus === "On Leave")
+        .length,
+      upcoming: allEmployees.filter((e) => e.formattedStatus === "Upcoming")
+        .length,
+    };
+  }, [allEmployees]);
+
+  // ------------------------------------------
+  // Filtering & Pagination Logic
+  // ------------------------------------------
   const filteredEmployees = useMemo(() => {
     return allEmployees.filter((emp) => {
       const matchesSearch =
         emp.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        emp.id.toLowerCase().includes(searchTerm.toLowerCase());
+        emp.employeeId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        emp.jobTitle.toLowerCase().includes(searchTerm.toLowerCase());
 
-      const matchesDept =
-        departmentFilter === "all" ||
-        emp.department.toLowerCase() === departmentFilter.toLowerCase();
+      const matchesGroup =
+        selectedGroup === "All" || emp.group === selectedGroup;
+      const matchesStatus =
+        selectedStatus === "All" || emp.formattedStatus === selectedStatus;
 
-      return matchesSearch && matchesDept;
+      return matchesSearch && matchesGroup && matchesStatus;
     });
-  }, [searchTerm, departmentFilter]);
+  }, [allEmployees, searchTerm, selectedGroup, selectedStatus]);
 
-  // Numerical Page Size Helper
-  const numericPageSize = pageSize === "all" ? filteredEmployees.length || 1 : Number(pageSize);
+  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage) || 1;
 
-  // Pagination Calculations
-  const totalItems = filteredEmployees.length;
-  const totalPages = Math.ceil(totalItems / numericPageSize) || 1;
-
-  // Paginated Data Chunk
   const paginatedEmployees = useMemo(() => {
-    if (pageSize === "all") return filteredEmployees;
-    const start = (currentPage - 1) * numericPageSize;
-    return filteredEmployees.slice(start, start + numericPageSize);
-  }, [filteredEmployees, currentPage, pageSize, numericPageSize]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return filteredEmployees.slice(start, start + itemsPerPage);
+  }, [filteredEmployees, currentPage, itemsPerPage]);
 
-  // Export to Excel Function
-  const exportToExcel = () => {
-    const dataToExport = filteredEmployees.map((emp) => ({
-      "Employee ID": emp.id,
-      "Name": emp.name,
-      "Role": emp.role,
-      "Department": emp.department,
-      "Status": emp.status,
-      "Total Allowed": emp.totalAllowance,
+  // ------------------------------------------
+  // EXPORT TO EXCEL
+  // ------------------------------------------
+  const handleExportExcel = () => {
+    const exportData = filteredEmployees.map((emp) => ({
+      "Employee ID": emp.employeeId,
+      Name: emp.name,
+      Email: emp.email,
+      "Job Title": emp.jobTitle,
+      Department: emp.group,
+      Status: emp.formattedStatus,
+      "Total Allowance": emp.totalAllowance,
       "Used Days": emp.usedDays,
       "Pending Days": emp.pendingDays,
       "Remaining Days": emp.remainingDays,
-      "Next Leave / Note": emp.nextLeaveDate || "None",
+      "Next / Return Date": emp.nextLeaveDate,
     }));
 
-    const worksheet = XLSX.utils.json_to_sheet(dataToExport);
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
     const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Employee Vacations");
-    XLSX.writeFile(workbook, `employee_vacations_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Vacation Report");
+    XLSX.writeFile(workbook, `Employee_Vacation_Report_${Date.now()}.xlsx`);
   };
 
-  // Export to PDF Function
-  const exportToPDF = () => {
-    const doc = new jsPDF();
+  // ------------------------------------------
+  // EXPORT TO PDF
+  // ------------------------------------------
+  const handleExportPDF = () => {
+    const doc = new jsPDF("landscape");
 
     doc.setFontSize(16);
-    doc.text("Employee Vacations Directory", 14, 15);
+    doc.text("Employee Vacation Tracker Report", 14, 15);
     doc.setFontSize(10);
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
 
     const tableHeaders = [
-      ["ID", "Name", "Role", "Department", "Status", "Allowed", "Used", "Pending", "Remaining"]
+      [
+        "ID",
+        "Name",
+        "Job Title",
+        "Department",
+        "Status",
+        "Allowance",
+        "Used",
+        "Pending",
+        "Remaining",
+        "Next Leave Date",
+      ],
     ];
 
-    const tableData = filteredEmployees.map((emp) => [
-      emp.id,
+    const tableRows = filteredEmployees.map((emp) => [
+      emp.employeeId,
       emp.name,
-      emp.role,
-      emp.department,
-      emp.status,
-      `${emp.totalAllowance} Days`,
-      `${emp.usedDays} Days`,
-      emp.pendingDays > 0 ? `${emp.pendingDays} Days` : "-",
-      `${emp.remainingDays} Days`
+      emp.jobTitle,
+      emp.group,
+      emp.formattedStatus,
+      `${emp.totalAllowance} d`,
+      `${emp.usedDays} d`,
+      `${emp.pendingDays} d`,
+      `${emp.remainingDays} d`,
+      emp.nextLeaveDate,
     ]);
 
     autoTable(doc, {
       head: tableHeaders,
-      body: tableData,
+      body: tableRows,
       startY: 28,
       theme: "striped",
-      headStyles: { fillColor: [16, 185, 129] }, // Emerald header color
-      styles: { fontSize: 8, cellPadding: 3 }
+      headStyles: { fillColor: [79, 70, 229] }, // Indigo color
+      styles: { fontSize: 8 },
     });
 
-    doc.save(`employee_vacations_${new Date().toISOString().slice(0, 10)}.pdf`);
+    doc.save(`Employee_Vacation_Report_${Date.now()}.pdf`);
   };
 
-  // Reset to page 1 on filter/pageSize change
-  const handlePageSizeChange = (value: string) => {
-    setPageSize(value);
-    setCurrentPage(1);
-  };
-
-  const handleFilterChange = (value: string) => {
-    setDepartmentFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
-  const getStatusBadge = (status: EmployeeVacation["status"]) => {
+  // Helper for Status Badge Styling
+  const renderStatusBadge = (
+    status: EmployeeVacationRecord["formattedStatus"],
+  ) => {
     switch (status) {
       case "Active":
         return (
-          <Badge className="bg-emerald-500/15 text-emerald-600 hover:bg-emerald-500/25 border-emerald-500/20">
-            <UserCheck className="w-3 h-3 mr-1" /> Active
-          </Badge>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
+            <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-500"></span>
+            Active
+          </span>
         );
       case "On Leave":
         return (
-          <Badge className="bg-amber-500/15 text-amber-600 hover:bg-amber-500/25 border-amber-500/20">
-            <Palmtree className="w-3 h-3 mr-1" /> On Leave
-          </Badge>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
+            <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-amber-500"></span>
+            On Leave
+          </span>
         );
       case "Upcoming":
         return (
-          <Badge className="bg-blue-500/15 text-blue-600 hover:bg-blue-500/25 border-blue-500/20">
-            <Clock className="w-3 h-3 mr-1" /> Scheduled
-          </Badge>
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+            <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-blue-500"></span>
+            Upcoming
+          </span>
         );
+      default:
+        return null;
     }
   };
 
   return (
-    <div className="container mx-auto p-4 md:p-8 max-w-7xl space-y-8">
+    <div className="p-6 max-w-7xl mx-auto space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-900 dark:text-slate-100">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Employee Vacations</h1>
-          <p className="text-muted-foreground mt-1">
-            Overview of team leave balances, active leaves, and upcoming time off.
+          <h1 className="text-2xl font-bold tracking-tight">
+            Employee Vacation Tracker
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Monitor allowance balances, active leaves, and upcoming schedules.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Excel Export */}
-          <Button
-            variant="outline"
-            onClick={exportToExcel}
-            className="gap-2 border-emerald-600/30 hover:bg-emerald-500/10 text-emerald-700"
+        <div className="flex flex-wrap items-center gap-3">
+          <button
+            onClick={fetchEmployeeData}
+            className="p-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+            title="Refresh Data"
           >
-            <FileSpreadsheet className="w-4 h-4 text-emerald-600" /> Excel
-          </Button>
+            <RefreshCw
+              className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+            />
+          </button>
 
-          {/* PDF Export */}
-          <Button
-            variant="outline"
-            onClick={exportToPDF}
-            className="gap-2 border-rose-600/30 hover:bg-rose-500/10 text-rose-700"
+          {/* Export Buttons */}
+          <button
+            onClick={handleExportExcel}
+            className="flex items-center gap-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-3.5 py-2 rounded-lg text-sm font-medium transition"
           >
-            <Download className="w-4 h-4 text-rose-600" /> PDF
-          </Button>
+            <FileSpreadsheet className="w-4 h-4" /> Excel
+          </button>
 
-          {/* Assign Action */}
-          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+          <button
+            onClick={handleExportPDF}
+            className="flex items-center gap-2 border border-rose-600 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 px-3.5 py-2 rounded-lg text-sm font-medium transition"
+          >
+            <FileText className="w-4 h-4" /> PDF
+          </button>
+
+          <button
+            onClick={onAssignVacation}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+          >
             <Plus className="w-4 h-4" /> Assign Vacation
-          </Button>
+          </button>
         </div>
       </div>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-emerald-500/20 bg-emerald-500/5">
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Currently On Leave</CardTitle>
-            <Palmtree className="w-5 h-5 text-emerald-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-emerald-600">
-              {allEmployees.filter((e) => e.status === "On Leave").length} Employees
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Out of {allEmployees.length} total staff</p>
-          </CardContent>
-        </Card>
+      {/* Metrics Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
+            <Briefcase className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Total Employees
+            </p>
+            <p className="text-2xl font-semibold">{metrics.total}</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Approval</CardTitle>
-            <Clock className="w-5 h-5 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-amber-600">
-              {allEmployees.reduce((acc, curr) => acc + (curr.pendingDays > 0 ? 1 : 0), 0)} Requests
-            </div>
-            <p className="text-xs text-muted-foreground mt-1">Requires manager action</p>
-          </CardContent>
-        </Card>
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
+            <UserCheck className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Active On-Duty
+            </p>
+            <p className="text-2xl font-semibold">{metrics.active}</p>
+          </div>
+        </div>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Avg. Remaining Balance</CardTitle>
-            <CheckCircle2 className="w-5 h-5 text-slate-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">18.2 Days</div>
-            <p className="text-xs text-muted-foreground mt-1">Average per employee</p>
-          </CardContent>
-        </Card>
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg">
+            <UserX className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Currently On Leave
+            </p>
+            <p className="text-2xl font-semibold">{metrics.onLeave}</p>
+          </div>
+        </div>
+
+        <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+          <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
+            <Clock className="w-6 h-6" />
+          </div>
+          <div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+              Upcoming Leave
+            </p>
+            <p className="text-2xl font-semibold">{metrics.upcoming}</p>
+          </div>
+        </div>
       </div>
 
-      {/* Main Table Card */}
-      <Card>
-        <CardHeader className="gap-4">
-          <div>
-            <CardTitle>Team Vacation Directory</CardTitle>
-            <CardDescription>Track leave balances and statuses across all departments</CardDescription>
-          </div>
+      {/* Filter Bar */}
+      <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-center">
+        <div className="relative w-full md:w-80">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search by name, ID, or title..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
 
-          {/* Search & Filter Tools */}
-          <div className="flex flex-col sm:flex-row gap-4 items-center justify-between pt-2">
-            <div className="relative w-full sm:w-80">
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search employee, ID, or role..."
-                value={searchTerm}
-                onChange={handleSearchChange}
-                className="pl-9"
-              />
-            </div>
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <select
+            value={selectedGroup}
+            onChange={(e) => setSelectedGroup(e.target.value)}
+            className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            {departments.map((dept) => (
+              <option key={dept} value={dept}>
+                Department: {dept}
+              </option>
+            ))}
+          </select>
 
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <Filter className="w-4 h-4 text-muted-foreground" />
-              <Select value={departmentFilter} onValueChange={handleFilterChange}>
-                <SelectTrigger className="w-full sm:w-[180px]">
-                  <SelectValue placeholder="Department" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Departments</SelectItem>
-                  <SelectItem value="engineering">Engineering</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="operations">Operations</SelectItem>
-                  <SelectItem value="hr">HR</SelectItem>
-                  <SelectItem value="marketing">Marketing</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </CardHeader>
+          <select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+            className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          >
+            <option value="All">Status: All</option>
+            <option value="Active">Status: Active</option>
+            <option value="On Leave">Status: On Leave</option>
+            <option value="Upcoming">Status: Upcoming</option>
+          </select>
+        </div>
+      </div>
 
-        <CardContent>
-          {paginatedEmployees.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">
-              <FileText className="w-12 h-12 mx-auto mb-3 opacity-40" />
-              <p>No matching employee vacation records found.</p>
-            </div>
-          ) : (
-            <div className="relative overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="text-xs uppercase bg-muted/50 text-muted-foreground border-b">
-                  <tr>
-                    <th className="px-4 py-3">Employee</th>
-                    <th className="px-4 py-3">Status</th>
-                    <th className="px-4 py-3 text-center">Total Allowed</th>
-                    <th className="px-4 py-3 text-center">Used</th>
-                    <th className="px-4 py-3 text-center">Pending</th>
-                    <th className="px-4 py-3 text-center">Remaining</th>
-                    <th className="px-4 py-3">Next Leave / Note</th>
+      {/* Main Table */}
+      <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-slate-100/75 dark:bg-slate-700/50 text-slate-600 dark:text-slate-300 font-semibold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th className="py-3.5 px-4">Employee</th>
+                <th className="py-3.5 px-4">Department</th>
+                <th className="py-3.5 px-4">Status</th>
+                <th className="py-3.5 px-4 text-center">Allowance</th>
+                <th className="py-3.5 px-4 text-center">Used</th>
+                <th className="py-3.5 px-4 text-center">Pending</th>
+                <th className="py-3.5 px-4 text-center">Remaining</th>
+                <th className="py-3.5 px-4">Next / Return Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                    <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
+                    Loading employee vacation records...
+                  </td>
+                </tr>
+              ) : paginatedEmployees.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-500">
+                    No employee records match your selected criteria.
+                  </td>
+                </tr>
+              ) : (
+                paginatedEmployees.map((employee) => (
+                  <tr
+                    key={employee._id}
+                    className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
+                  >
+                    <td className="py-3.5 px-4">
+                      <div className="flex items-center gap-3">
+                        {employee.avatarUrl ? (
+                          <img
+                            src={employee.avatarUrl}
+                            alt={employee.name}
+                            className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700"
+                          />
+                        ) : (
+                          <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-xs">
+                            {employee.name.slice(0, 2).toUpperCase()}
+                          </div>
+                        )}
+                        <div>
+                          <div className="font-semibold text-slate-900 dark:text-slate-100">
+                            {employee.name}
+                          </div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">
+                            {employee.employeeId} • {employee.jobTitle}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
+                      {employee.group}
+                    </td>
+                    <td className="py-3.5 px-4">
+                      {renderStatusBadge(employee.formattedStatus)}
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-medium">
+                      {employee.totalAllowance} d
+                    </td>
+                    <td className="py-3.5 px-4 text-center text-amber-600 dark:text-amber-400 font-medium">
+                      {employee.usedDays} d
+                    </td>
+                    <td className="py-3.5 px-4 text-center text-blue-600 dark:text-blue-400 font-medium">
+                      {employee.pendingDays} d
+                    </td>
+                    <td className="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+                      {employee.remainingDays} d
+                    </td>
+                    <td className="py-3.5 px-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+                      {employee.nextLeaveDate}
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {paginatedEmployees.map((emp) => {
-                    const remainingPct = (emp.remainingDays / emp.totalAllowance) * 100;
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-                    return (
-                      <tr key={emp.id} className="hover:bg-muted/30 transition-colors">
-                        {/* Employee Details */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <div className="flex items-center gap-3">
-                            <Avatar className="h-9 w-9">
-                              <AvatarImage src={emp.avatarUrl} alt={emp.name} />
-                              <AvatarFallback className="bg-emerald-600 text-white font-semibold text-xs">
-                                {emp.name
-                                  .split(" ")
-                                  .map((n) => n[0])
-                                  .join("")}
-                              </AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <div className="font-semibold text-foreground flex items-center gap-2">
-                                {emp.name}
-                                <span className="text-[10px] text-muted-foreground font-mono">
-                                  ({emp.id})
-                                </span>
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {emp.role} • <span className="font-medium text-slate-500">{emp.department}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Status */}
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          {getStatusBadge(emp.status)}
-                        </td>
-
-                        {/* Total Allowed */}
-                        <td className="px-4 py-4 text-center font-medium">
-                          {emp.totalAllowance} Days
-                        </td>
-
-                        {/* Used */}
-                        <td className="px-4 py-4 text-center font-medium text-slate-600">
-                          {emp.usedDays} Days
-                        </td>
-
-                        {/* Pending */}
-                        <td className="px-4 py-4 text-center font-medium">
-                          {emp.pendingDays > 0 ? (
-                            <span className="text-amber-600 font-semibold">{emp.pendingDays} Days</span>
-                          ) : (
-                            <span className="text-muted-foreground">-</span>
-                          )}
-                        </td>
-
-                        {/* Remaining & Custom Bar */}
-                        <td className="px-4 py-4 text-center">
-                          <div className="inline-flex flex-col items-center">
-                            <span className="font-bold text-emerald-600">{emp.remainingDays} Days</span>
-                            <div className="w-16 bg-slate-200 h-1.5 rounded-full overflow-hidden mt-1">
-                              <div
-                                className="bg-emerald-600 h-full rounded-full"
-                                style={{ width: `${remainingPct}%` }}
-                              />
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Next Leave Date */}
-                        <td className="px-4 py-4 whitespace-nowrap text-xs text-muted-foreground">
-                          {emp.nextLeaveDate || "None"}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-
-          {/* Pagination Controls Section */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-4 mt-4 border-t border-border">
-            {/* Rows Per Page Dropdown & Record Counter */}
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">Rows per page</span>
-                <Select value={pageSize} onValueChange={handlePageSizeChange}>
-                  <SelectTrigger className="h-8 w-[80px]">
-                    <SelectValue placeholder={pageSize} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="10">10</SelectItem>
-                    <SelectItem value="50">50</SelectItem>
-                    <SelectItem value="100">100</SelectItem>
-                    <SelectItem value="all">ALL</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <span className="text-xs text-muted-foreground">
-                Showing {totalItems > 0 ? (pageSize === "all" ? 1 : (currentPage - 1) * numericPageSize + 1) : 0} to{" "}
-                {pageSize === "all" ? totalItems : Math.min(currentPage * numericPageSize, totalItems)} of {totalItems} entries
-              </span>
-            </div>
-
-            {/* Page Controls */}
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground mr-2">
-                Page {currentPage} of {totalPages}
-              </span>
-
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setCurrentPage(1)}
-                disabled={currentPage === 1 || pageSize === "all"}
-              >
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                disabled={currentPage === 1 || pageSize === "all"}
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                disabled={currentPage === totalPages || pageSize === "all"}
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="outline"
-                size="icon"
-                className="h-8 w-8"
-                onClick={() => setCurrentPage(totalPages)}
-                disabled={currentPage === totalPages || pageSize === "all"}
-              >
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
+        {/* Pagination Footer */}
+        <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-slate-400">
+          <div>
+            Showing{" "}
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {filteredEmployees.length === 0
+                ? 0
+                : (currentPage - 1) * itemsPerPage + 1}
+            </span>{" "}
+            to{" "}
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {Math.min(currentPage * itemsPerPage, filteredEmployees.length)}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {filteredEmployees.length}
+            </span>{" "}
+            records
           </div>
-        </CardContent>
-      </Card>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <span className="font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="p-1.5 rounded-lg border border-slate-300 dark:border-slate-700 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-slate-700 transition"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
-}
+};
+
+export default EmployeeVacationTablePage;

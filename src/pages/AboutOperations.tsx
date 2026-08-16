@@ -1,35 +1,45 @@
-import { useState } from "react";
 import {
-  Users,
-  TreePine,
-  ShieldCheck,
-  Building2,
-  Phone,
-  Mail,
-  ChevronRight,
-  Sparkles,
   Award,
-  Layers,
-
+  Building2,
+  CheckCircle2,
+  ChevronRight,
   Clock,
   Eye,
-  CheckCircle2,
+  Layers,
+  Mail,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  TreePine,
+  Users,
 } from "lucide-react";
+import { useState } from "react";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 // Role & Hierarchy Types
-type DivisionType = "Executive" | "Operations" | "Maintenance" | "Design & Build" | "Safety & Quality";
+type DivisionType =
+  | "Executive"
+  | "Operations"
+  | "Maintenance"
+  | "Design & Build"
+  | "Safety & Quality";
 
 interface OrganizationalRole {
   id: string;
@@ -152,7 +162,9 @@ const orgHierarchyData: OrganizationalRole[] = [
 ];
 
 export default function AboutOperations() {
-  const [selectedRole, setSelectedRole] = useState<OrganizationalRole | null>(null);
+  const [selectedRole, setSelectedRole] = useState<OrganizationalRole | null>(
+    null,
+  );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
   const handleOpenDetail = (role: OrganizationalRole) => {
@@ -164,17 +176,41 @@ export default function AboutOperations() {
   const getDepartmentBadge = (type: DivisionType) => {
     switch (type) {
       case "Executive":
-        return <Badge className="bg-purple-500/15 text-purple-600 border-purple-500/20">Executive</Badge>;
+        return (
+          <Badge className="bg-purple-500/15 text-purple-600 border-purple-500/20">
+            Executive
+          </Badge>
+        );
       case "Operations":
-        return <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20">Operations</Badge>;
+        return (
+          <Badge className="bg-emerald-500/15 text-emerald-600 border-emerald-500/20">
+            Operations
+          </Badge>
+        );
       case "Maintenance":
-        return <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/20">Grounds & Lawn</Badge>;
+        return (
+          <Badge className="bg-blue-500/15 text-blue-600 border-blue-500/20">
+            Grounds & Lawn
+          </Badge>
+        );
       case "Design & Build":
-        return <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/20">Design & Build</Badge>;
+        return (
+          <Badge className="bg-amber-500/15 text-amber-600 border-amber-500/20">
+            Design & Build
+          </Badge>
+        );
       case "Safety & Quality":
-        return <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/20">HSE & Quality</Badge>;
+        return (
+          <Badge className="bg-rose-500/15 text-rose-600 border-rose-500/20">
+            HSE & Quality
+          </Badge>
+        );
       default:
-        return <Badge className="bg-slate-500/15 text-slate-600 border-slate-500/20">General</Badge>;
+        return (
+          <Badge className="bg-slate-500/15 text-slate-600 border-slate-500/20">
+            General
+          </Badge>
+        );
     }
   };
 
@@ -183,9 +219,12 @@ export default function AboutOperations() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">About Operations & Structure</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            About Operations & Structure
+          </h1>
           <p className="text-muted-foreground mt-1">
-            Safari Group Grounds & Landscaping management tree, functional hierarchy, and team roles.
+            Safari Group Grounds & Landscaping management tree, functional
+            hierarchy, and team roles.
           </p>
         </div>
 
@@ -200,7 +239,9 @@ export default function AboutOperations() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase">Total Workforce</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Total Workforce
+                </p>
                 <p className="text-2xl font-bold mt-1">120+ Active</p>
               </div>
               <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg">
@@ -214,7 +255,9 @@ export default function AboutOperations() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase">Ground Divisions</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Ground Divisions
+                </p>
                 <p className="text-2xl font-bold mt-1">5 Departments</p>
               </div>
               <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
@@ -228,7 +271,9 @@ export default function AboutOperations() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase">Quality Standards</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Quality Standards
+                </p>
                 <p className="text-2xl font-bold mt-1">ISO 14001 Compliant</p>
               </div>
               <div className="p-3 bg-amber-50 text-amber-600 rounded-lg">
@@ -242,7 +287,9 @@ export default function AboutOperations() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase">Primary Site Hub</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase">
+                  Primary Site Hub
+                </p>
                 <p className="text-2xl font-bold mt-1">Main Yard Base</p>
               </div>
               <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
@@ -261,19 +308,27 @@ export default function AboutOperations() {
             Operations Organizational Hierarchy
           </CardTitle>
           <CardDescription>
-            Visual map representing leadership flow, project reporting routes, and on-field execution channels.
+            Visual map representing leadership flow, project reporting routes,
+            and on-field execution channels.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="p-6 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 space-y-6">
-
             {/* Tier 1 - Top Leadership */}
             <div className="flex justify-center">
               <div className="w-full max-w-sm p-4 bg-white dark:bg-slate-950 rounded-lg border-2 border-emerald-600 shadow-md text-center space-y-1">
-                <Badge className="bg-emerald-600 text-white mb-1">Top Executive</Badge>
-                <h3 className="font-bold text-base">General Manager / Director</h3>
-                <p className="text-xs text-muted-foreground">Mahabub Alam (EMP-001)</p>
-                <p className="text-[11px] text-emerald-600 font-medium pt-1">Oversees Overall Group Strategy & EMS Systems</p>
+                <Badge className="bg-emerald-600 text-white mb-1">
+                  Top Executive
+                </Badge>
+                <h3 className="font-bold text-base">
+                  General Manager / Director
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Mahabub Alam (EMP-001)
+                </p>
+                <p className="text-[11px] text-emerald-600 font-medium pt-1">
+                  Oversees Overall Group Strategy & EMS Systems
+                </p>
               </div>
             </div>
 
@@ -284,16 +339,28 @@ export default function AboutOperations() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
               <div className="p-4 bg-white dark:bg-slate-950 rounded-lg border shadow-sm text-center space-y-1 relative">
                 {getDepartmentBadge("Operations")}
-                <h4 className="font-semibold text-sm mt-1">Operations Manager</h4>
-                <p className="text-xs text-muted-foreground">John Doe (EMP-002)</p>
-                <span className="text-[10px] text-muted-foreground block">Field Execution & Logistics</span>
+                <h4 className="font-semibold text-sm mt-1">
+                  Operations Manager
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  John Doe (EMP-002)
+                </p>
+                <span className="text-[10px] text-muted-foreground block">
+                  Field Execution & Logistics
+                </span>
               </div>
 
               <div className="p-4 bg-white dark:bg-slate-950 rounded-lg border shadow-sm text-center space-y-1">
                 {getDepartmentBadge("Design & Build")}
-                <h4 className="font-semibold text-sm mt-1">Landscape Architect & Design Lead</h4>
-                <p className="text-xs text-muted-foreground">Sarah Jenkins (EMP-005)</p>
-                <span className="text-[10px] text-muted-foreground block">3D Layouts & Engineering</span>
+                <h4 className="font-semibold text-sm mt-1">
+                  Landscape Architect & Design Lead
+                </h4>
+                <p className="text-xs text-muted-foreground">
+                  Sarah Jenkins (EMP-005)
+                </p>
+                <span className="text-[10px] text-muted-foreground block">
+                  3D Layouts & Engineering
+                </span>
               </div>
             </div>
 
@@ -304,23 +371,34 @@ export default function AboutOperations() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border text-center space-y-1">
                 {getDepartmentBadge("Maintenance")}
-                <h5 className="font-medium text-xs mt-1">Grounds & Lawn Supervisor</h5>
-                <p className="text-[11px] text-muted-foreground">Ahmed Al-Mansoor</p>
+                <h5 className="font-medium text-xs mt-1">
+                  Grounds & Lawn Supervisor
+                </h5>
+                <p className="text-[11px] text-muted-foreground">
+                  Ahmed Al-Mansoor
+                </p>
               </div>
 
               <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border text-center space-y-1">
                 {getDepartmentBadge("Safety & Quality")}
-                <h5 className="font-medium text-xs mt-1">HSE & Quality Inspector</h5>
-                <p className="text-[11px] text-muted-foreground">Tariq Hassan</p>
+                <h5 className="font-medium text-xs mt-1">
+                  HSE & Quality Inspector
+                </h5>
+                <p className="text-[11px] text-muted-foreground">
+                  Tariq Hassan
+                </p>
               </div>
 
               <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border text-center space-y-1">
                 {getDepartmentBadge("Operations")}
-                <h5 className="font-medium text-xs mt-1">Crew Leaders & Technicians</h5>
-                <p className="text-[11px] text-muted-foreground">15+ Field Team Leads</p>
+                <h5 className="font-medium text-xs mt-1">
+                  Crew Leaders & Technicians
+                </h5>
+                <p className="text-[11px] text-muted-foreground">
+                  15+ Field Team Leads
+                </p>
               </div>
             </div>
-
           </div>
         </CardContent>
       </Card>
@@ -328,9 +406,12 @@ export default function AboutOperations() {
       {/* Detailed Roles & Key Staff Directory Table */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Operations Roles & Key Personnel</CardTitle>
+          <CardTitle className="text-xl">
+            Operations Roles & Key Personnel
+          </CardTitle>
           <CardDescription>
-            Detailed overview of key lead positions, contact points, and operational responsibilities.
+            Detailed overview of key lead positions, contact points, and
+            operational responsibilities.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -348,7 +429,10 @@ export default function AboutOperations() {
               </thead>
               <tbody className="divide-y">
                 {orgHierarchyData.map((item) => (
-                  <tr key={item.id} className="hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={item.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
                     <td className="px-4 py-4 font-medium text-foreground">
                       <div className="flex items-center gap-2">
                         <TreePine className="w-4 h-4 text-emerald-600 shrink-0" />
@@ -364,7 +448,9 @@ export default function AboutOperations() {
                     </td>
 
                     <td className="px-4 py-4">
-                      <div className="font-semibold text-foreground">{item.employeeName}</div>
+                      <div className="font-semibold text-foreground">
+                        {item.employeeName}
+                      </div>
                       <span className="text-xs text-muted-foreground font-mono">
                         {item.employeeId}
                       </span>
@@ -377,7 +463,9 @@ export default function AboutOperations() {
                           {item.reportsTo}
                         </span>
                       ) : (
-                        <span className="italic text-emerald-700 font-medium">Head of Organization</span>
+                        <span className="italic text-emerald-700 font-medium">
+                          Head of Organization
+                        </span>
                       )}
                     </td>
 
@@ -420,12 +508,18 @@ export default function AboutOperations() {
             <div className="space-y-4 py-2">
               <div className="p-4 bg-muted/40 rounded-lg border space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-xs font-mono text-muted-foreground">{selectedRole.id}</span>
+                  <span className="text-xs font-mono text-muted-foreground">
+                    {selectedRole.id}
+                  </span>
                   {getDepartmentBadge(selectedRole.department)}
                 </div>
                 <h3 className="font-bold text-lg">{selectedRole.roleTitle}</h3>
                 <p className="text-sm text-muted-foreground">
-                  Assigned Lead: <strong className="text-foreground">{selectedRole.employeeName}</strong> ({selectedRole.employeeId})
+                  Assigned Lead:{" "}
+                  <strong className="text-foreground">
+                    {selectedRole.employeeName}
+                  </strong>{" "}
+                  ({selectedRole.employeeId})
                 </p>
               </div>
 
@@ -433,32 +527,49 @@ export default function AboutOperations() {
                 <div className="flex items-center gap-2">
                   <Clock className="w-4 h-4 text-slate-400" />
                   <div>
-                    <span className="text-muted-foreground block text-xs">Required Experience</span>
-                    <span className="font-medium">{selectedRole.experience}</span>
+                    <span className="text-muted-foreground block text-xs">
+                      Required Experience
+                    </span>
+                    <span className="font-medium">
+                      {selectedRole.experience}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Users className="w-4 h-4 text-slate-400" />
                   <div>
-                    <span className="text-muted-foreground block text-xs">Subordinate Staff</span>
-                    <span className="font-medium">{selectedRole.headcount} Direct/Indirect</span>
+                    <span className="text-muted-foreground block text-xs">
+                      Subordinate Staff
+                    </span>
+                    <span className="font-medium">
+                      {selectedRole.headcount} Direct/Indirect
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Phone className="w-4 h-4 text-slate-400" />
                   <div>
-                    <span className="text-muted-foreground block text-xs">Direct Phone</span>
-                    <span className="font-mono text-xs font-medium">{selectedRole.phone}</span>
+                    <span className="text-muted-foreground block text-xs">
+                      Direct Phone
+                    </span>
+                    <span className="font-mono text-xs font-medium">
+                      {selectedRole.phone}
+                    </span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2">
                   <Mail className="w-4 h-4 text-slate-400" />
                   <div>
-                    <span className="text-muted-foreground block text-xs">Official Email</span>
-                    <span className="font-mono text-xs font-medium truncate max-w-[140px] block" title={selectedRole.email}>
+                    <span className="text-muted-foreground block text-xs">
+                      Official Email
+                    </span>
+                    <span
+                      className="font-mono text-xs font-medium truncate max-w-[140px] block"
+                      title={selectedRole.email}
+                    >
                       {selectedRole.email}
                     </span>
                   </div>
@@ -471,7 +582,10 @@ export default function AboutOperations() {
                 </h4>
                 <ul className="space-y-2 text-xs">
                   {selectedRole.responsibilities.map((resp, idx) => (
-                    <li key={idx} className="flex items-start gap-2 text-slate-700 dark:text-slate-300">
+                    <li
+                      key={idx}
+                      className="flex items-start gap-2 text-slate-700 dark:text-slate-300"
+                    >
                       <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
                       <span>{resp}</span>
                     </li>
