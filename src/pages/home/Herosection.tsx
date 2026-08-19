@@ -1,4 +1,3 @@
-import bg from "@/assets/imgs/bg.png";
 import Autoplay from "embla-carousel-autoplay";
 import useEmblaCarousel from "embla-carousel-react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -8,7 +7,7 @@ const carouselImages = [
   "https://pbs.twimg.com/media/GMSGUTUX0AAHqC7?format=jpg&name=medium",
   "https://kfia.sa/-/media/Project/Daco-Digital-Channels/KFIA/Driving-Directions-Banner.jpg?h=418&iar=0&w=1120&hash=934B8B07F45C7313C4E84754B4E88ECA",
   // "https://i.ytimg.com/vi/a6L9xA-WPag/maxresdefault.jpg",
-  bg,
+  // bg,
   "https://i.ytimg.com/vi/a6L9xA-WPag/maxresdefault.jpg",
   "https://mahabub2030.github.io/KFIAPROJICET/img/Nabatat_BG.jpg",
   "https://alwofod.sa/wp-content/uploads/2024/02/Receiving-passengers.jpg",
