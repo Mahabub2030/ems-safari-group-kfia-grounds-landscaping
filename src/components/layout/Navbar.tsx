@@ -83,7 +83,7 @@ const defaultNavigationLinks: NavbarNavLink[] = [
   { href: "/Expiration", label: "Expiration" },
   { href: "/Dashboard", label: "Dashboard" },
   { href: "/Vacation", label: "Vacation" },
-  { href: "/Documents", label: "Documents" },
+  { href: "/EmployeeDocuments", label: "Documents" },
   { href: "/AboutOperations", label: "AboutOperations" },
 ];
 

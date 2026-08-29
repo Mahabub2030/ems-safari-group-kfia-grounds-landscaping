@@ -9,7 +9,8 @@ import AboutOperations from "@/pages/AboutOperations";
 import Login from "@/pages/Authentication/Login";
 import Register from "@/pages/Authentication/Register";
 import Dashboard from "@/pages/Dashboard/Dashboard";
-import Documents from "@/pages/Documents";
+
+import EmployeeDocuments from "@/pages/Documents/EmployeeDocuments";
 import Expiration from "@/pages/Expiration";
 import Vacation from "@/pages/Vacation";
 
@@ -35,8 +36,8 @@ export const router = createBrowserRouter([
         Component: Expiration,
       },
       {
-        path: "Documents",
-        Component: Documents,
+        path: "EmployeeDocuments",
+        Component: EmployeeDocuments,
       },
       {
         path: "AboutOperations",
