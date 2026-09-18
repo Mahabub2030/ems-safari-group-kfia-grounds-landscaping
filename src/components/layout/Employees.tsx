@@ -11,6 +11,7 @@ import {
  SelectTrigger,
  SelectValue,
 } from "@/components/ui/select";
+import employeesJson from "@/data/employees.json";
 import { useGetAllEmployeesQuery } from "@/redux/features/employees/employees.api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -23,14 +24,10 @@ import * as XLSX from "xlsx";
 /*  Types                                                                      */
 /* -------------------------------------------------------------------------- */
 
-// Import this from your own types file instead if you already export it:
+// Import these from your own types file instead if you already export them:
 // import type { IEmployee, EMPLOYEE_STATUS } from "@/types/employee.type";
 
-export type EMPLOYEE_STATUS =
- | "ACTIVE"
- | "INACTIVE"
- | "ON_LEAVE"
- | "TERMINATED";
+export type EMPLOYEE_STATUS = "ACTIVE" | "INACTIVE" | "ON_LEAVE" | "TERMINATED";
 
 export interface IEmployee {
  _id: string;
@@ -38,7 +35,7 @@ export interface IEmployee {
  jobTitle: string;
  idNumber: string;
  employeeId: string | number;
- dacoId?: string;
+ dacoId?: string | null;
  group: string;
  joiningDate: Date | string;
  nationality: string;
@@ -47,13 +44,48 @@ export interface IEmployee {
  email?: string;
  phoneNumber?: string;
  gender?: "male" | "female";
- workLocation?: string;
+ workLocation?: string | null;
  images?: string[];
- remark: string;
+ remark?: string | null;
+}
+
+interface IMeta {
+ page: number;
+ limit: number;
+ total: number;
+ totalPage: number;
+}
+
+interface IEmployeesResponse {
+ data: IEmployee[];
+ meta?: IMeta;
 }
 
 /* -------------------------------------------------------------------------- */
-/*  Static config (outside the component - it never changes)                    */
+/*  Data source                                                                */
+/* -------------------------------------------------------------------------- */
+
+// true  = read from src/data/employees.json (no backend needed)
+// false = read from the API (useGetAllEmployeesQuery)
+const USE_MOCK = true;
+
+const MOCK_RESPONSE: IEmployeesResponse = {
+ data: employeesJson as unknown as IEmployee[],
+ meta: {
+  page: 1,
+  limit: employeesJson.length,
+  total: employeesJson.length,
+  totalPage: 1,
+ },
+};
+
+// If your backend paginates (usually 10 per page), ask for everything.
+// Change the param name to match your API (limit, pageSize, per_page...).
+// If the hook takes no arguments, set this to undefined.
+const FETCH_ARGS: { limit: number } | undefined = { limit: 1000 };
+
+/* -------------------------------------------------------------------------- */
+/*  Static config                                                              */
 /* -------------------------------------------------------------------------- */
 
 const statusBadge: Record<string, string> = {
@@ -78,7 +110,7 @@ const statusFilterOptions: FilterOption[] = [
 /*  Helpers                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const formatDate = (date: Date | string | undefined) => {
+const formatDate = (date: Date | string | undefined | null) => {
  if (!date) return "—";
  const d = new Date(date);
  if (Number.isNaN(d.getTime())) return "—";
@@ -86,6 +118,7 @@ const formatDate = (date: Date | string | undefined) => {
   day: "2-digit",
   month: "short",
   year: "numeric",
+  timeZone: "UTC", // dates are stored as UTC midnight; avoids off-by-one days
  });
 };
 
@@ -98,28 +131,66 @@ const initials = (name: string) =>
   .join("")
   .toUpperCase();
 
+/** Case/space-insensitive key so "labor" and "Labor" are treated as the same value. */
+const norm = (s?: string | null) => (s ?? "").trim().toLowerCase();
+
+/** Fixes known typos in remarks for display, search and export. */
+const cleanRemark = (remark?: string | null) => {
+ const r = (remark ?? "").trim();
+ if (!r) return "";
+ if (norm(r) === "complted") return "Completed";
+ return r;
+};
+
+/** Unique, case-insensitive dropdown options. Keeps the first spelling found. */
+const buildOptions = (values: (string | null | undefined)[]) => {
+ const map = new Map<string, string>();
+ values.forEach((v) => {
+  const label = (v ?? "").trim();
+  if (label && !map.has(norm(label))) map.set(norm(label), label);
+ });
+ return [...map.entries()]
+  .map(([value, label]) => ({ value, label }))
+  .sort((a, b) => a.label.localeCompare(b.label));
+};
+
+/** Accepts either `{ data: [...] }` or a bare `[...]` array. */
+const extractEmployees = (payload: unknown): IEmployee[] => {
+ if (Array.isArray(payload)) return payload as IEmployee[];
+ const data = (payload as IEmployeesResponse | undefined)?.data;
+ return Array.isArray(data) ? data : [];
+};
+
 /* -------------------------------------------------------------------------- */
 /*  Page                                                                       */
 /* -------------------------------------------------------------------------- */
 
 export default function Employees() {
- // Confirmed API shape:
+ // API shape:
  // { statusCode, success, message, meta: { page, limit, total, totalPage }, data: IEmployee[] }
- const { data: response, isLoading, isError } = useGetAllEmployeesQuery(
-  undefined,
- ) as {
-  data?: {
-   data: IEmployee[];
-   meta?: { page: number; limit: number; total: number; totalPage: number };
-  };
+ const {
+  data: apiResponse,
+  isLoading: apiLoading,
+  isError: apiError,
+ } = useGetAllEmployeesQuery(FETCH_ARGS as never, { skip: USE_MOCK }) as {
+  data?: IEmployeesResponse | IEmployee[];
   isLoading: boolean;
   isError: boolean;
  };
 
- const employees: IEmployee[] = response?.data ?? [];
- // Not used yet, but here if you want to switch from client-side filtering
- // to real server-side pagination later (see note below).
- const serverMeta = response?.meta;
+ const response = USE_MOCK ? MOCK_RESPONSE : apiResponse;
+ const isLoading = USE_MOCK ? false : apiLoading;
+ const isError = USE_MOCK ? false : apiError;
+
+ const employees: IEmployee[] = useMemo(
+  () => extractEmployees(response),
+  [response],
+ );
+
+ const serverMeta = Array.isArray(response) ? undefined : response?.meta;
+ // True when the server has more rows than we received (server-side pagination).
+ const isPartial =
+  !!serverMeta && serverMeta.total > employees.length && employees.length > 0;
 
  const [search, setSearch] = useState("");
  const [statusFilter, setStatusFilter] = useState("all");
@@ -132,18 +203,21 @@ export default function Employees() {
  /* ----- dropdown options built from the data ----- */
 
  const groupOptions = useMemo(
-  () => [...new Set(employees.map((e) => e.group).filter(Boolean))].sort(),
+  () => buildOptions(employees.map((e) => e.group)),
   [employees],
  );
-
  const positionOptions = useMemo(
-  () => [...new Set(employees.map((e) => e.jobTitle).filter(Boolean))].sort(),
+  () => buildOptions(employees.map((e) => e.jobTitle)),
+  [employees],
+ );
+ const companyOptions = useMemo(
+  () => buildOptions(employees.map((e) => e.companyName)),
   [employees],
  );
 
- const companyOptions = useMemo(
-  () =>
-   [...new Set(employees.map((e) => e.companyName).filter(Boolean))].sort(),
+ // Only show the work location column when at least one record has a value.
+ const hasWorkLocation = useMemo(
+  () => employees.some((e) => !!e.workLocation),
   [employees],
  );
 
@@ -156,7 +230,7 @@ export default function Employees() {
    const haystack = [
     e.name,
     e.email,
-    String(e.employeeId),
+    String(e.employeeId ?? ""),
     e.idNumber,
     e.dacoId,
     e.jobTitle,
@@ -165,6 +239,7 @@ export default function Employees() {
     e.nationality,
     e.workLocation,
     e.phoneNumber,
+    cleanRemark(e.remark),
    ]
     .filter(Boolean)
     .join(" ")
@@ -173,9 +248,9 @@ export default function Employees() {
    return (
     (!q || haystack.includes(q)) &&
     (statusFilter === "all" || e.status === statusFilter) &&
-    (groupFilter === "all" || e.group === groupFilter) &&
-    (positionFilter === "all" || e.jobTitle === positionFilter) &&
-    (companyFilter === "all" || e.companyName === companyFilter)
+    (groupFilter === "all" || norm(e.group) === groupFilter) &&
+    (positionFilter === "all" || norm(e.jobTitle) === positionFilter) &&
+    (companyFilter === "all" || norm(e.companyName) === companyFilter)
    );
   });
  }, [
@@ -218,7 +293,7 @@ export default function Employees() {
    Nationality: e.nationality,
    "Work location": e.workLocation ?? "",
    Status: e.status,
-   Remark: e.remark,
+   Remark: cleanRemark(e.remark),
    "Joining date": formatDate(e.joiningDate),
   }));
 
@@ -272,8 +347,8 @@ export default function Employees() {
     e.group,
     e.companyName,
     e.nationality,
-    e.status,
-    e.remark || "—",
+    e.status.replace(/_/g, " "),
+    cleanRemark(e.remark) || "—",
    ]),
    styles: { fontSize: 8, cellPadding: 2 },
    headStyles: { fillColor: [34, 34, 34] },
@@ -340,7 +415,7 @@ export default function Employees() {
    render: (e) => (
     <div className="flex items-center gap-1.5 min-w-[130px]">
      <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-     <span className="text-xs font-semibold bg-accent/50 px-2 py-0.5 rounded-md border border-accent">
+     <span className="text-xs font-semibold bg-accent/50 px-2 py-0.5 rounded-md border border-accent capitalize">
       {e.jobTitle}
      </span>
     </div>
@@ -350,9 +425,7 @@ export default function Employees() {
    key: "group",
    label: "Department",
    render: (e) => (
-    <span className="text-xs font-medium min-w-[120px] block">
-     {e.group}
-    </span>
+    <span className="text-xs font-medium min-w-[120px] block">{e.group}</span>
    ),
   },
   {
@@ -383,16 +456,20 @@ export default function Employees() {
     </span>
    ),
   },
-  {
-   key: "workLocation",
-   label: "Work location",
-   render: (e) => (
-    <div className="flex items-center gap-1.5 min-w-[110px]">
-     <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-     <span className="text-xs truncate">{e.workLocation || "—"}</span>
-    </div>
-   ),
-  },
+  ...(hasWorkLocation
+   ? [
+    {
+     key: "workLocation",
+     label: "Work location",
+     render: (e: IEmployee) => (
+      <div className="flex items-center gap-1.5 min-w-[110px]">
+       <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+       <span className="text-xs truncate">{e.workLocation || "—"}</span>
+      </div>
+     ),
+    } as Column<IEmployee>,
+   ]
+   : []),
   {
    key: "joiningDate",
    label: "Joined",
@@ -405,14 +482,17 @@ export default function Employees() {
   {
    key: "remark",
    label: "Remark",
-   render: (e) => (
-    <span
-     className="text-xs text-muted-foreground italic truncate max-w-[140px] block"
-     title={e.remark}
-    >
-     {e.remark || "—"}
-    </span>
-   ),
+   render: (e) => {
+    const remark = cleanRemark(e.remark);
+    return (
+     <span
+      className="text-xs text-muted-foreground italic truncate max-w-[140px] block"
+      title={remark}
+     >
+      {remark || "—"}
+     </span>
+    );
+   },
   },
   {
    key: "status",
@@ -422,7 +502,7 @@ export default function Employees() {
      className={`text-[11px] px-2 py-0.5 rounded-full border font-semibold inline-block whitespace-nowrap ${statusBadge[e.status] ?? statusBadge.INACTIVE
       }`}
     >
-     {e.status.replace("_", " ")}
+     {e.status.replace(/_/g, " ")}
     </span>
    ),
   },
@@ -459,16 +539,20 @@ export default function Employees() {
  return (
   <div className="space-y-4 p-4 md:p-6">
    <div>
-    <h1 className="text-2xl font-bold tracking-tight">
-     Employee directory
-    </h1>
+    <h1 className="text-2xl font-bold tracking-tight">Employee directory</h1>
     <p className="text-muted-foreground text-xs mt-0.5">
-     <span className="font-semibold text-foreground">
-      {filtered.length}
-     </span>{" "}
+     <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
      of {employees.length} employees
     </p>
    </div>
+
+   {isPartial && (
+    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-700 dark:text-amber-400">
+     Showing {employees.length} of {serverMeta?.total} employees. The server
+     is paginating, so filters and exports only cover the loaded rows. Raise
+     the limit in FETCH_ARGS to load everyone.
+    </div>
+   )}
 
    {/* Filter bar */}
    <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 border rounded-xl shadow-sm">
@@ -509,8 +593,8 @@ export default function Employees() {
       <SelectContent>
        <SelectItem value="all">All positions</SelectItem>
        {positionOptions.map((p) => (
-        <SelectItem key={p} value={p}>
-         {p}
+        <SelectItem key={p.value} value={p.value}>
+         {p.label}
         </SelectItem>
        ))}
       </SelectContent>
@@ -529,8 +613,8 @@ export default function Employees() {
       <SelectContent>
        <SelectItem value="all">All departments</SelectItem>
        {groupOptions.map((g) => (
-        <SelectItem key={g} value={g}>
-         {g}
+        <SelectItem key={g.value} value={g.value}>
+         {g.label}
         </SelectItem>
        ))}
       </SelectContent>
@@ -549,8 +633,8 @@ export default function Employees() {
       <SelectContent>
        <SelectItem value="all">All companies</SelectItem>
        {companyOptions.map((c) => (
-        <SelectItem key={c} value={c}>
-         {c}
+        <SelectItem key={c.value} value={c.value}>
+         {c.label}
         </SelectItem>
        ))}
       </SelectContent>
@@ -570,7 +654,7 @@ export default function Employees() {
        setSearch(v);
        resetPage();
       }}
-      searchPlaceholder="Search name, ID, iqama, position, department…"
+      searchPlaceholder="Search name, ID, iqama, position, department, remark…"
       filterValue={statusFilter}
       onFilterChange={(v) => {
        setStatusFilter(v);
