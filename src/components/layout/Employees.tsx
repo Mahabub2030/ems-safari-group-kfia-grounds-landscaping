@@ -68,7 +68,7 @@ interface IEmployeesResponse {
 
 // true  = read from src/data/employees.json (no backend needed)
 // false = read from the API (useGetAllEmployeesQuery)
-const USE_MOCK = false;
+const USE_MOCK = true;
 
 const MOCK_RESPONSE: IEmployeesResponse = {
  data: employeesJson as unknown as IEmployee[],
