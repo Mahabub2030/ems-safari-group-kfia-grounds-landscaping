@@ -15,10 +15,11 @@ import employeesJson from "@/data/employees.json";
 import { useGetAllEmployeesQuery } from "@/redux/features/employees/employees.api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Briefcase, Building2, Download, FileText, MapPin } from "lucide-react";
+import { Briefcase, Building2, Download, Edit, Eye, FileText, MapPin, MoreHorizontal, Power, Trash2Icon } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 /* -------------------------------------------------------------------------- */
 /*  Types                                                                      */
@@ -67,7 +68,7 @@ interface IEmployeesResponse {
 
 // true  = read from src/data/employees.json (no backend needed)
 // false = read from the API (useGetAllEmployeesQuery)
-const USE_MOCK = true;
+const USE_MOCK = false;
 
 const MOCK_RESPONSE: IEmployeesResponse = {
  data: employeesJson as unknown as IEmployee[],
@@ -199,6 +200,33 @@ export default function Employees() {
  const [companyFilter, setCompanyFilter] = useState("all");
  const [pageSize, setPageSize] = useState(10); // 0 = show all
  const [page, setPage] = useState(1);
+
+
+ /* ----- Action Handlers ----- */
+
+ const handleViewDetails = (employee: IEmployee) => {
+  toast.info(`Viewing details for ${employee.name}`);
+  // Open View Modal or Navigate to route
+ };
+
+ const handleEdit = (employee: IEmployee) => {
+  toast.info(`Editing employee ${employee.name}`);
+  // Open Edit Modal or Sheet Form
+ };
+
+ const handleToggleStatus = (employee: IEmployee) => {
+  const newStatus = employee.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
+  toast.success(`Updated status for ${employee.name} to ${newStatus}`);
+  // Trigger RTK Query update mutation here
+ };
+
+ const handleDelete = (employee: IEmployee) => {
+  if (confirm(`Are you sure you want to delete ${employee.name}?`)) {
+   toast.success(`Deleted ${employee.name}`);
+   // Trigger RTK Query delete mutation here
+  }
+ };
+
 
  /* ----- dropdown options built from the data ----- */
 
@@ -506,7 +534,48 @@ export default function Employees() {
     </span>
    ),
   },
+  /* ====================================================================== */
+  /*  ADDED: ACTION BUTTON COLUMN                                           */
+  /* ====================================================================== */
+  {
+   key: "actions",
+   label: "Actions",
+   render: (e) => (
+    <DropdownMenu>
+     <DropdownMenuTrigger asChild>
+      <Button variant="ghost" className="h-8 w-8 p-0">
+       <span className="sr-only">Open action menu</span>
+       <MoreHorizontal className="h-4 w-4" />
+      </Button>
+     </DropdownMenuTrigger>
+     <DropdownMenuContent align="end" className="w-[160px]">
+      <DropdownMenuLabel>Actions</DropdownMenuLabel>
+      <DropdownMenuItem onClick={() => handleViewDetails(e)}>
+       <Eye className="mr-2 h-4 w-4 text-muted-foreground" />
+       View Details
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => handleEdit(e)}>
+       <Edit className="mr-2 h-4 w-4 text-blue-500" />
+       Edit Profile
+      </DropdownMenuItem>
+      <DropdownMenuItem onClick={() => handleToggleStatus(e)}>
+       <Power className="mr-2 h-4 w-4 text-amber-500" />
+       Toggle Status
+      </DropdownMenuItem>
+      <DropdownMenuSeparator />
+      <DropdownMenuItem
+       onClick={() => handleDelete(e)}
+       className="text-destructive focus:text-destructive"
+      >
+       <Trash2Icon className="mr-2 h-4 w-4" />
+       Delete Record
+      </DropdownMenuItem>
+     </DropdownMenuContent>
+    </DropdownMenu>
+   ),
+  },
  ];
+
 
  /* ----- loading / error ----- */
 
