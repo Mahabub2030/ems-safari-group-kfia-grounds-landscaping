@@ -2700,8 +2700,8 @@
     "joiningDate": "2026-04-22T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Safari",
-    "status": "ACTIVE",
-    "remark": ""
+    "status": "INACTIVE",
+    "remark": "Left the company"
   },
   {
     "_id": "6a40b233a377d5283b7c44a172",
