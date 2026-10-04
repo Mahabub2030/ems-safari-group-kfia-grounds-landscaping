@@ -1,0 +1,32 @@
+[
+  {
+    "docId": "DOC-PASS-003",
+    "docName": "Reda_Abdelmaged_Passport.pdf",
+    "docType": "Passport",
+    "employeeName": "Reda Abdelmaged",
+    "employeeId": "EMP-67574",
+    "group": "Administrative / Management",
+    "passportNumber": "2503732816",
+    "issueDate": "2026-04-01",
+    "expiryDate": "2036-04-01",
+    "fileSize": "2.4 MB",
+    "fileFormat": "PDF",
+    "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+    "imgUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60",
+    "cvDoc": {
+      "docName": "Reda_Abdelmaged_CV.pdf",
+      "downloadUrl": "https://drive.google.com/file/d/1PCYeAD5UYAZdpb2t86tIcLEXB6EstwGp/view?usp=sharing",
+      "imgUrl": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&auto=format&fit=crop&q=60"
+    },
+    "jobOfferDoc": {
+      "docName": "Reda_Abdelmaged_Job_Offer.pdf",
+      "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "imgUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=500&auto=format&fit=crop&q=60"
+    },
+    "otherDoc": {
+      "docName": "Reda_Abdelmaged_Degree.pdf",
+      "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+      "imgUrl": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60"
+    }
+  }
+]

@@ -12,7 +12,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Egyptian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a2",
@@ -27,13 +28,14 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a3",
     "name": "Reda Abdelmaged",
-    "email": "reda.abdelmaged@example.com",
-    "phoneNumber": "+966 50 000 0003",
+    "email": "rdadybw445@gmail.com",
+    "phoneNumber": "0592993070",
     "jobTitle": "Engineer",
     "idNumber": "2503732816",
     "employeeId": "67574",
@@ -42,37 +44,40 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Egyptian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ON_LEAVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a4",
     "name": "Mohamed Elsayed",
-    "email": "mohamed.elsayed@example.com",
-    "phoneNumber": "+966 50 000 0004",
+    "email": "mansourever6@gmail.com",
+    "phoneNumber": "0501189281",
     "jobTitle": "Engineer",
     "idNumber": "2485302786",
     "employeeId": "67608",
-    "dacoId": null,
+    "dacoId": "DMM-011-6110",
     "group": "Administrative / Management",
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Egyptian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a5",
     "name": "Afrazier Nassal",
-    "email": "afrazier.nassal@example.com",
-    "phoneNumber": "+966 50 000 0005",
+    "email": "frasznassal@gmail.com",
+    "phoneNumber": "0563342608",
     "jobTitle": "Engineer",
     "idNumber": "2483842916",
     "employeeId": "68168",
-    "dacoId": null,
+    "dacoId": "DMM-011-8010",
     "group": "Administrative / Management",
     "joiningDate": "2000-01-07T00:00:00.000Z",
     "nationality": "Filipino",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a6",
@@ -82,12 +87,13 @@
     "jobTitle": "Engineer",
     "idNumber": "2489688859",
     "employeeId": "67620",
-    "dacoId": null,
+    "dacoId": "DMM-011-1799",
     "group": "Administrative / Management",
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Filipino",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a7",
@@ -97,12 +103,13 @@
     "jobTitle": "Administrator",
     "idNumber": "1092119575",
     "employeeId": "67524",
-    "dacoId": null,
+    "dacoId": "DMM-011-1798",
     "group": "Administrative / Management",
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a8",
@@ -117,7 +124,8 @@
     "joiningDate": "2026-06-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Safari",
-    "status": "ACTIVE"
+    "status": "INACTIVE",
+    "remark": "Company terminated 01-July-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a9",
@@ -132,7 +140,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Pakistani",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a10",
@@ -147,7 +156,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a11",
@@ -162,7 +172,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a12",
@@ -177,7 +188,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a13",
@@ -192,7 +204,8 @@
     "joiningDate": "2026-05-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Safari",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a14",
@@ -207,7 +220,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "INACTIVE",
+    "remark": "Daco rejected 01-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a15",
@@ -222,7 +236,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a16",
@@ -237,7 +252,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a17",
@@ -252,7 +268,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Filipino",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a18",
@@ -267,7 +284,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a19",
@@ -282,7 +300,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a20",
@@ -297,7 +316,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Egyptian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a21",
@@ -312,7 +332,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Indian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a22",
@@ -327,7 +348,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Pakistani",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a23",
@@ -342,7 +364,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Jordanian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a24",
@@ -357,7 +380,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a25",
@@ -372,7 +396,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Saudi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a26",
@@ -387,7 +412,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Indian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a27",
@@ -402,7 +428,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Indian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a28",
@@ -417,7 +444,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a29",
@@ -432,7 +460,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a30",
@@ -447,7 +476,8 @@
     "joiningDate": "2026-04-01T00:00:00.000Z",
     "nationality": "Indian",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a31",
@@ -462,7 +492,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE"
+    "status": "ACTIVE",
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a32",
@@ -2701,7 +2732,7 @@
     "nationality": "Bangladeshi",
     "companyName": "Safari",
     "status": "INACTIVE",
-    "remark": "Left the company"
+    "remark": "Left the company 15-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a172",
@@ -2860,8 +2891,8 @@
     "joiningDate": "2026-04-20T00:00:00.000Z",
     "nationality": "Pakistani",
     "companyName": "Safari",
-    "status": "ACTIVE",
-    "remark": ""
+    "status": "INACTIVE",
+    "remark": " left 08-Sep-2026 kafel make final exit"
   },
   {
     "_id": "6a40b233a377d5283b7c44a182",
@@ -2972,8 +3003,8 @@
     "joiningDate": "2026-04-22T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Safari",
-    "status": "ACTIVE",
-    "remark": ""
+    "status": "INACTIVE",
+    "remark": "15-Sep-2026 left the company"
   },
   {
     "_id": "6a40b233a377d5283b7c44a189",
@@ -3196,8 +3227,8 @@
     "joiningDate": "2026-05-01T00:00:00.000Z",
     "nationality": "Pakistani",
     "companyName": "Safari",
-    "status": "ACTIVE",
-    "remark": ""
+    "status": "INACTIVE",
+    "remark": "Left the company 15-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a203",

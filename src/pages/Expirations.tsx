@@ -28,11 +28,18 @@ import {
  Pencil,
  Plus,
  RefreshCw,
+ RotateCcw, // <<< CHANGED (1): new icon for "Reset to JSON" button
  ShieldAlert,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react"; // <<< CHANGED (2): added useEffect
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+
+// <<< CHANGED (3) START: import fake data from src/data/DocumentExpiry.json
+// Needs "resolveJsonModule": true in tsconfig.json.
+// If your alias "@" points to "src", this path is correct. Otherwise use "../data/DocumentExpiry.json".
+import expiryJson from "@/data/DocumentExpiry.json";
+// <<< CHANGED (3) END
 
 export interface MockDocumentExpiry {
  slNo: number;
@@ -53,9 +60,11 @@ export interface MockDocumentExpiry {
  medicalInsurance?: string;
 }
 
-const MOCK_EXPIRY_DATA: MockDocumentExpiry[] = [
-
-];
+// <<< CHANGED (4) START: typed seed data + storage key
+// If your JSON is wrapped like { "data": [...] }, change to: (expiryJson as any).data
+const SEED_DATA = expiryJson as MockDocumentExpiry[];
+const STORAGE_KEY = "expiryData";
+// <<< CHANGED (4) END
 
 // Helper function to calculate remaining days from current date
 const getDaysRemaining = (expiryDateString?: string) => {
@@ -115,12 +124,43 @@ const filterStatusOptions: FilterOption[] = [
 ];
 
 export default function Expiration() {
- const [data, setData] = useState<MockDocumentExpiry[]>(MOCK_EXPIRY_DATA);
+ // <<< CHANGED (5) START: load from localStorage; if nothing saved (or empty), fall back to the JSON file
+ // Before: returned [] when localStorage was empty, so the table was always blank.
+ const [data, setData] = useState<MockDocumentExpiry[]>(() => {
+  try {
+   const stored = localStorage.getItem(STORAGE_KEY);
+   if (stored) {
+    const parsed = JSON.parse(stored) as MockDocumentExpiry[];
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+   }
+  } catch {
+   // corrupted localStorage -> ignore and use JSON
+  }
+  return SEED_DATA;
+ });
+ // <<< CHANGED (5) END
+
+ // <<< CHANGED (6) START: persist every change (add / edit) to localStorage
+ // Before: data was never written back, so added/edited records were lost on refresh.
+ useEffect(() => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+ }, [data]);
+ // <<< CHANGED (6) END
+
+ // <<< CHANGED (7) START: reset table back to the JSON file data
+ const resetToJson = () => {
+  localStorage.removeItem(STORAGE_KEY);
+  setData(SEED_DATA);
+  setPage(2)
+  toast.success("Data reset from DocumentExpiry.json");
+ };
+ // <<< CHANGED (7) END
+
  const [search, setSearch] = useState("");
  const [groupFilter, setGroupFilter] = useState("all");
  const [expiryStatusFilter, setExpiryStatusFilter] = useState("all");
  const [pageSize, setPageSize] = useState<number>(10);
- const [page, setPage] = useState(1);
+ const [page, setPage] = useState(2);
  const [dialogOpen, setDialogOpen] = useState(false);
  const [editingRecord, setEditingRecord] = useState<MockDocumentExpiry | null>(
   null,
@@ -506,14 +546,10 @@ export default function Expiration() {
 
    {/* Main Table Wrapper */}
    <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
-    {/*
-          Horizontal scroll is enabled for wide columns.
-          Vertical scroll activates only when visible rows exceed 10 (max-h-[520px]).
-        */}
     <div
      className={`w-full overflow-x-auto ${paginated.length > 10
-       ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
-       : "overflow-y-visible"
+      ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
+      : "overflow-y-visible"
       }`}
     >
      <DataTable<MockDocumentExpiry>
@@ -540,6 +576,17 @@ export default function Expiration() {
       emptyMessage="No matching document expiration records found"
       actions={
        <div className="flex items-center gap-2">
+        {/* <<< CHANGED (8) START: new "Reset" button to reload JSON data */}
+        <Button
+         variant="outline"
+         size="sm"
+         onClick={resetToJson}
+         className="h-8 text-xs"
+         title="Reload data from DocumentExpiry.json"
+        >
+         <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
+        </Button>
+        {/* <<< CHANGED (8) END */}
         <Button
          variant="outline"
          size="sm"

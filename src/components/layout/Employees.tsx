@@ -15,7 +15,7 @@ import employeesJson from "@/data/employees.json";
 import { useGetAllEmployeesQuery } from "@/redux/features/employees/employees.api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { Briefcase, Building2, Download, Edit, Eye, FileText, MapPin, MoreHorizontal, Power, Trash2Icon } from "lucide-react";
+import { Briefcase, Building2, Download, Edit, Eye, FileText, MapPin, MoreHorizontal, Plane, Power, Trash2Icon, UserCheck, Users, UserX } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
@@ -249,6 +249,27 @@ export default function Employees() {
   [employees],
  );
 
+ /* ----- summary stats + card config ----- */
+ /* INACTIVE employees are NOT counted in "Total Employees" */
+ const stats = useMemo(() => {
+  const inactive = employees.filter((e) => e.status === "INACTIVE").length;
+  const onLeave = employees.filter((e) => e.status === "ON_LEAVE").length;
+  const active = employees.filter((e) => e.status === "ACTIVE").length;
+  return {
+   total: employees.length - inactive, // excludes inactive
+   active,
+   onLeave,
+   inactive,
+  };
+ }, [employees]);
+
+ const statCards = [
+  { label: "Total Employees", value: stats.total, hint: "Excluding inactive", icon: Users, color: "text-primary bg-primary/10 border-primary/20", filter: "all" },
+  { label: "Active", value: stats.active, hint: "Currently working", icon: UserCheck, color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20", filter: "ACTIVE" },
+  { label: "On Vacation", value: stats.onLeave, hint: "Currently on leave", icon: Plane, color: "text-amber-600 bg-amber-500/10 border-amber-500/20", filter: "ON_LEAVE" },
+  { label: "Inactive", value: stats.inactive, hint: "Not counted in total", icon: UserX, color: "text-slate-600 bg-slate-500/10 border-slate-500/20", filter: "INACTIVE" },
+ ];
+
  /* ----- filtering ----- */
 
  const filtered = useMemo(() => {
@@ -289,6 +310,19 @@ export default function Employees() {
   positionFilter,
   companyFilter,
  ]);
+
+ /* >>>>>>>>>> NEW: serial numbers (INACTIVE employees are skipped and show "--") <<<<<<<<<< */
+ // Numbers the whole filtered list (not just this page), so page 2 continues
+ // from where page 1 ended. Inactive employees get no number.
+ const serialMap = useMemo(() => {
+  const map = new Map<string, number>();
+  let n = 0;
+  filtered.forEach((e) => {
+   if (e.status !== "INACTIVE") map.set(e._id, ++n);
+  });
+  return map;
+ }, [filtered]);
+ /* >>>>>>>>>> END NEW <<<<<<<<<< */
 
  /* ----- pagination (slices `filtered`, not the raw list) ----- */
 
@@ -389,15 +423,20 @@ export default function Employees() {
  /* ----- columns ----- */
 
  const columns: Column<IEmployee>[] = [
+  /* >>>>>>>>>> CHANGED: "#" column shows "--" for INACTIVE employees <<<<<<<<<< */
   {
    key: "sr",
    label: "#",
-   render: (_row, i) => (
-    <span className="text-xs text-muted-foreground font-mono">
-     {pageSize === 0 ? i + 1 : (page - 1) * pageSize + i + 1}
-    </span>
-   ),
+   render: (e) => {
+    const sr = serialMap.get(e._id);
+    return (
+     <span className="text-xs text-muted-foreground font-mono">
+      {sr ?? "--"}
+     </span>
+    );
+   },
   },
+  /* >>>>>>>>>> END CHANGED <<<<<<<<<< */
   {
    key: "employeeId",
    label: "Emp ID / Iqama",
@@ -507,6 +546,7 @@ export default function Employees() {
     </span>
    ),
   },
+  /* >>>>>>>>>> CHANGED: remark shows the full sentence (wraps, no truncate) <<<<<<<<<< */
   {
    key: "remark",
    label: "Remark",
@@ -514,7 +554,7 @@ export default function Employees() {
     const remark = cleanRemark(e.remark);
     return (
      <span
-      className="text-xs text-muted-foreground italic truncate max-w-[140px] block"
+      className="text-xs text-muted-foreground italic block min-w-[180px] max-w-[300px] whitespace-normal break-words"
       title={remark}
      >
       {remark || "—"}
@@ -522,6 +562,7 @@ export default function Employees() {
     );
    },
   },
+  /* >>>>>>>>>> END CHANGED <<<<<<<<<< */
   {
    key: "status",
    label: "Status",
@@ -535,7 +576,7 @@ export default function Employees() {
    ),
   },
   /* ====================================================================== */
-  /*  ADDED: ACTION BUTTON COLUMN                                           */
+  /*  ACTION BUTTON COLUMN                                                  */
   /* ====================================================================== */
   {
    key: "actions",
@@ -611,8 +652,36 @@ export default function Employees() {
     <h1 className="text-2xl font-bold tracking-tight">Employee directory</h1>
     <p className="text-muted-foreground text-xs mt-0.5">
      <span className="font-semibold text-foreground">{filtered.length}</span>{" "}
-     of {employees.length} employees
+     of {stats.total} employees
     </p>
+   </div>
+
+   {/* Summary cards */}
+   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    {statCards.map((c) => {
+     const Icon = c.icon;
+     return (
+      <button
+       key={c.label}
+       type="button"
+       onClick={() => {
+        setStatusFilter(c.filter);
+        resetPage();
+       }}
+       className={`text-left bg-card border rounded-xl shadow-sm p-4 flex items-center gap-3 transition hover:shadow-md ${statusFilter === c.filter && c.filter !== "all" ? "ring-2 ring-primary/40" : ""
+        }`}
+      >
+       <div className={`h-10 w-10 rounded-lg border flex items-center justify-center shrink-0 ${c.color}`}>
+        <Icon className="h-5 w-5" />
+       </div>
+       <div>
+        <p className="text-2xl font-bold leading-none">{c.value}</p>
+        <p className="text-xs font-medium mt-1.5">{c.label}</p>
+        <p className="text-[11px] text-muted-foreground">{c.hint}</p>
+       </div>
+      </button>
+     );
+    })}
    </div>
 
    {isPartial && (

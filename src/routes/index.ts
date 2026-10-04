@@ -11,7 +11,7 @@ import Register from "@/pages/Authentication/Register";
 import Dashboard from "@/pages/Dashboard/Dashboard";
 
 import EmployeeDocuments from "@/pages/Documents/EmployeeDocuments";
-import Expiration from "@/pages/Expiration";
+import Expiration from "@/pages/Expirations";
 import Vacation from "@/pages/Vacation";
 
 export const router = createBrowserRouter([

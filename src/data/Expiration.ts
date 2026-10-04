@@ -1,4 +1,4 @@
-import type { MockDocumentExpiry } from "@/pages/Expiration";
+import type { MockDocumentExpiry } from "@/pages/Expirations";
 
 export const MOCK_EXPIRY_DATA: MockDocumentExpiry[] = [
   {
