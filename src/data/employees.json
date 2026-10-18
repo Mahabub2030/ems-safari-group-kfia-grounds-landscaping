@@ -747,8 +747,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE",
-    "remark": "Transfer Pending"
+    "status": "INACTIVE",
+    "remark": "Company terminated 10-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a48",
@@ -763,8 +763,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE",
-    "remark": "Transfer Pending"
+    "status": "INACTIVE",
+    "remark": "Company terminated 10-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a49",
@@ -779,8 +779,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE",
-    "remark": "Transfer Pending"
+    "status": "INACTIVE",
+    "remark": "Company terminated 10-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a50",
@@ -796,7 +796,7 @@
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
     "status": "ACTIVE",
-    "remark": "Transfer Pending"
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a51",
@@ -812,7 +812,7 @@
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
     "status": "ACTIVE",
-    "remark": "Transfer Pending"
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a52",
@@ -828,7 +828,7 @@
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
     "status": "ACTIVE",
-    "remark": "Transfer Pending"
+    "remark": "Ok"
   },
   {
     "_id": "6a40b233a377d5283b7c44a53",
@@ -891,8 +891,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE",
-    "remark": "Complted"
+    "status": "INACTIVE",
+    "remark": "Going to final exit 15-Sep-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a57",
@@ -971,8 +971,8 @@
     "joiningDate": "2026-04-15T00:00:00.000Z",
     "nationality": "Bangladeshi",
     "companyName": "Nabatat",
-    "status": "ACTIVE",
-    "remark": "Complted"
+    "status": "INACTIVE",
+    "remark": "Left the company 08-Oct-2026"
   },
   {
     "_id": "6a40b233a377d5283b7c44a62",
@@ -1956,7 +1956,7 @@
     "email": "ghulam.qaiser@example.com",
     "phoneNumber": "+966 50 000 0123",
     "jobTitle": "labor",
-    "idNumber": "BV4911123",
+    "idNumber": "2636519080",
     "employeeId": "68503",
     "dacoId": "DMM-010-8410",
     "group": "Irrigation",
