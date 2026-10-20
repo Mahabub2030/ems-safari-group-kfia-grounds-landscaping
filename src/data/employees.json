@@ -3852,6 +3852,22 @@
     "nationality": "Bangladeshi",
     "companyName": "Safari",
     "status": "ACTIVE",
+    "remark": ""
+  },
+  {
+    "_id": "6a40b233a377d5283b7c44a2330",
+    "name": "Faisal Mehmood Mitha Khan",
+    "email": "Faisal Mehmood Mitha Khan@example.com",
+    "phoneNumber": "+966 50 000 0232",
+    "jobTitle": "labor",
+    "idNumber": "2550424424",
+    "employeeId": "39069",
+    "dacoId": "N/A",
+    "group": "Landscaping",
+    "joiningDate": "2026-09-18 T00:00:00.000Z",
+    "nationality": "Pakistani",
+    "companyName": "Safari",
+    "status": "ACTIVE",
     "remark": "Currently working Custodial & Pest Control"
   }
 ]
