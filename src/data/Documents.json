@@ -1,32 +1,126 @@
 [
   {
-    "docId": "DOC-PASS-003",
-    "docName": "Reda_Abdelmaged_Passport.pdf",
-    "docType": "Passport",
+    "docId": "DOC-EMP-001",
     "employeeName": "Reda Abdelmaged",
+    "designation": "Operations Supervisor",
     "employeeId": "EMP-67574",
+    "iqamaNumber": "2503732816",
+    "refCode": "DMM-03-5859",
+    "email": "reda.abdelmaged@company.com",
+    "mobile": "+966500111222",
     "group": "Administrative / Management",
-    "passportNumber": "2503732816",
-    "issueDate": "2026-04-01",
-    "expiryDate": "2036-04-01",
-    "fileSize": "2.4 MB",
-    "fileFormat": "PDF",
-    "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-    "imgUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60",
-    "cvDoc": {
-      "docName": "Reda_Abdelmaged_CV.pdf",
-      "downloadUrl": "https://drive.google.com/file/d/1PCYeAD5UYAZdpb2t86tIcLEXB6EstwGp/view?usp=sharing",
-      "imgUrl": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&auto=format&fit=crop&q=60"
-    },
-    "jobOfferDoc": {
-      "docName": "Reda_Abdelmaged_Job_Offer.pdf",
-      "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      "imgUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=500&auto=format&fit=crop&q=60"
-    },
-    "otherDoc": {
-      "docName": "Reda_Abdelmaged_Degree.pdf",
-      "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-      "imgUrl": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60"
+    "docs": {
+      "jobOffer": {
+        "docName": "Reda_Abdelmaged_GACA_Certificate.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=500&auto=format&fit=crop&q=60"
+      },
+      "gacaCertificate": {
+        "docName": "Reda_Abdelmaged_GACA_Certificate.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=500&auto=format&fit=crop&q=60"
+      },
+      "joining": {
+        "docName": "Reda_Abdelmaged_Joining.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&auto=format&fit=crop&q=60"
+      },
+      "iqama": {
+        "docName": "Reda_Abdelmaged_Iqama.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&auto=format&fit=crop&q=60"
+      },
+      "passport": {
+        "docName": "Reda_Abdelmaged_Passport.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60"
+      },
+      "others": {
+        "docName": "Reda_Abdelmaged_Degree.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60"
+      },
+      "aid": {
+        "docName": "Reda_Abdelmaged_AID.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60"
+      },
+      "dacoId": {
+        "docName": "Reda_Abdelmaged_Daco_ID.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=500&auto=format&fit=crop&q=60"
+      }
+    }
+  },
+  {
+    "docId": "DOC-EMP-002",
+    "employeeName": "Abdullah Aldarweesh",
+    "designation": "Grounds Team Leader",
+    "employeeId": "EMP-67666",
+    "iqamaNumber": "1068924107",
+    "refCode": "0",
+    "email": "abdullah.aldarweesh@company.com",
+    "mobile": "+966500222333",
+    "group": "Administrative / Management",
+    "docs": {
+      "gacaCertificate": {
+        "docName": "Abdullah_Aldarweesh_GACA_Certificate.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60"
+      },
+      "joining": {
+        "docName": "Abdullah_Aldarweesh_Joining.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1552664730-d307ca884978?w=500&auto=format&fit=crop&q=60"
+      },
+      "iqama": {
+        "docName": "Abdullah_Aldarweesh_Iqama.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1586281380349-632531db7ed4?w=500&auto=format&fit=crop&q=60"
+      },
+      "passport": {
+        "docName": "Abdullah_Aldarweesh_Passport.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60"
+      },
+      "dacoId": {
+        "docName": "Abdullah_Aldarweesh_Daco_ID.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=500&auto=format&fit=crop&q=60"
+      }
+    }
+  },
+  {
+    "docId": "DOC-EMP-003",
+    "employeeName": "Mohamed Elsayed",
+    "designation": "Horticulture Technician",
+    "employeeId": "EMP-67608",
+    "iqamaNumber": "2485302786",
+    "refCode": "DMM-04-8731",
+    "email": "mohamed.elsayed@company.com",
+    "mobile": "+966500333444",
+    "group": "Operations",
+    "docs": {
+      "jobOffer": {
+        "docName": "Mohamed_Elsayed_GACA_Certificate.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=500&auto=format&fit=crop&q=60"
+      },
+      "gacaCertificate": {
+        "docName": "Mohamed_Elsayed_GACA_Certificate.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1450133064473-71024230f91b?w=500&auto=format&fit=crop&q=60"
+      },
+      "passport": {
+        "docName": "Mohamed_Elsayed_Passport.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1544717305-2782549b5136?w=500&auto=format&fit=crop&q=60"
+      },
+      "others": {
+        "docName": "Mohamed_Elsayed_Certificate.pdf",
+        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
+        "imgUrl": "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=500&auto=format&fit=crop&q=60"
+      }
     }
   }
 ]
