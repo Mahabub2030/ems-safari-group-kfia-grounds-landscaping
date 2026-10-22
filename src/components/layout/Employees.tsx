@@ -205,13 +205,15 @@ export default function Employees() {
  /* ----- Action Handlers ----- */
 
  const handleViewDetails = (employee: IEmployee) => {
-  toast.info(`Viewing details for ${employee.name}`);
+  // toast.info(`Viewing details for ${employee.name}`);
   // Open View Modal or Navigate to route
+  window.location.href = `/EmployeeDetails/${employee._id}`;
  };
 
  const handleEdit = (employee: IEmployee) => {
-  toast.info(`Editing employee ${employee.name}`);
-  // Open Edit Modal or Sheet Form
+  // toast.info(`Editing employee ${employee.name}`);
+
+  window.location.href = `/EmployeeDetails/${employee._id}`;
  };
 
  const handleToggleStatus = (employee: IEmployee) => {

@@ -11,6 +11,7 @@ import Register from "@/pages/Authentication/Register";
 import Dashboard from "@/pages/Dashboard/Dashboard";
 
 import EmployeeDocuments from "@/pages/Documents/EmployeeDocuments";
+import EmployeeDetails from "@/pages/EmployeeDetails";
 import Expiration from "@/pages/Expirations";
 import Vacation from "@/pages/Vacation";
 
@@ -26,6 +27,10 @@ export const router = createBrowserRouter([
       {
         path: "Employees",
         Component: Employees,
+      },
+      {
+        path: "EmployeeDetails/:id",
+        Component: EmployeeDetails,
       },
       {
         path: "Vacation",

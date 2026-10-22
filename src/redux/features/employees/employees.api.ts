@@ -20,7 +20,18 @@ export const employeesApi = baseApi.injectEndpoints({
       }),
       providesTags: ["EMPLOYEE"],
     }),
+    getSingaleEmployee: builder.query<TEmployee, string>({
+      query: (id) => ({
+        url: `employees/${id}`,
+        method: "GET",
+      }),
+      providesTags: ["EMPLOYEE"],
+    }),
   }),
 });
 
-export const { useAddEmployeeMutation, useGetAllEmployeesQuery } = employeesApi;
+export const {
+  useAddEmployeeMutation,
+  useGetAllEmployeesQuery,
+  useGetSingaleEmployeeQuery,
+} = employeesApi;
