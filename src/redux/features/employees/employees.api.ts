@@ -11,7 +11,7 @@ export const employeesApi = baseApi.injectEndpoints({
       }),
       invalidatesTags: ["EMPLOYEE"],
     }),
-    // http://localhost:5000/api/v1/employees/all-Employee
+    // https://ems-backen.vercel.app/api/v1/employees/all-Employee
     getAllEmployees: builder.query<TEmployee[], void>({
       query: (params) => ({
         url: "employees/all-Employee",
