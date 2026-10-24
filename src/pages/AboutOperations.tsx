@@ -364,10 +364,10 @@ const UnitColumn = ({
   {total > 1 && (
    <span
     className={`absolute top-0 h-px ${LINE} ${index === 0
-      ? "left-1/2 right-0"
-      : index === total - 1
-       ? "left-0 right-1/2"
-       : "left-0 right-0"
+     ? "left-1/2 right-0"
+     : index === total - 1
+      ? "left-0 right-1/2"
+      : "left-0 right-0"
      }`}
    />
   )}
