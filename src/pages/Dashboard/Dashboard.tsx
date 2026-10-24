@@ -13,6 +13,9 @@ export default function Dashboard() {
  // Everything below is calculated from src/data/Vacations.json
  const records = useMemo(() => loadVacations(), []);
  const stats = useMemo(() => computeStats(records), [records]);
+ const SectionCardsWithStats = SectionCards as React.ComponentType<{
+  stats: typeof stats;
+ }>;
 
  return (
   <SidebarProvider
@@ -29,7 +32,7 @@ export default function Dashboard() {
     <div className="flex flex-1 flex-col">
      <div className="@container/main flex flex-1 flex-col gap-2">
       <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6">
-       <SectionCards stats={stats} />
+       <SectionCardsWithStats stats={stats} />
        <div className="px-4 lg:px-6">
         <VacationChart records={records} />
        </div>
