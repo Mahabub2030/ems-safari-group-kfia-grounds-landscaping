@@ -59,6 +59,39 @@ export interface MockDocumentExpiry {
  medicalInsurance?: string;
 }
 
+// Converts many date formats to YYYY-MM-DD:
+//  2027-04-27 | 2027-Apr-27 | 27-Apr-2027 | 27/04/2027
+// Returns undefined when it can't understand the value (e.g. Hijri text).
+const MONTH_NAMES = [
+ "jan", "feb", "mar", "apr", "may", "jun",
+ "jul", "aug", "sep", "oct", "nov", "dec",
+];
+const toIsoDate = (value?: string): string | undefined => {
+ if (!value) return undefined;
+ const s = String(value).trim();
+ const pad = (n: number) => String(n).padStart(2, "0");
+ const monthFromName = (name: string) =>
+  MONTH_NAMES.indexOf(name.slice(0, 3).toLowerCase()) + 1;
+
+ let y = 0, m = 0, d = 0;
+ let r: RegExpExecArray | null;
+
+ if ((r = /^(\d{4})[-/ ](\d{1,2})[-/ ](\d{1,2})/.exec(s))) {
+  y = +r[1]; m = +r[2]; d = +r[3]; // 2027-04-27
+ } else if ((r = /^(\d{4})[-/ ]([A-Za-z]{3,})[-/ ](\d{1,2})$/.exec(s))) {
+  y = +r[1]; m = monthFromName(r[2]); d = +r[3]; // 2027-Apr-27
+ } else if ((r = /^(\d{1,2})[-/ ]([A-Za-z]{3,})[-/ ](\d{4})$/.exec(s))) {
+  d = +r[1]; m = monthFromName(r[2]); y = +r[3]; // 27-Apr-2027
+ } else if ((r = /^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/.exec(s))) {
+  d = +r[1]; m = +r[2]; y = +r[3]; // 27/04/2027 (day first)
+ } else {
+  return undefined;
+ }
+
+ if (m < 1 || m > 12 || d < 1 || d > 31) return undefined;
+ return `${y}-${pad(m)}-${pad(d)}`;
+};
+
 // Works with both [ ... ] and { "data": [ ... ] } JSON files
 const RAW_ROWS: Partial<MockDocumentExpiry>[] = Array.isArray(expiryJson)
  ? (expiryJson as unknown as Partial<MockDocumentExpiry>[])
@@ -68,6 +101,9 @@ const RAW_ROWS: Partial<MockDocumentExpiry>[] = Array.isArray(expiryJson)
 const SEED_DATA: MockDocumentExpiry[] = RAW_ROWS.map((item, index) => ({
  ...item,
  slNo: item.slNo ?? index + 1, // JSON has no slNo, so generate one
+ // normalise dates to YYYY-MM-DD (also needed by the <input type="date"> in the form)
+ iqamaExpiryDate: toIsoDate(item.iqamaExpiryDate) ?? item.iqamaExpiryDate,
+ dacoExpiryDate: toIsoDate(item.dacoExpiryDate) ?? item.dacoExpiryDate,
 })) as MockDocumentExpiry[];
 const STORAGE_KEY = "expiryData";
 
@@ -89,8 +125,8 @@ const getDaysRemaining = (expiryDateString?: string) => {
  today.setHours(0, 0, 0, 0);
 
  // Parse YYYY-MM-DD as a LOCAL date (new Date("2026-10-29") is UTC and can be off by a day)
- const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(expiryDateString);
- if (!m) return null; // Hijri / non-standard strings
+ const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(toIsoDate(expiryDateString) ?? "");
+ if (!m) return null; // Hijri / unknown formats
  const expiry = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 
  return Math.round(
