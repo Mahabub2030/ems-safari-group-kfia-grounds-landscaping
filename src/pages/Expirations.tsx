@@ -28,18 +28,17 @@ import {
  Pencil,
  Plus,
  RefreshCw,
- RotateCcw, // <<< CHANGED (1): new icon for "Reset to JSON" button
+ RotateCcw,
  ShieldAlert,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react"; // <<< CHANGED (2): added useEffect
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
-// <<< CHANGED (3) START: import fake data from src/data/DocumentExpiry.json
-// Needs "resolveJsonModule": true in tsconfig.json.
-// If your alias "@" points to "src", this path is correct. Otherwise use "../data/DocumentExpiry.json".
-import expiryJson from "@/data/DocumentExpiry.json";
-// <<< CHANGED (3) END
+// Data file: src/data/Expiration.json  (needs "resolveJsonModule": true in tsconfig.json)
+// Component: src/pages/Expiration.tsx
+// "@" must point to "src". If it doesn't, use the relative path: "../data/Expiration.json"
+import expiryJson from "@/data/Expiration.json";
 
 export interface MockDocumentExpiry {
  slNo: number;
@@ -52,65 +51,117 @@ export interface MockDocumentExpiry {
  dacoId?: string;
  group: string;
  companyName: string;
- iqamaExpiryDate?: string; // ISO String YYYY-MM-DD or Hijri string
- dacoExpiryDate?: string; // ISO String YYYY-MM-DD
+ iqamaExpiryDate?: string; // YYYY-MM-DD
+ dacoExpiryDate?: string; // YYYY-MM-DD
  workLocation?: string;
  nationality: string;
  remark?: string;
  medicalInsurance?: string;
 }
 
-// <<< CHANGED (4) START: typed seed data + storage key
-// If your JSON is wrapped like { "data": [...] }, change to: (expiryJson as any).data
-const SEED_DATA = expiryJson as MockDocumentExpiry[];
-const STORAGE_KEY = "expiryData";
-// <<< CHANGED (4) END
+// Works with both [ ... ] and { "data": [ ... ] } JSON files
+const RAW_ROWS: Partial<MockDocumentExpiry>[] = Array.isArray(expiryJson)
+ ? (expiryJson as unknown as Partial<MockDocumentExpiry>[])
+ : (((expiryJson as unknown as { data?: unknown[] }).data ??
+  []) as Partial<MockDocumentExpiry>[]);
 
-// Helper function to calculate remaining days from current date
+const SEED_DATA: MockDocumentExpiry[] = RAW_ROWS.map((item, index) => ({
+ ...item,
+ slNo: item.slNo ?? index + 1, // JSON has no slNo, so generate one
+})) as MockDocumentExpiry[];
+const STORAGE_KEY = "expiryData";
+
+/* ------------------------------------------------------------------ */
+/* Dynamic status logic                                                */
+/* ------------------------------------------------------------------ */
+
+// Change these numbers to move the thresholds
+const URGENT_DAYS = 30;
+const SOON_DAYS = 60;
+const NEAR_DAYS = 120; // e.g. 115 days left => "Near Expiry"
+
+type StatusKey = "EXPIRED" | "URGENT" | "SOON" | "NEAR" | "VALID" | "UNKNOWN";
+
+// Remaining days from today (negative = already expired)
 const getDaysRemaining = (expiryDateString?: string) => {
  if (!expiryDateString) return null;
  const today = new Date();
  today.setHours(0, 0, 0, 0);
 
- const expiry = new Date(expiryDateString);
- if (isNaN(expiry.getTime())) return null; // Fallback for Hijri or non-standard date strings
- expiry.setHours(0, 0, 0, 0);
+ // Parse YYYY-MM-DD as a LOCAL date (new Date("2026-10-29") is UTC and can be off by a day)
+ const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(expiryDateString);
+ if (!m) return null; // Hijri / non-standard strings
+ const expiry = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
 
- const diffTime = expiry.getTime() - today.getTime();
- const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
- return diffDays;
+ return Math.round(
+  (expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24),
+ );
 };
 
-// Render badge depending on urgency
+const getStatusKey = (days: number | null): StatusKey => {
+ if (days === null) return "UNKNOWN";
+ if (days < 0) return "EXPIRED";
+ if (days <= URGENT_DAYS) return "URGENT";
+ if (days <= SOON_DAYS) return "SOON";
+ if (days <= NEAR_DAYS) return "NEAR";
+ return "VALID";
+};
+
+const STATUS_STYLES: Record<StatusKey, string> = {
+ EXPIRED:
+  "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/20 animate-pulse",
+ URGENT: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/20",
+ SOON: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
+ NEAR: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
+ VALID:
+  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+ UNKNOWN: "bg-muted text-muted-foreground border-border",
+};
+
+// Text shown in the badge
+const getStatusLabel = (days: number | null): string => {
+ const key = getStatusKey(days);
+ if (days === null) return "No Date";
+ if (key === "EXPIRED") return `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago`;
+ if (days === 0) return "Expires Today";
+ if (key === "URGENT") return `Urgent • ${days} Days Left`;
+ if (key === "SOON") return `Expiring Soon • ${days} Days Left`;
+ if (key === "NEAR") return `Near Expiry • ${days} Days Left`;
+ return `Valid • ${days} Days Left`;
+};
+
+// Plain text version (for Excel / PDF)
+const getStatusText = (days: number | null): string => {
+ if (days === null) return "N/A";
+ if (days < 0) return `EXPIRED (${Math.abs(days)} days ago)`;
+ if (days === 0) return "EXPIRES TODAY";
+ const key = getStatusKey(days);
+ const name =
+  key === "URGENT" ? "Urgent" : key === "SOON" ? "Expiring Soon" : key === "NEAR" ? "Near Expiry" : "Valid";
+ return `${name} (${days} days)`;
+};
+
+// Worst (smallest) days between Iqama and DACO => overall employee status
+const getOverallDays = (item: MockDocumentExpiry): number | null => {
+ const list = [
+  getDaysRemaining(item.iqamaExpiryDate),
+  getDaysRemaining(item.dacoExpiryDate),
+ ].filter((d): d is number => d !== null);
+ return list.length ? Math.min(...list) : null;
+};
+
+// Badge with date + dynamic status
 const renderExpiryBadge = (dateString?: string) => {
  const days = getDaysRemaining(dateString);
  if (days === null) return <span className="text-muted-foreground">—</span>;
-
- let badgeStyle =
-  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20";
- let label = `${days} Days Left`;
-
- if (days < 0) {
-  badgeStyle =
-   "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/20 animate-pulse";
-  label = `Expired (${Math.abs(days)}d ago)`;
- } else if (days <= 30) {
-  badgeStyle =
-   "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/20";
-  label = `${days} Days (Urgent)`;
- } else if (days <= 60) {
-  badgeStyle =
-   "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20";
-  label = `${days} Days Left`;
- }
 
  return (
   <div className="flex flex-col gap-0.5">
    <span className="text-xs font-mono font-medium">{dateString}</span>
    <span
-    className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold inline-block text-center w-fit ${badgeStyle}`}
+    className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold inline-block text-center w-fit ${STATUS_STYLES[getStatusKey(days)]}`}
    >
-    {label}
+    {getStatusLabel(days)}
    </span>
   </div>
  );
@@ -118,14 +169,31 @@ const renderExpiryBadge = (dateString?: string) => {
 
 const filterStatusOptions: FilterOption[] = [
  { label: "Expired", value: "EXPIRED" },
- { label: "Expiring in 30 Days", value: "30_DAYS" },
- { label: "Expiring in 60 Days", value: "60_DAYS" },
+ { label: `Urgent (≤ ${URGENT_DAYS} Days)`, value: "URGENT" },
+ { label: `Expiring Soon (≤ ${SOON_DAYS} Days)`, value: "SOON" },
+ { label: `Near Expiry (≤ ${NEAR_DAYS} Days)`, value: "NEAR" },
  { label: "Valid", value: "VALID" },
 ];
 
+const emptyForm: Partial<MockDocumentExpiry> = {
+ name: "",
+ email: "",
+ employeeId: "",
+ idNumber: "",
+ dacoId: "",
+ group: "Administrative / Management",
+ companyName: "Safari Group",
+ iqamaExpiryDate: "",
+ dacoExpiryDate: "",
+ workLocation: "",
+ remark: "",
+ designation: "",
+ nationality: "Saudi",
+ status: "Active",
+};
+
 export default function Expiration() {
- // <<< CHANGED (5) START: load from localStorage; if nothing saved (or empty), fall back to the JSON file
- // Before: returned [] when localStorage was empty, so the table was always blank.
+ // Load from localStorage; if empty/corrupted, fall back to Expiration.json
  const [data, setData] = useState<MockDocumentExpiry[]>(() => {
   try {
    const stored = localStorage.getItem(STORAGE_KEY);
@@ -134,54 +202,34 @@ export default function Expiration() {
     if (Array.isArray(parsed) && parsed.length > 0) return parsed;
    }
   } catch {
-   // corrupted localStorage -> ignore and use JSON
+   // ignore and use JSON
   }
   return SEED_DATA;
  });
- // <<< CHANGED (5) END
 
- // <<< CHANGED (6) START: persist every change (add / edit) to localStorage
- // Before: data was never written back, so added/edited records were lost on refresh.
+ // Persist every change (add / edit)
  useEffect(() => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
  }, [data]);
- // <<< CHANGED (6) END
-
- // <<< CHANGED (7) START: reset table back to the JSON file data
- const resetToJson = () => {
-  localStorage.removeItem(STORAGE_KEY);
-  setData(SEED_DATA);
-  setPage(2)
-  toast.success("Data reset from DocumentExpiry.json");
- };
- // <<< CHANGED (7) END
 
  const [search, setSearch] = useState("");
  const [groupFilter, setGroupFilter] = useState("all");
  const [expiryStatusFilter, setExpiryStatusFilter] = useState("all");
  const [pageSize, setPageSize] = useState<number>(10);
- const [page, setPage] = useState(2);
+ const [page, setPage] = useState(1); // FIX: was 2, so table opened on an empty page
  const [dialogOpen, setDialogOpen] = useState(false);
  const [editingRecord, setEditingRecord] = useState<MockDocumentExpiry | null>(
   null,
  );
+ const [form, setForm] = useState<Partial<MockDocumentExpiry>>(emptyForm);
 
- const [form, setForm] = useState<Partial<MockDocumentExpiry>>({
-  name: "",
-  email: "",
-  employeeId: "",
-  idNumber: "",
-  dacoId: "",
-  group: "Administrative / Management",
-  companyName: "Safari Group",
-  iqamaExpiryDate: "",
-  dacoExpiryDate: "",
-  workLocation: "",
-  remark: "",
-  designation: "",
-  nationality: "Saudi",
-  status: "Active",
- });
+ // Reset table back to Expiration.json
+ const resetToJson = () => {
+  localStorage.removeItem(STORAGE_KEY);
+  setData(SEED_DATA);
+  setPage(1); // FIX: was 2
+  toast.success("Data reset from Expiration.json");
+ };
 
  // Dynamic Group filter options
  const groupOptions = useMemo(() => {
@@ -191,44 +239,32 @@ export default function Expiration() {
   return uniqueGroups.map((g) => ({ label: g, value: g }));
  }, [data]);
 
- // Combined Search & Filtering logic
+ // Search + filters
  const filtered = useMemo(() => {
+  const q = search.toLowerCase();
   return data.filter((item) => {
-   const q = search.toLowerCase();
+   // String(...) so numbers / missing fields in the JSON never crash the search
+   const has = (v: unknown) => String(v ?? "").toLowerCase().includes(q);
    const matchSearch =
-    item.name.toLowerCase().includes(q) ||
-    (item.email && item.email.toLowerCase().includes(q)) ||
-    item.employeeId.toLowerCase().includes(q) ||
-    item.idNumber.includes(q) ||
-    (item.dacoId && item.dacoId.toLowerCase().includes(q)) ||
-    item.group.toLowerCase().includes(q) ||
-    item.companyName.toLowerCase().includes(q);
+    has(item.name) ||
+    has(item.email) ||
+    has(item.employeeId) ||
+    has(item.idNumber) ||
+    has(item.dacoId) ||
+    has(item.group) ||
+    has(item.companyName);
 
    const matchGroup = groupFilter === "all" || item.group === groupFilter;
 
-   // Expiry days status filter checking Iqama OR DACO
-   const iqamaDays = getDaysRemaining(item.iqamaExpiryDate);
-   const dacoDays = getDaysRemaining(item.dacoExpiryDate);
-   const minDays = Math.min(iqamaDays ?? Infinity, dacoDays ?? Infinity);
-
-   let matchExpiry = true;
-   if (expiryStatusFilter === "EXPIRED") {
-    matchExpiry =
-     (iqamaDays !== null && iqamaDays < 0) ||
-     (dacoDays !== null && dacoDays < 0);
-   } else if (expiryStatusFilter === "30_DAYS") {
-    matchExpiry = minDays >= 0 && minDays <= 30;
-   } else if (expiryStatusFilter === "60_DAYS") {
-    matchExpiry = minDays >= 0 && minDays <= 60;
-   } else if (expiryStatusFilter === "VALID") {
-    matchExpiry = minDays > 60;
-   }
+   // Overall status = worst of Iqama / DACO
+   const matchExpiry =
+    expiryStatusFilter === "all" ||
+    getStatusKey(getOverallDays(item)) === expiryStatusFilter;
 
    return matchSearch && matchGroup && matchExpiry;
   });
  }, [data, search, groupFilter, expiryStatusFilter]);
 
- // Pagination Logic
  const paginated = useMemo(() => {
   if (pageSize === 0) return filtered;
   return filtered.slice((page - 1) * pageSize, page * pageSize);
@@ -236,22 +272,7 @@ export default function Expiration() {
 
  const openAdd = () => {
   setEditingRecord(null);
-  setForm({
-   name: "",
-   email: "",
-   employeeId: "",
-   idNumber: "",
-   dacoId: "",
-   group: "Administrative / Management",
-   companyName: "Safari Group",
-   iqamaExpiryDate: "",
-   dacoExpiryDate: "",
-   workLocation: "",
-   remark: "",
-   designation: "",
-   nationality: "Saudi",
-   status: "Active",
-  });
+  setForm({ ...emptyForm });
   setDialogOpen(true);
  };
 
@@ -282,6 +303,7 @@ export default function Expiration() {
    toast.success("Document expiry dates updated");
   } else {
    const newRec: MockDocumentExpiry = {
+    ...form,
     slNo: Date.now(),
     name: form.name || "",
     employeeId: form.employeeId || "",
@@ -292,7 +314,6 @@ export default function Expiration() {
     group: form.group || "Administrative / Management",
     companyName: form.companyName || "Safari Group",
     nationality: form.nationality || "Saudi",
-    ...form,
    };
    setData((prev) => [newRec, ...prev]);
    toast.success("New expiration tracking record created");
@@ -309,9 +330,12 @@ export default function Expiration() {
     "Iqama / ID": e.idNumber,
     "Iqama Expiry": e.iqamaExpiryDate || "N/A",
     "Iqama Days Left": getDaysRemaining(e.iqamaExpiryDate) ?? "N/A",
+    "Iqama Status": getStatusText(getDaysRemaining(e.iqamaExpiryDate)),
     "DACO ID": e.dacoId || "",
     "DACO Expiry": e.dacoExpiryDate || "",
     "DACO Days Left": getDaysRemaining(e.dacoExpiryDate) ?? "N/A",
+    "DACO Status": getStatusText(getDaysRemaining(e.dacoExpiryDate)),
+    "Overall Status": getStatusText(getOverallDays(e)),
     Group: e.group,
     Company: e.companyName,
     Location: e.workLocation || "",
@@ -344,22 +368,18 @@ export default function Expiration() {
      "Group",
     ],
    ],
-   body: filtered.map((e) => {
-    const iDays = getDaysRemaining(e.iqamaExpiryDate);
-    const dDays = getDaysRemaining(e.dacoExpiryDate);
-    return [
-     e.slNo,
-     e.employeeId,
-     e.name,
-     e.idNumber,
-     e.iqamaExpiryDate || "—",
-     iDays !== null ? (iDays < 0 ? "EXPIRED" : `${iDays} days`) : "—",
-     e.dacoId || "—",
-     e.dacoExpiryDate || "—",
-     dDays !== null ? (dDays < 0 ? "EXPIRED" : `${dDays} days`) : "—",
-     e.group,
-    ];
-   }),
+   body: filtered.map((e) => [
+    e.slNo,
+    e.employeeId,
+    e.name,
+    e.idNumber,
+    e.iqamaExpiryDate || "—",
+    getStatusText(getDaysRemaining(e.iqamaExpiryDate)),
+    e.dacoId || "—",
+    e.dacoExpiryDate || "—",
+    getStatusText(getDaysRemaining(e.dacoExpiryDate)),
+    e.group,
+   ]),
    styles: { fontSize: 8 },
   });
   doc.save("iqama_daco_expiry_report.pdf");
@@ -442,13 +462,26 @@ export default function Expiration() {
    ),
   },
   {
-   key: "remark",
+   // Dynamic overall status (calculated from dates, not from JSON "status")
+   key: "status",
    label: "Status / Remark",
-   render: (emp) => (
-    <span className="text-xs text-muted-foreground italic truncate max-w-[150px] block">
-     {emp.remark || emp.status || "—"}
-    </span>
-   ),
+   render: (emp) => {
+    const days = getOverallDays(emp);
+    return (
+     <div className="flex flex-col gap-1 min-w-[150px]">
+      <span
+       className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold w-fit ${STATUS_STYLES[getStatusKey(days)]}`}
+      >
+       {getStatusLabel(days)}
+      </span>
+      {emp.remark && (
+       <span className="text-[11px] text-muted-foreground italic truncate max-w-[150px] block">
+        {emp.remark}
+       </span>
+      )}
+     </div>
+    );
+   },
   },
   {
    key: "actions",
@@ -491,10 +524,9 @@ export default function Expiration() {
     </div>
    </div>
 
-   {/* Expiry Control Bar: Group & Expiry Status Filters */}
+   {/* Control Bar */}
    <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 border rounded-xl shadow-sm">
     <div className="flex flex-wrap items-center gap-4">
-     {/* Group Filter */}
      <div className="flex items-center gap-2">
       <span className="text-xs text-muted-foreground font-medium">
        Group:
@@ -521,7 +553,6 @@ export default function Expiration() {
      </div>
     </div>
 
-    {/* Rows Per Page */}
     <div className="flex items-center gap-2 text-xs text-muted-foreground">
      <span>Rows per page:</span>
      <Select
@@ -544,12 +575,12 @@ export default function Expiration() {
     </div>
    </div>
 
-   {/* Main Table Wrapper */}
+   {/* Main Table */}
    <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
     <div
      className={`w-full overflow-x-auto ${paginated.length > 10
-      ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
-      : "overflow-y-visible"
+       ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
+       : "overflow-y-visible"
       }`}
     >
      <DataTable<MockDocumentExpiry>
@@ -576,17 +607,15 @@ export default function Expiration() {
       emptyMessage="No matching document expiration records found"
       actions={
        <div className="flex items-center gap-2">
-        {/* <<< CHANGED (8) START: new "Reset" button to reload JSON data */}
         <Button
          variant="outline"
          size="sm"
          onClick={resetToJson}
          className="h-8 text-xs"
-         title="Reload data from DocumentExpiry.json"
+         title="Reload data from Expiration.json"
         >
          <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
         </Button>
-        {/* <<< CHANGED (8) END */}
         <Button
          variant="outline"
          size="sm"
@@ -621,9 +650,7 @@ export default function Expiration() {
     <DialogContent className="sm:max-w-lg">
      <DialogHeader>
       <DialogTitle>
-       {editingRecord
-        ? "Update Expiry Dates"
-        : "Add Expiry Track Record"}
+       {editingRecord ? "Update Expiry Dates" : "Add Expiry Track Record"}
       </DialogTitle>
      </DialogHeader>
 
@@ -645,9 +672,7 @@ export default function Expiration() {
         </label>
         <Input
          value={form.employeeId || ""}
-         onChange={(e) =>
-          setForm({ ...form, employeeId: e.target.value })
-         }
+         onChange={(e) => setForm({ ...form, employeeId: e.target.value })}
          placeholder="67712"
         />
        </div>
@@ -660,9 +685,7 @@ export default function Expiration() {
         </label>
         <Input
          value={form.idNumber || ""}
-         onChange={(e) =>
-          setForm({ ...form, idNumber: e.target.value })
-         }
+         onChange={(e) => setForm({ ...form, idNumber: e.target.value })}
          placeholder="1063800229"
         />
        </div>
@@ -721,9 +744,7 @@ export default function Expiration() {
         </label>
         <Input
          value={form.companyName || ""}
-         onChange={(e) =>
-          setForm({ ...form, companyName: e.target.value })
-         }
+         onChange={(e) => setForm({ ...form, companyName: e.target.value })}
         />
        </div>
       </div>
