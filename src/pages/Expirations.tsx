@@ -615,8 +615,8 @@ export default function Expiration() {
    <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
     <div
      className={`w-full overflow-x-auto ${paginated.length > 10
-       ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
-       : "overflow-y-visible"
+      ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
+      : "overflow-y-visible"
       }`}
     >
      <DataTable<MockDocumentExpiry>
