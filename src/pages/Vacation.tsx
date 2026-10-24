@@ -7,10 +7,12 @@ import {
  Clock,
  FileSpreadsheet,
  FileText,
+ Hourglass,
  Plus,
  RefreshCw,
  Search,
  UserCheck,
+ UserPlus,
  UserX,
 } from "lucide-react";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -52,8 +54,19 @@ export interface RawEmployeeData {
  avatarUrl?: string;
 }
 
+export type VacationStatus =
+ | "Active"
+ | "Pending"
+ | "On Leave"
+ | "Upcoming"
+ | "Re-joined"
+ | "Final Exit"
+ | "Terminated"
+ | "Inactive"
+ | "Cancelled";
+
 export interface EmployeeVacationRecord extends RawEmployeeData {
- formattedStatus: "Active" | "On Leave" | "Upcoming";
+ formattedStatus: VacationStatus;
  formattedNationality: "Saudi" | "Non-Saudi" | "-";
  serial: number | string;
  vacationDays: number | string;
@@ -72,8 +85,7 @@ const DASH = "-";
 const show = (v: unknown): string =>
  v === undefined || v === null || v === "" ? DASH : String(v);
 
-// Days between two dates, inclusive (leave day and return day both counted out
-// is NOT done: we count calendar days from leave date up to return date).
+// Calendar days from leave date up to return date.
 const diffDays = (from?: string, to?: string): number | null => {
  if (!from || !to) return null;
  const a = new Date(from).getTime();
@@ -107,13 +119,35 @@ const transformEmployeeData = (
  raw: RawEmployeeData,
  index: number,
 ): EmployeeVacationRecord => {
- let formattedStatus: "Active" | "On Leave" | "Upcoming" = "Active";
- const upperStatus = raw.status?.toUpperCase() || "";
+ let formattedStatus: VacationStatus = "Active";
+ // "Final Exit", "final-exit", "FINAL_EXIT" -> "FINALEXIT"
+ const statusKey = (raw.status ?? "").toUpperCase().replace(/[\s_-]/g, "");
 
- if (upperStatus === "ON_LEAVE" || upperStatus === "ON LEAVE") {
+ if (statusKey === "ONLEAVE") {
   formattedStatus = "On Leave";
- } else if (upperStatus === "UPCOMING") {
+ } else if (statusKey === "PENDING") {
+  formattedStatus = "Pending";
+ } else if (statusKey === "UPCOMING") {
   formattedStatus = "Upcoming";
+ } else if (
+  statusKey === "REJOINED" ||
+  statusKey === "REJOINING" ||
+  statusKey === "REJOIN" ||
+  statusKey === "RETURNED"
+ ) {
+  formattedStatus = "Re-joined";
+ } else if (statusKey === "FINALEXIT") {
+  formattedStatus = "Final Exit";
+ } else if (statusKey === "TERMINATED" || statusKey === "TERMINATE") {
+  formattedStatus = "Terminated";
+ } else if (statusKey === "INACTIVE") {
+  formattedStatus = "Inactive";
+ } else if (
+  statusKey === "CANCELLED" ||
+  statusKey === "CANCELED" ||
+  statusKey === "CENCELLED"
+ ) {
+  formattedStatus = "Cancelled";
  }
 
  // Normalize nationality: "saudi" -> Saudi, "non saudi"/"non-saudi" -> Non-Saudi
@@ -158,6 +192,7 @@ export const EmployeeVacationTablePage: React.FC<
  const [selectedNationality, setSelectedNationality] = useState<string>("All");
  const [selectedVacationType, setSelectedVacationType] =
   useState<string>("All");
+ const [selectedMonth, setSelectedMonth] = useState<string>("All");
  const [currentPage, setCurrentPage] = useState<number>(1);
  const [rowsPerPage, setRowsPerPage] = useState<number | "All">(10);
 
@@ -187,7 +222,14 @@ export const EmployeeVacationTablePage: React.FC<
  // Reset pagination on filter change
  useEffect(() => {
   setCurrentPage(1);
- }, [searchTerm, selectedGroup, selectedStatus, selectedNationality, selectedVacationType]);
+ }, [
+  searchTerm,
+  selectedGroup,
+  selectedStatus,
+  selectedNationality,
+  selectedVacationType,
+  selectedMonth,
+ ]);
 
  // ------------------------------------------
  // Memoized Metrics & Filter Options
@@ -204,14 +246,35 @@ export const EmployeeVacationTablePage: React.FC<
   return ["All", ...types.sort()];
  }, [allEmployees]);
 
+ // Month options (e.g. "August 2026", "September 2026"), oldest -> newest
+ const months = useMemo(() => {
+  const sortKey = new Map<string, number>();
+  allEmployees.forEach((e) => {
+   if (!e.monthLabel || e.monthLabel === DASH) return;
+   let t = e.leaveDate ? new Date(e.leaveDate).getTime() : NaN;
+   if (Number.isNaN(t)) t = new Date(`1 ${e.monthLabel}`).getTime();
+   if (Number.isNaN(t)) t = Number.MAX_SAFE_INTEGER;
+   const prev = sortKey.get(e.monthLabel);
+   if (prev === undefined || t < prev) sortKey.set(e.monthLabel, t);
+  });
+  const labels = Array.from(sortKey.entries())
+   .sort((a, b) => a[1] - b[1])
+   .map(([label]) => label);
+  return ["All", ...labels];
+ }, [allEmployees]);
+
  const metrics = useMemo(() => {
+  const count = (s: VacationStatus) =>
+   allEmployees.filter((e) => e.formattedStatus === s).length;
   return {
    total: allEmployees.length,
-   active: allEmployees.filter((e) => e.formattedStatus === "Active").length,
-   onLeave: allEmployees.filter((e) => e.formattedStatus === "On Leave")
-    .length,
-   upcoming: allEmployees.filter((e) => e.formattedStatus === "Upcoming")
-    .length,
+   active: count("Active"),
+   pending: count("Pending"),
+   onLeave: count("On Leave"),
+   upcoming: count("Upcoming"),
+   rejoined: count("Re-joined"),
+   finalExit: count("Final Exit"),
+   cancelled: count("Cancelled"),
   };
  }, [allEmployees]);
 
@@ -243,13 +306,16 @@ export const EmployeeVacationTablePage: React.FC<
    const matchesVacationType =
     selectedVacationType === "All" ||
     emp.vacationType === selectedVacationType;
+   const matchesMonth =
+    selectedMonth === "All" || emp.monthLabel === selectedMonth;
 
    return (
     matchesSearch &&
     matchesGroup &&
     matchesStatus &&
     matchesNationality &&
-    matchesVacationType
+    matchesVacationType &&
+    matchesMonth
    );
   });
  }, [
@@ -259,6 +325,7 @@ export const EmployeeVacationTablePage: React.FC<
   selectedStatus,
   selectedNationality,
   selectedVacationType,
+  selectedMonth,
  ]);
 
  const itemsPerPage =
@@ -315,7 +382,12 @@ export const EmployeeVacationTablePage: React.FC<
   doc.setFontSize(16);
   doc.text("Employee Vacation Tracker Report", 14, 15);
   doc.setFontSize(10);
-  doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+  doc.text(
+   `Generated on: ${new Date().toLocaleDateString()}${selectedMonth !== "All" ? `  |  Month: ${selectedMonth}` : ""
+   }`,
+   14,
+   22,
+  );
 
   const tableHeaders = [
    [
@@ -373,7 +445,9 @@ export const EmployeeVacationTablePage: React.FC<
    startY: 28,
    theme: "striped",
    headStyles: { fillColor: [79, 70, 229] }, // Indigo color
-   styles: { fontSize: 7 },
+   styles: { fontSize: 7, overflow: "linebreak" },
+   // Full remark text, wrapped over several lines
+   columnStyles: { 20: { cellWidth: 70 } },
   });
 
   doc.save(`Employee_Vacation_Report_${Date.now()}.pdf`);
@@ -391,6 +465,13 @@ export const EmployeeVacationTablePage: React.FC<
       Active
      </span>
     );
+   case "Pending":
+    return (
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-orange-500"></span>
+      Pending
+     </span>
+    );
    case "On Leave":
     return (
      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
@@ -405,8 +486,71 @@ export const EmployeeVacationTablePage: React.FC<
       Upcoming
      </span>
     );
+   case "Re-joined":
+    return (
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-teal-500"></span>
+      Re-joined
+     </span>
+    );
+   case "Final Exit":
+    return (
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-900 text-white">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-white"></span>
+      Final Exit
+     </span>
+    );
+   case "Terminated":
+    return (
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-700 text-white">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-white"></span>
+      Terminated
+     </span>
+    );
+   case "Inactive":
+    return (
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-400 text-yellow-950">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-yellow-900"></span>
+      Inactive
+     </span>
+    );
+   case "Cancelled":
+    return (
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-300">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-slate-500"></span>
+      Cancelled
+     </span>
+    );
    default:
     return null;
+  }
+ };
+
+ // Row color per status:
+ // Final Exit = full red row, Terminated = dark gray, Inactive = yellow,
+ // Pending = orange, On Leave = amber, Upcoming = blue, Re-joined = teal
+ const getRowClasses = (status: VacationStatus) => {
+  switch (status) {
+   case "Final Exit":
+    // Full red row, all plain text turns white (badges keep their own colors)
+    return "bg-red-600 hover:bg-red-700 [&_*:not([class*=bg-])]:!text-white [&>td]:text-white";
+   case "Terminated":
+    return "bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 [&>td]:text-slate-500 dark:[&>td]:text-slate-400";
+   case "Inactive":
+    return "bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50";
+   case "Pending":
+    return "bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40";
+   case "On Leave":
+    return "bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40";
+   case "Upcoming":
+    return "bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40";
+   case "Re-joined":
+    return "bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40";
+   case "Cancelled":
+    // Disabled row: faded, grayscale, no hover or click, text not selectable
+    return "bg-slate-100 dark:bg-slate-800 opacity-50 grayscale pointer-events-none select-none [&>td]:text-slate-400 dark:[&>td]:text-slate-500";
+   default:
+    return "hover:bg-slate-50 dark:hover:bg-slate-700/30";
   }
  };
 
@@ -440,7 +584,7 @@ export const EmployeeVacationTablePage: React.FC<
   const key = type.trim().toLowerCase();
   let colorClasses =
    "bg-slate-200 text-slate-800 dark:bg-slate-600 dark:text-slate-100";
-  if (key === "emergency") colorClasses = "bg-red-600 text-white";
+  if (key === "emergency") colorClasses = "bg-red-600 text-white ring-1 ring-white";
   else if (key === "annual") colorClasses = "bg-green-600 text-white";
 
   return (
@@ -508,7 +652,7 @@ export const EmployeeVacationTablePage: React.FC<
    )}
 
    {/* Metrics Cards */}
-   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
     <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
      <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
       <Briefcase className="w-6 h-6" />
@@ -556,6 +700,30 @@ export const EmployeeVacationTablePage: React.FC<
       <p className="text-2xl font-semibold">{metrics.upcoming}</p>
      </div>
     </div>
+
+    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+     <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg">
+      <Hourglass className="w-6 h-6" />
+     </div>
+     <div>
+      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+       Pending
+      </p>
+      <p className="text-2xl font-semibold">{metrics.pending}</p>
+     </div>
+    </div>
+
+    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+     <div className="p-3 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg">
+      <UserPlus className="w-6 h-6" />
+     </div>
+     <div>
+      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+       Re-joined
+      </p>
+      <p className="text-2xl font-semibold">{metrics.rejoined}</p>
+     </div>
+    </div>
    </div>
 
    {/* Filter Bar */}
@@ -572,6 +740,18 @@ export const EmployeeVacationTablePage: React.FC<
     </div>
 
     <div className="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+     <select
+      value={selectedMonth}
+      onChange={(e) => setSelectedMonth(e.target.value)}
+      className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+     >
+      {months.map((m) => (
+       <option key={m} value={m}>
+        Month: {m}
+       </option>
+      ))}
+     </select>
+
      <select
       value={selectedGroup}
       onChange={(e) => setSelectedGroup(e.target.value)}
@@ -613,8 +793,14 @@ export const EmployeeVacationTablePage: React.FC<
      >
       <option value="All">Status: All</option>
       <option value="Active">Status: Active</option>
+      <option value="Pending">Status: Pending</option>
       <option value="On Leave">Status: On Leave</option>
       <option value="Upcoming">Status: Upcoming</option>
+      <option value="Re-joined">Status: Re-joined</option>
+      <option value="Final Exit">Status: Final Exit</option>
+      <option value="Terminated">Status: Terminated</option>
+      <option value="Inactive">Status: Inactive</option>
+      <option value="Cancelled">Status: Cancelled</option>
      </select>
     </div>
    </div>
@@ -643,7 +829,7 @@ export const EmployeeVacationTablePage: React.FC<
         <th className="py-3.5 px-4 text-center">Used</th>
         <th className="py-3.5 px-4 text-center">Pending</th>
         <th className="py-3.5 px-4 text-center">Remaining</th>
-        <th className="py-3.5 px-4">Remark</th>
+        <th className="py-3.5 px-4 min-w-[280px]">Remark</th>
        </tr>
       </thead>
       <tbody className="divide-y divide-slate-200 dark:divide-slate-700">
@@ -670,7 +856,7 @@ export const EmployeeVacationTablePage: React.FC<
         paginatedEmployees.map((employee) => (
          <tr
           key={employee._id}
-          className="hover:bg-slate-50 dark:hover:bg-slate-700/30 transition"
+          className={`transition ${getRowClasses(employee.formattedStatus)}`}
          >
           <td className="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-300">
            {employee.serial}
@@ -698,7 +884,9 @@ export const EmployeeVacationTablePage: React.FC<
             </div>
            </div>
           </td>
-          <td className="py-3.5 px-4 font-medium">{show(employee.emdId)}</td>
+          <td className="py-3.5 px-4 font-medium">
+           {show(employee.emdId)}
+          </td>
           <td className="py-3.5 px-4 font-medium">
            {show(employee.iqamaNumber)}
           </td>
@@ -745,10 +933,8 @@ export const EmployeeVacationTablePage: React.FC<
           <td className="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
            {employee.remainingDays} d
           </td>
-          <td
-           className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-300 max-w-[220px] truncate"
-           title={employee.remark}
-          >
+          {/* Full remark: wraps onto several lines, never cut with "..." */}
+          <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-300 min-w-[280px] max-w-[420px] whitespace-normal break-words">
            {show(employee.remark)}
           </td>
          </tr>
