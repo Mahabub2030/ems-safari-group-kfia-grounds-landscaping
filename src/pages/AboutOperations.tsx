@@ -1,3 +1,5 @@
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 import {
  Award,
  Building2,
@@ -5,15 +7,17 @@ import {
  ChevronRight,
  Clock,
  Eye,
+ FileSpreadsheet,
+ FileText,
  Layers,
  Mail,
  Phone,
  ShieldCheck,
- Sparkles,
  TreePine,
  Users,
 } from "lucide-react";
 import { useState } from "react";
+import * as XLSX from "xlsx";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -33,7 +37,10 @@ import {
  DialogTitle,
 } from "@/components/ui/dialog";
 
-// Role & Hierarchy Types
+// ==========================================
+// TYPES
+// ==========================================
+
 type DivisionType =
  | "Executive"
  | "Operations"
@@ -55,7 +62,97 @@ interface OrganizationalRole {
  headcount: number;
 }
 
-// Hierarchy Dataset matching Safari Group EMS style
+// Shift A / Shift B head counts
+interface ShiftCount {
+ a: number;
+ b: number;
+}
+
+interface ChartUnit {
+ title: string; // Supervisor card title
+ caption: string; // small label under the column
+ supervisor: ShiftCount;
+ technician: ShiftCount;
+ labor: ShiftCount;
+}
+
+// ==========================================
+// ORG CHART DATA (edit numbers here)
+// ==========================================
+
+const managerCount: ShiftCount = { a: 1, b: 0 }; // "Shift A: 1" on the banners
+const landscapingEngineer: ShiftCount = { a: 3, b: 0 };
+const landscapingAdmin: ShiftCount = { a: 3, b: 2 };
+const roadsEngineer: ShiftCount = { a: 1, b: 0 };
+
+const landscapingUnits: ChartUnit[] = [
+ {
+  title: "Nursery Supervisor",
+  caption: "Nursery",
+  supervisor: { a: 2, b: 0 },
+  technician: { a: 3, b: 2 },
+  labor: { a: 19, b: 0 },
+ },
+ {
+  title: "Irrigation Supervisor",
+  caption: "Irrigation",
+  supervisor: { a: 1, b: 1 },
+  technician: { a: 4, b: 2 },
+  labor: { a: 18, b: 4 },
+ },
+ {
+  title: "Landscaping Supervisor",
+  caption: "Landscaping",
+  supervisor: { a: 5, b: 3 },
+  technician: { a: 2, b: 4 },
+  labor: { a: 43, b: 20 },
+ },
+ {
+  title: "Electrical Supervisor",
+  caption: "Electrical",
+  supervisor: { a: 1, b: 0 },
+  technician: { a: 1, b: 1 },
+  labor: { a: 2, b: 2 },
+ },
+ {
+  title: "Pest Control Supervisor",
+  caption: "Pest Control",
+  supervisor: { a: 1, b: 0 },
+  technician: { a: 0, b: 0 },
+  labor: { a: 1, b: 0 },
+ },
+];
+
+const roadsUnits: ChartUnit[] = [
+ {
+  title: "Roads & Ground Supervisor",
+  caption: "Roads & Grounds",
+  supervisor: { a: 3, b: 1 },
+  technician: { a: 4, b: 2 },
+  labor: { a: 23, b: 10 },
+ },
+ {
+  title: "Workshop Supervisor",
+  caption: "Workshop",
+  supervisor: { a: 1, b: 0 },
+  technician: { a: 3, b: 0 },
+  labor: { a: 5, b: 0 },
+ },
+];
+
+const landscapingGroups = [
+ "Landscaping",
+ "Irrigation",
+ "Nursery",
+ "Pest Control",
+ "Street Light",
+];
+const roadsGroups = ["Roads and Grounds", "Workshop"];
+
+// ==========================================
+// ROLE TABLE DATA
+// ==========================================
+
 const orgHierarchyData: OrganizationalRole[] = [
  {
   id: "ROLE-001",
@@ -161,6 +258,222 @@ const orgHierarchyData: OrganizationalRole[] = [
  },
 ];
 
+// ==========================================
+// ORG CHART BUILDING BLOCKS
+// ==========================================
+
+type Accent = "top" | "teal" | "slate";
+
+const ACCENT_CLASSES: Record<Accent, string> = {
+ top: "border-t-4 border-t-[#0e7a6e]",
+ teal: "border-l-4 border-l-[#0e7a6e]",
+ slate: "border-l-4 border-l-slate-500",
+};
+
+const LINE = "bg-slate-700 dark:bg-slate-400";
+
+// "A: 3   B: 0" (zeros turn red when redZero is on)
+const Counts = ({
+ counts,
+ redZero = false,
+ compact = false,
+}: {
+ counts: ShiftCount;
+ redZero?: boolean;
+ compact?: boolean;
+}) => {
+ const cell = (label: string, value: number) => (
+  <span
+   className={
+    redZero && value === 0
+     ? "text-red-600 font-semibold"
+     : "text-slate-600 dark:text-slate-300"
+   }
+  >
+   {label}: {value}
+  </span>
+ );
+ return (
+  <div
+   className={`flex items-center justify-center gap-3 ${compact ? "text-xs" : "text-sm"
+    }`}
+  >
+   {cell("A", counts.a)}
+   {cell("B", counts.b)}
+  </div>
+ );
+};
+
+const ChartCard = ({
+ title,
+ counts,
+ accent,
+ redZero,
+ large = false,
+ className = "",
+}: {
+ title: string;
+ counts: ShiftCount;
+ accent: Accent;
+ redZero?: boolean;
+ large?: boolean;
+ className?: string;
+}) => (
+ <div
+  className={`bg-white dark:bg-slate-950 rounded-md border border-slate-200 dark:border-slate-800 shadow-sm px-2 py-3 text-center space-y-1 ${ACCENT_CLASSES[accent]} ${className}`}
+ >
+  <p
+   className={`font-bold leading-tight text-slate-900 dark:text-slate-100 ${large ? "text-base" : "text-xs"
+    }`}
+  >
+   {title}
+  </p>
+  <Counts counts={counts} redZero={redZero} compact={!large} />
+ </div>
+);
+
+const ManagerBanner = ({
+ title,
+ subtitle,
+}: {
+ title: string;
+ subtitle: string;
+}) => (
+ <div className="bg-[#0e7a6e] text-white rounded-md shadow-sm text-center py-2.5 px-4">
+  <p className="font-bold uppercase tracking-wide text-lg leading-tight">
+   {title}
+  </p>
+  <p className="text-xs text-white/85">{subtitle}</p>
+ </div>
+);
+
+// One vertical stack: Supervisor -> Technician -> Labor -> caption
+const UnitColumn = ({
+ unit,
+ index,
+ total,
+}: {
+ unit: ChartUnit;
+ index: number;
+ total: number;
+}) => (
+ <div className="relative flex-1 min-w-[120px] px-1 pt-5">
+  {/* vertical stub from the bus line */}
+  <span className={`absolute top-0 left-1/2 w-px h-5 ${LINE}`} />
+  {/* horizontal bus line segment */}
+  {total > 1 && (
+   <span
+    className={`absolute top-0 h-px ${LINE} ${index === 0
+      ? "left-1/2 right-0"
+      : index === total - 1
+       ? "left-0 right-1/2"
+       : "left-0 right-0"
+     }`}
+   />
+  )}
+
+  <div className="space-y-3">
+   <ChartCard
+    title={unit.title}
+    counts={unit.supervisor}
+    accent="top"
+    className="min-h-[84px] flex flex-col justify-center"
+   />
+   <ChartCard title="Technician" counts={unit.technician} accent="teal" className="py-4" />
+   <ChartCard title="Labor" counts={unit.labor} accent="slate" className="py-4" />
+  </div>
+
+  <p className="text-center text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+   {unit.caption}
+  </p>
+ </div>
+);
+
+const VLine = ({ h = "h-4" }: { h?: string }) => (
+ <div className={`w-px ${h} ${LINE} mx-auto`} />
+);
+
+// ==========================================
+// EXPORT (Excel + PDF A3)
+// ==========================================
+
+const EXPORT_HEAD = ["Division", "Group", "Position", "Shift A", "Shift B", "Total"];
+
+const buildExportRows = (): (string | number)[][] => {
+ const rows: (string | number)[][] = [];
+ const add = (
+  division: string,
+  group: string,
+  position: string,
+  c: ShiftCount,
+ ) => rows.push([division, group, position, c.a, c.b, c.a + c.b]);
+
+ add("Landscaping", "Management", "Landscaping Manager", managerCount);
+ add("Landscaping", "Management", "Engineer", landscapingEngineer);
+ add("Landscaping", "Management", "Admin", landscapingAdmin);
+ landscapingUnits.forEach((u) => {
+  add("Landscaping", u.caption, u.title, u.supervisor);
+  add("Landscaping", u.caption, "Technician", u.technician);
+  add("Landscaping", u.caption, "Labor", u.labor);
+ });
+
+ add("Roads & Grounds", "Management", "Roads & Grounds Manager", managerCount);
+ add("Roads & Grounds", "Management", "Roads Engineer", roadsEngineer);
+ roadsUnits.forEach((u) => {
+  add("Roads & Grounds", u.caption, u.title, u.supervisor);
+  add("Roads & Grounds", u.caption, "Technician", u.technician);
+  add("Roads & Grounds", u.caption, "Labor", u.labor);
+ });
+
+ return rows;
+};
+
+const sumColumn = (rows: (string | number)[][], col: number) =>
+ rows.reduce((t, r) => t + Number(r[col]), 0);
+
+const handleExportExcel = () => {
+ const rows = buildExportRows();
+ const data = [
+  EXPORT_HEAD,
+  ...rows,
+  ["TOTAL", "", "", sumColumn(rows, 3), sumColumn(rows, 4), sumColumn(rows, 5)],
+ ];
+ const ws = XLSX.utils.aoa_to_sheet(data);
+ ws["!cols"] = [{ wch: 18 }, { wch: 18 }, { wch: 30 }, { wch: 10 }, { wch: 10 }, { wch: 10 }];
+ const wb = XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb, ws, "Organization Chart");
+ XLSX.writeFile(wb, `Ground_Landscaping_Org_Chart_${Date.now()}.xlsx`);
+};
+
+const handleExportPDF = () => {
+ const rows = buildExportRows();
+ const doc = new jsPDF("landscape", "mm", "a3");
+
+ doc.setFontSize(18);
+ doc.text("Ground & Landscaping - Organization Chart", 14, 16);
+ doc.setFontSize(10);
+ doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 23);
+
+ autoTable(doc, {
+  head: [EXPORT_HEAD],
+  body: rows,
+  foot: [
+   ["TOTAL", "", "", sumColumn(rows, 3), sumColumn(rows, 4), sumColumn(rows, 5)],
+  ],
+  startY: 28,
+  theme: "striped",
+  headStyles: { fillColor: [14, 122, 110] }, // teal
+  footStyles: { fillColor: [14, 122, 110], textColor: 255 },
+  styles: { fontSize: 10 },
+ });
+
+ doc.save(`Ground_Landscaping_Org_Chart_${Date.now()}.pdf`);
+};
+
+// ==========================================
+// MAIN COMPONENT
+// ==========================================
+
 export default function AboutOperations() {
  const [selectedRole, setSelectedRole] = useState<OrganizationalRole | null>(
   null,
@@ -228,9 +541,25 @@ export default function AboutOperations() {
      </p>
     </div>
 
-    <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-     <TreePine className="w-4 h-4" /> Download Company Profile
-    </Button>
+    <div className="flex flex-wrap items-center gap-3">
+     <Button
+      variant="outline"
+      onClick={handleExportExcel}
+      className="gap-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+     >
+      <FileSpreadsheet className="w-4 h-4" /> Excel
+     </Button>
+     <Button
+      variant="outline"
+      onClick={handleExportPDF}
+      className="gap-2 border-rose-600 text-rose-600 hover:bg-rose-50"
+     >
+      <FileText className="w-4 h-4" /> PDF (A3)
+     </Button>
+     <Button className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+      <TreePine className="w-4 h-4" /> Download Company Profile
+     </Button>
+    </div>
    </div>
 
    {/* Top Banner KPI Grid */}
@@ -300,103 +629,147 @@ export default function AboutOperations() {
     </Card>
    </div>
 
-   {/* Organizational Structure Chart Overview */}
-   <Card>
-    <CardHeader>
-     <CardTitle className="text-xl flex items-center gap-2">
-      <Sparkles className="w-5 h-5 text-emerald-600" />
-      Operations Organizational Hierarchy
-     </CardTitle>
-     <CardDescription>
-      Visual map representing leadership flow, project reporting routes,
-      and on-field execution channels.
-     </CardDescription>
-    </CardHeader>
-    <CardContent>
-     <div className="p-6 bg-slate-50/50 dark:bg-slate-900/40 rounded-xl border border-dashed border-slate-200 dark:border-slate-800 space-y-6">
-      {/* Tier 1 - Top Leadership */}
-      <div className="flex justify-center">
-       <div className="w-full max-w-sm p-4 bg-white dark:bg-slate-950 rounded-lg border-2 border-emerald-600 shadow-md text-center space-y-1">
-        <Badge className="bg-emerald-600 text-white mb-1">
-         Top Executive
-        </Badge>
-        <h3 className="font-bold text-base">
-         General Manager / Director
-        </h3>
-        <p className="text-xs text-muted-foreground">
-         Mahabub Alam (EMP-001)
+   {/* ===================================================== */}
+   {/* ORGANIZATION CHART (matches the reference image)      */}
+   {/* ===================================================== */}
+   <Card className="overflow-hidden border-t-4 border-t-[#0e7a6e]">
+    <CardContent className="p-0">
+     <div className="overflow-x-auto">
+      <div className="min-w-[1180px] bg-slate-50 dark:bg-slate-900/60">
+       {/* Chart header: logo slots + titles */}
+       <div className="relative px-6 pt-5 pb-3 text-center">
+        <div className="absolute left-6 top-5 text-[10px] font-bold text-slate-400 tracking-wider">
+         LOGO
+        </div>
+        <p className="text-sm font-bold tracking-[0.25em] text-[#0e7a6e] uppercase">
+         Ground &amp; Landscaping
         </p>
-        <p className="text-[11px] text-emerald-600 font-medium pt-1">
-         Oversees Overall Group Strategy & EMS Systems
-        </p>
-       </div>
-      </div>
-
-      {/* Connecting Vertical Line */}
-      <div className="w-px h-6 bg-slate-300 dark:bg-slate-700 mx-auto" />
-
-      {/* Tier 2 - Department Managers */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-3xl mx-auto">
-       <div className="p-4 bg-white dark:bg-slate-950 rounded-lg border shadow-sm text-center space-y-1 relative">
-        {getDepartmentBadge("Operations")}
-        <h4 className="font-semibold text-sm mt-1">
-         Operations Manager
-        </h4>
-        <p className="text-xs text-muted-foreground">
-         John Doe (EMP-002)
-        </p>
-        <span className="text-[10px] text-muted-foreground block">
-         Field Execution & Logistics
-        </span>
+        <h2 className="text-2xl font-bold mt-1 text-slate-900 dark:text-slate-100">
+         Organization Chart
+        </h2>
+        {/* Swap these two boxes for <img src="..." /> company logos */}
+        <div className="absolute right-6 top-3 flex items-center gap-3">
+         <div className="h-10 w-28 rounded border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] text-slate-400">
+          SAFARI logo
+         </div>
+         <div className="h-10 w-28 rounded border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-[10px] text-slate-400">
+          Dammam Airports logo
+         </div>
+        </div>
        </div>
 
-       <div className="p-4 bg-white dark:bg-slate-950 rounded-lg border shadow-sm text-center space-y-1">
-        {getDepartmentBadge("Design & Build")}
-        <h4 className="font-semibold text-sm mt-1">
-         Landscape Architect & Design Lead
-        </h4>
-        <p className="text-xs text-muted-foreground">
-         Sarah Jenkins (EMP-005)
-        </p>
-        <span className="text-[10px] text-muted-foreground block">
-         3D Layouts & Engineering
-        </span>
+       {/* Two halves separated by a dashed divider */}
+       <div className="flex px-6 pb-6">
+        {/* LEFT: Landscaping */}
+        <div className="flex-[5] pr-4 space-y-0">
+         <div className="max-w-[490px] mx-auto">
+          <ManagerBanner
+           title="Landscaping Manager"
+           subtitle="Shift A: 1"
+          />
+         </div>
+         <VLine />
+
+         {/* Engineer + Admin */}
+         <div className="grid grid-cols-2 gap-1 max-w-[580px] mx-auto">
+          <ChartCard
+           title="Engineer"
+           counts={landscapingEngineer}
+           accent="teal"
+           large
+           className="py-4"
+          />
+          <ChartCard
+           title="Admin"
+           counts={landscapingAdmin}
+           accent="teal"
+           large
+           className="py-4"
+          />
+         </div>
+
+         {/* Supervisor columns on a bus line */}
+         <div className="flex mt-0">
+          {landscapingUnits.map((u, i) => (
+           <UnitColumn
+            key={u.caption}
+            unit={u}
+            index={i}
+            total={landscapingUnits.length}
+           />
+          ))}
+         </div>
+        </div>
+
+        {/* Dashed divider */}
+        <div className="border-l border-dashed border-slate-300 dark:border-slate-700" />
+
+        {/* RIGHT: Roads & Grounds */}
+        <div className="flex-[2.1] pl-4">
+         <div className="max-w-[490px] mx-auto">
+          <ManagerBanner
+           title="Roads & Grounds Manager"
+           subtitle="Shift A: 1"
+          />
+         </div>
+         <VLine />
+
+         <div className="max-w-[270px] mx-auto">
+          <ChartCard
+           title="Roads Engineer"
+           counts={roadsEngineer}
+           accent="teal"
+           large
+           className="py-4"
+          />
+         </div>
+
+         <div className="flex">
+          {roadsUnits.map((u, i) => (
+           <UnitColumn
+            key={u.caption}
+            unit={u}
+            index={i}
+            total={roadsUnits.length}
+           />
+          ))}
+         </div>
+        </div>
        </div>
-      </div>
 
-      {/* Connecting Vertical Line */}
-      <div className="w-px h-6 bg-slate-300 dark:bg-slate-700 mx-auto" />
-
-      {/* Tier 3 - Supervisory & Field Execution */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-       <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border text-center space-y-1">
-        {getDepartmentBadge("Maintenance")}
-        <h5 className="font-medium text-xs mt-1">
-         Grounds & Lawn Supervisor
-        </h5>
-        <p className="text-[11px] text-muted-foreground">
-         Ahmed Al-Mansoor
+       {/* Footer: organizational groups */}
+       <div className="bg-slate-100/80 dark:bg-slate-900 border-t px-6 py-5">
+        <p className="text-xs font-bold uppercase tracking-wider text-[#0e7a6e]">
+         Organizational Groups
         </p>
-       </div>
-
-       <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border text-center space-y-1">
-        {getDepartmentBadge("Safety & Quality")}
-        <h5 className="font-medium text-xs mt-1">
-         HSE & Quality Inspector
-        </h5>
-        <p className="text-[11px] text-muted-foreground">
-         Tariq Hassan
-        </p>
-       </div>
-
-       <div className="p-3 bg-white dark:bg-slate-950 rounded-lg border text-center space-y-1">
-        {getDepartmentBadge("Operations")}
-        <h5 className="font-medium text-xs mt-1">
-         Crew Leaders & Technicians
-        </h5>
-        <p className="text-[11px] text-muted-foreground">
-         15+ Field Team Leads
-        </p>
+        <div className="border-t border-slate-200 dark:border-slate-700 mt-2 pt-4 flex justify-between gap-8">
+         <div>
+          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+           Landscaping Manager
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+           {landscapingGroups.map((g, i) => (
+            <span key={g}>
+             {i > 0 && <span className="mx-1.5">·</span>}
+             {i + 1}. {g}
+            </span>
+           ))}
+          </p>
+         </div>
+         <div>
+          <p className="text-sm font-bold text-slate-900 dark:text-slate-100">
+           Roads &amp; Grounds Manager
+          </p>
+          <p className="text-xs text-slate-600 dark:text-slate-300 mt-2">
+           {roadsGroups.map((g, i) => (
+            <span key={g}>
+             {i > 0 && <span className="mx-1.5">·</span>}
+             {i + 1}. {g}
+            </span>
+           ))}
+          </p>
+         </div>
+        </div>
        </div>
       </div>
      </div>
