@@ -49,5 +49,22 @@
     "nationality": "Saudi",
     "status": "",
     "remark": ""
+  },
+  {
+    "slNo": 4,
+    "employeeId": "67666",
+    "name": "Abdullah Aldarweesh",
+    "email": "abdullah.aldarweesh@domain.com",
+    "designation": "Ground Manager",
+    "idNumber": "1068924107",
+    "dacoId": "DMM-011-0230",
+    "group": "Administrative / Management",
+    "companyName": "",
+    "iqamaExpiryDate": "Saudi",
+    "dacoExpiryDate": "2027-Apr-27",
+    "workLocation": "Ground & Landscaping",
+    "nationality": "Saudi",
+    "status": "",
+    "remark": ""
   }
 ]

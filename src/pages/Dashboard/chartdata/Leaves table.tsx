@@ -42,7 +42,7 @@ export function LeavesTable({ records }: { records: VacationRecord[] }) {
      </CardDescription>
     </CardHeader>
     <CardContent className="overflow-x-auto">
-     <Table>
+     <Table className="min-w-[720px] w-full">
       <TableHeader>
        <TableRow>
         <TableHead>Employee</TableHead>

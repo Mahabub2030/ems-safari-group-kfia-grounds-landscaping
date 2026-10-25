@@ -495,8 +495,8 @@ export const EmployeeVacationTablePage: React.FC<
     );
    case "Final Exit":
     return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-900 text-white">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-white"></span>
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-300 text-red-900 border border-red-400/50">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-red-700"></span>
       Final Exit
      </span>
     );
@@ -509,15 +509,15 @@ export const EmployeeVacationTablePage: React.FC<
     );
    case "Inactive":
     return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-400 text-yellow-950">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-yellow-900"></span>
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 border border-slate-300">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-slate-500"></span>
       Inactive
      </span>
     );
    case "Cancelled":
     return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-300 text-slate-600 dark:bg-slate-600 dark:text-slate-300">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-slate-500"></span>
+     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200">
+      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-yellow-500"></span>
       Cancelled
      </span>
     );
@@ -532,12 +532,11 @@ export const EmployeeVacationTablePage: React.FC<
  const getRowClasses = (status: VacationStatus) => {
   switch (status) {
    case "Final Exit":
-    // Full red row, all plain text turns white (badges keep their own colors)
-    return "bg-red-600 hover:bg-red-700 [&_*:not([class*=bg-])]:!text-white [&>td]:text-white";
+    return "bg-red-300/80 hover:bg-red-300 [&>td]:text-red-950";
    case "Terminated":
     return "bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 [&>td]:text-slate-500 dark:[&>td]:text-slate-400";
    case "Inactive":
-    return "bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50";
+    return "bg-slate-100 hover:bg-slate-200 [&>td]:text-slate-600";
    case "Pending":
     return "bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40";
    case "On Leave":
@@ -547,8 +546,7 @@ export const EmployeeVacationTablePage: React.FC<
    case "Re-joined":
     return "bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40";
    case "Cancelled":
-    // Disabled row: faded, grayscale, no hover or click, text not selectable
-    return "bg-slate-100 dark:bg-slate-800 opacity-50 grayscale pointer-events-none select-none [&>td]:text-slate-400 dark:[&>td]:text-slate-500";
+    return "bg-yellow-50 hover:bg-yellow-100 [&>td]:text-yellow-800";
    default:
     return "hover:bg-slate-50 dark:hover:bg-slate-700/30";
   }
