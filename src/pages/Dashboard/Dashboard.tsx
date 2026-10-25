@@ -94,9 +94,11 @@ export default function Dashboard() {
     iqamaExpiryDate?: string;
     dacoExpiryDate?: string;
   }>;
-  const dacoIdCount = rows.filter(
-    (row) => !!row.dacoId && String(row.dacoId).trim() !== "",
-  ).length;
+  const employeeDacoRows = employeesData as Array<{ dacoId?: string | null }>;
+  const dacoIdCount = employeeDacoRows.filter((employee) => {
+    const value = String(employee.dacoId ?? "").trim();
+    return value !== "" && value.toUpperCase() !== "N/A" && value.toUpperCase() !== "NULL";
+  }).length;
   const expiredIqama = rows.filter((row) => {
     const days = getDaysRemaining(row.iqamaExpiryDate);
     return days !== null && days < 0;
@@ -116,9 +118,7 @@ export default function Dashboard() {
     );
   }).length;
   const applied = rows.length;
-  const missing = rows.filter((row) => {
-    return !row.dacoId || !row.dacoExpiryDate;
-  }).length;
+  const missing = Math.max(employeeDacoRows.length - dacoIdCount, 0);
 
   return {
    total: rows.length,
