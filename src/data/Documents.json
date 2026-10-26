@@ -91,7 +91,7 @@
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1oOTJwM_685_hUk6ufsa97ZpiUFDvyCFx/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -144,7 +144,7 @@
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1tGQVShqGdXPyRuilLxP2K9d5OieeFVsR/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -188,16 +188,16 @@
       },
       "iqama": {
         "docName": "Iqama",
-        "downloadUrl": "N/A",
-        "imgUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1kq1sjNXa6cJ9IOO25-iL0NDY8OCgWFpz/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1kq1sjNXa6cJ9IOO25-iL0NDY8OCgWFpz/view?usp=sharing"
       },
       "passport": {
         "docName": "Passport",
-        "downloadUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1pFwGpjNejovfBTGp5xDWknaXN-k3pXwm/view?usp=sharing"
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/12KM2vdj1Gac5DK9YLjXNtMNp7qacHNu6/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -241,16 +241,16 @@
       },
       "iqama": {
         "docName": "Iqama",
-        "downloadUrl": "N/A",
-        "imgUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1gn5rQN0v_B4uuXVQ04Ei-OreunD40ZeL/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1gn5rQN0v_B4uuXVQ04Ei-OreunD40ZeL/view?usp=sharing"
       },
       "passport": {
         "docName": "Passport",
-        "downloadUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1HIMrMRT2LZ7lX3rezkH-y3c1bgL5y0IP/view?usp=sharing"
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1xn3RXo6QdbCHA1irUcvPqtxH-wqNvTzf/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -294,16 +294,16 @@
       },
       "iqama": {
         "docName": "Iqama",
-        "downloadUrl": "N/A",
-        "imgUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1Pm-pZtoT6C19yztv3TTnPGZpggeId7Cq/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1Pm-pZtoT6C19yztv3TTnPGZpggeId7Cq/view?usp=sharing"
       },
       "passport": {
         "docName": "Passport",
-        "downloadUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1vpiCk3y2_hytf0wRw0cFyVPYU4rvUpMv/view?usp=sharing"
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1-Gby9DR4aN07LeHamQMykYWDuei8Gsjr/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -356,7 +356,11 @@
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1MeZ6lZhu1vGMQYtiep8r7_CJHUqLGTmw/view?usp=sharing"
+      },
+      "Cv": {
+        "docName": "CV",
+        "downloadUrl": "https://drive.google.com/file/d/1FlleXlu6GBzKg9VPiVZL6KBTiXVDUvGE/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -405,11 +409,15 @@
       },
       "passport": {
         "docName": "Passport",
-        "downloadUrl": "N/A"
+        "downloadUrl": "https://www.dropbox.com/scl/fi/69shj9bcr2qvevd8477yx/401785_passprot.pdf?rlkey=qdyi9qkrx5n4pxk9v1m29r7qo&dl=0"
       },
       "others": {
         "docName": "Other Document",
         "downloadUrl": "NA"
+      },
+      "Cv": {
+        "docName": "CV",
+        "downloadUrl": "https://drive.google.com/file/d/1m71acNx6uL6aMWQ22Cx6GRo21-Sq6z4E/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -464,6 +472,10 @@
         "docName": "Other Document",
         "downloadUrl": "NA"
       },
+      "Cv": {
+        "docName": "CV",
+        "downloadUrl": "https://drive.google.com/file/d/1-dcLxESUM5h-EsFwec-Dpy2ZS5y9ZcBC/view?usp=sharing"
+      },
       "aid": {
         "docName": "A/ID",
         "downloadUrl": "NA",
@@ -496,8 +508,8 @@
       },
       "gacaCertificate": {
         "docName": "GACA Certificate",
-        "downloadUrl": "N/A",
-        "imgUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1gwqWGrAHIWnHgXgi53kO5AC-VSO13WIW/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1gwqWGrAHIWnHgXgi53kO5AC-VSO13WIW/view?usp=sharing"
       },
       "joining": {
         "docName": "Joining Document",
@@ -506,16 +518,16 @@
       },
       "iqama": {
         "docName": "Iqama",
-        "downloadUrl": "N/A",
-        "imgUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1JBXBSNvJ9I5N7Co3ny8_NiuQrB6aBorh/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1JBXBSNvJ9I5N7Co3ny8_NiuQrB6aBorh/view?usp=sharing"
       },
       "passport": {
         "docName": "Passport",
-        "downloadUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1_XW3ZC-252Zs5e2hDQTp5vGYQ5iBFRrF/view?usp=sharing"
       },
-      "others": {
-        "docName": "Other Document",
-        "downloadUrl": "NA"
+      "Cv": {
+        "docName": "CV",
+        "downloadUrl": "https://drive.google.com/file/d/1-dcLxESUM5h-EsFwec-Dpy2ZS5y9ZcBC/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",
@@ -524,8 +536,8 @@
       },
       "dacoId": {
         "docName": "DACO ID",
-        "downloadUrl": "NA",
-        "imgUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1tCzCikb8ic5AhNAyx_fBrV4ZLnUM8X_P/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1tCzCikb8ic5AhNAyx_fBrV4ZLnUM8X_P/view?usp=sharing"
       }
     }
   },

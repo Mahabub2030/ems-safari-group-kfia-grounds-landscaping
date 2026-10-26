@@ -58,6 +58,7 @@ export type DocKey =
   | "iqama"
   | "passport"
   | "others"
+  | "Cv"
   | "aid"
   | "dacoId";
 
@@ -101,6 +102,7 @@ const DOC_BUTTONS: { key: DocKey; label: string; header: string }[] = [
   { key: "joining", label: "JOINING", header: "Joining" },
   { key: "iqama", label: "IQAMA", header: "Iqama / ID" },
   { key: "passport", label: "PASSPORT", header: "Passport" },
+  { key: "Cv", label: "CV", header: "CV" },
   { key: "others", label: "OTHERS", header: "Others" },
   { key: "aid", label: "A/ID", header: "A/ID" },
   { key: "dacoId", label: "DACO", header: "DACO ID" },
