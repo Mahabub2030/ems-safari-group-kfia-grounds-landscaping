@@ -34,21 +34,551 @@
       },
       "passport": {
         "docName": "Passport",
-        "downloadUrl": "https://www.dropbox.com/scl/fi/qbyy126wvkigmxhbl8lfs/401798_Passprot.pdf?rlkey=jbcpmth1qugbuk6uui3jkces1&st=p4fyrpo8&dl=0"
+        "downloadUrl": "https://www.dropbox.com/scl/fi/qbyy126wvkigmxhbl8lfs/401798_Passprot.pdf?rlkey=jbcpmth1qugbuk6uui3jkces1&dl=0"
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "https://drive.google.com/file/d/1m71acNx6uL6aMWQ22Cx6GRo21-Sq6z4E/view?usp=sharing"
+        "downloadUrl": "NA"
       },
       "aid": {
         "docName": "A/ID",
-        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-        "imgUrl": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60"
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
       },
       "dacoId": {
         "docName": "DACO ID",
-        "downloadUrl": "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf",
-        "imgUrl": "https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=500&auto=format&fit=crop&q=60"
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0230",
+    "employeeName": "Abdullah Aldarweesh",
+    "designation": "Manager - Ground",
+    "employeeId": "67666",
+    "nationality": "Saudi",
+    "iqamaNumber": "1068924107",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0453",
+    "employeeName": "Reda Abdelmaged",
+    "designation": "Engineer",
+    "employeeId": "67574",
+    "nationality": "Egyptian",
+    "iqamaNumber": "2503732816",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-6110",
+    "employeeName": "Mohamed Elsayed",
+    "designation": "Engineer",
+    "employeeId": "67608",
+    "nationality": "Egyptian",
+    "iqamaNumber": "2485302786",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-8010",
+    "employeeName": "Afrazier Nassal",
+    "designation": "Engineer",
+    "employeeId": "68168",
+    "nationality": "Filipino",
+    "iqamaNumber": "2483842916",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-1799",
+    "employeeName": "Alex Garcia Garcia",
+    "designation": "Engineer",
+    "employeeId": "67620",
+    "nationality": "Filipino",
+    "iqamaNumber": "2489688859",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-1798",
+    "employeeName": "Mohna alkhaldi",
+    "designation": "Administrator",
+    "employeeId": "67524",
+    "nationality": "Saudi",
+    "iqamaNumber": "1092119575",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-4179",
+    "employeeName": "Sher Shah",
+    "designation": "Administrator",
+    "employeeId": "65947",
+    "nationality": "Pakistani",
+    "iqamaNumber": "2443400342",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-1355",
+    "employeeName": "Eman AlNasser",
+    "designation": "Administrator",
+    "employeeId": "67712",
+    "nationality": "Saudi",
+    "iqamaNumber": "1063800229",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0266",
+    "employeeName": "Mahabub Alam",
+    "designation": "Administrator",
+    "employeeId": "67592",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2515496525",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-1360",
+    "employeeName": "Moneer Abdulhadi M Al Nasser",
+    "designation": "Safety Supervisor",
+    "employeeId": "67941",
+    "nationality": "Saudi",
+    "iqamaNumber": "1010625711",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Administrative / Management",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
       }
     }
   }

@@ -8,10 +8,12 @@ import {
   FileSpreadsheet,
   FileText,
   Filter,
+  LayoutGrid,
   Pencil,
   Plus,
   RefreshCw,
   Search,
+  Table as TableIcon,
   Trash2,
   Users,
 } from "lucide-react";
@@ -297,6 +299,9 @@ export default function EmployeeDocuments() {
     null
   );
 
+  // Card view or table view (table is the default)
+  const [viewMode, setViewMode] = useState<"card" | "table">("table");
+
   // Which document (slide) each employee card is showing
   const [slides, setSlides] = useState<Record<string, number>>({});
   const slideHover = useRef<Record<string, boolean>>({});
@@ -409,7 +414,7 @@ export default function EmployeeDocuments() {
     uploadTarget !== null;
 
   useEffect(() => {
-    if (anyDialogOpen) return;
+    if (anyDialogOpen || viewMode !== "card") return;
     if (
       typeof window !== "undefined" &&
       window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
@@ -432,7 +437,7 @@ export default function EmployeeDocuments() {
       });
     }, SLIDE_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [paginatedDocs, anyDialogOpen]);
+  }, [paginatedDocs, anyDialogOpen, viewMode]);
 
   const handleDownload = (url: string, filename: string) => {
     if (!isValidUrl(url)) return;
@@ -805,7 +810,29 @@ export default function EmployeeDocuments() {
             </p>
           )}
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white p-0.5">
+            {(
+              [
+                { mode: "card", label: "Cards", Icon: LayoutGrid },
+                { mode: "table", label: "Table", Icon: TableIcon },
+              ] as const
+            ).map(({ mode, label, Icon }) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setViewMode(mode)}
+                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                  viewMode === mode
+                    ? "bg-slate-900 text-white"
+                    : "text-slate-600 hover:bg-slate-100"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+                {label}
+              </button>
+            ))}
+          </div>
           <Button
             onClick={handleOpenAdd}
             className="gap-2 bg-emerald-600 text-white hover:bg-emerald-700"
@@ -934,8 +961,250 @@ export default function EmployeeDocuments() {
               <FileText className="mx-auto mb-3 h-12 w-12 opacity-40" />
               <p>No employees found matching your filters.</p>
             </div>
+          ) : viewMode === "table" ? (
+            <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+              <table className="w-full min-w-[1180px] text-left text-xs">
+                <thead className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold text-slate-600">
+                  <tr>
+                    <th className="px-3 py-2.5">#</th>
+                    <th className="px-3 py-2.5">Employee</th>
+                    <th className="px-3 py-2.5">Employee ID</th>
+                    <th className="px-3 py-2.5">Iqama / National ID no.</th>
+                    <th className="px-3 py-2.5">Nationality</th>
+                    <th className="px-3 py-2.5">Group</th>
+                    <th className="px-3 py-2.5">Iqama / ID</th>
+                    <th className="px-3 py-2.5">Passport</th>
+                    <th className="px-3 py-2.5">GACA</th>
+                    <th className="px-3 py-2.5">Other documents</th>
+                    <th className="px-3 py-2.5">Complete</th>
+                    <th className="px-3 py-2.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {paginatedDocs.map((doc, rowIndex) => {
+                    const missing = getMissingDocs(doc);
+                    const completion = Math.round(
+                      ((DOC_BUTTONS.length - missing.length) / DOC_BUTTONS.length) * 100
+                    );
+                    const iqamaValue = isValidUrl(doc.iqamaNumber)
+                      ? doc.iqamaNumber.trim()
+                      : "N/A";
+                    const rowNumber =
+                      pageSize === "all"
+                        ? rowIndex + 1
+                        : (currentPage - 1) * Number(pageSize) + rowIndex + 1;
+                    const otherFiles = OTHER_DOC_KEYS.filter(
+                      (key) => doc.docs?.[key]
+                    );
+
+                    const renderDocCell = (key: DocKey) => {
+                      const file = doc.docs?.[key];
+                      const title = docLabel(key, doc.nationality);
+                      const url = getFileUrl(file);
+                      if (!file) {
+                        return (
+                          <button
+                            type="button"
+                            onClick={() => openUpload(doc, key)}
+                            className="flex items-center gap-1 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[11px] font-semibold text-slate-500 transition hover:border-slate-400 hover:bg-slate-50"
+                          >
+                            <Plus className="h-3 w-3" /> Add
+                          </button>
+                        );
+                      }
+                      return (
+                        <div className="flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openPreview(url, `${doc.employeeName} — ${title}`)
+                            }
+                            title={`View ${title}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-50"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(url, title)}
+                            title={`Download ${title}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-50"
+                          >
+                            <Download className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openUpload(doc, key)}
+                            title={`Update ${title}`}
+                            className="flex h-7 w-7 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-50"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      );
+                    };
+
+                    return (
+                      <tr key={doc.docId} className="align-middle transition hover:bg-slate-50/70">
+                        <td className="px-3 py-2.5 text-slate-400">{rowNumber}</td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center gap-2">
+                            {doc.photoUrl ? (
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  openPreview(doc.photoUrl!, `${doc.employeeName} — Photo`)
+                                }
+                                title="View employee photo"
+                                className="shrink-0"
+                              >
+                                <img
+                                  src={doc.photoUrl}
+                                  alt={doc.employeeName || "Employee"}
+                                  className="h-8 w-8 rounded-full object-cover"
+                                />
+                              </button>
+                            ) : (
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-slate-200 text-[11px] font-bold text-slate-600">
+                                {getInitials(doc.employeeName)}
+                              </div>
+                            )}
+                            <div className="min-w-0">
+                              <p
+                                className="max-w-[200px] truncate text-sm font-semibold text-slate-800"
+                                title={doc.employeeName}
+                              >
+                                {doc.employeeName || "Unnamed Employee"}
+                              </p>
+                              <p
+                                className="max-w-[200px] truncate text-[11px] text-slate-500"
+                                title={doc.designation}
+                              >
+                                {doc.designation || "No designation"}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 font-medium text-slate-700">
+                          {doc.employeeId || "N/A"}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span className="font-semibold text-slate-800">{iqamaValue}</span>
+                          <span className="ml-1 text-[10px] text-slate-400">
+                            {idLabel(doc.nationality)}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-slate-700">
+                          {doc.nationality || "N/A"}
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <span className="inline-block max-w-[150px] truncate rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                            {doc.group || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5">{renderDocCell("iqama")}</td>
+                        <td className="px-3 py-2.5">{renderDocCell("passport")}</td>
+                        <td className="px-3 py-2.5">{renderDocCell("gacaCertificate")}</td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex max-w-[260px] flex-wrap items-center gap-1">
+                            {otherFiles.map((key) => {
+                              const file = doc.docs?.[key];
+                              const title = docLabel(key, doc.nationality);
+                              return (
+                                <div
+                                  key={key}
+                                  className="flex items-center overflow-hidden rounded-md border border-slate-200 bg-white text-[10px] font-medium text-slate-700"
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openPreview(getFileUrl(file), `${doc.employeeName} — ${title}`)
+                                    }
+                                    className="px-2 py-1 hover:bg-slate-50"
+                                    title={`View ${title}`}
+                                  >
+                                    {title}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownload(getFileUrl(file), title)}
+                                    className="border-l border-slate-200 px-1.5 py-1 hover:bg-slate-50"
+                                    title={`Download ${title}`}
+                                  >
+                                    <Download className="h-3 w-3" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openUpload(doc, key)}
+                                    className="border-l border-slate-200 px-1.5 py-1 hover:bg-slate-50"
+                                    title={`Update ${title}`}
+                                  >
+                                    <RefreshCw className="h-3 w-3" />
+                                  </button>
+                                </div>
+                              );
+                            })}
+                            <button
+                              type="button"
+                              onClick={() => openUploadOther(doc)}
+                              className="flex items-center gap-0.5 rounded-md border border-dashed border-slate-300 px-2 py-1 text-[10px] font-semibold text-slate-500 transition hover:bg-slate-50"
+                            >
+                              <Plus className="h-3 w-3" /> Add
+                            </button>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div
+                            className="flex items-center gap-2"
+                            title={
+                              missing.length === 0
+                                ? "All documents added"
+                                : `Missing: ${missing.map((m) => m.header).join(", ")}`
+                            }
+                          >
+                            <div className="h-1.5 w-14 overflow-hidden rounded-full bg-slate-100">
+                              <div
+                                className={`h-full rounded-full ${
+                                  missing.length === 0 ? "bg-emerald-500" : "bg-amber-400"
+                                }`}
+                                style={{ width: `${completion}%` }}
+                              />
+                            </div>
+                            <span className="font-semibold text-slate-700">{completion}%</span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleOpenEdit(doc)}
+                              className="h-7 gap-1 rounded-md px-2 text-[11px] text-slate-600 hover:bg-blue-50 hover:text-blue-700"
+                            >
+                              <Pencil className="h-3 w-3" />
+                              Edit
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => handleOpenDelete(doc)}
+                              className="h-7 gap-1 rounded-md px-2 text-[11px] text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
               {paginatedDocs.map((doc, index) => {
                 const missing = getMissingDocs(doc);
                 const completed = DOC_BUTTONS.length - missing.length;
@@ -964,10 +1233,10 @@ export default function EmployeeDocuments() {
                   doc.group,
                   doc.employeeId ? `ID ${doc.employeeId}` : "",
                   doc.nationality,
-                  doc.iqamaNumber
-                    ? `${idLabel(doc.nationality)} ${doc.iqamaNumber}`
-                    : "",
                 ].filter(Boolean) as string[];
+                const iqamaValue = isValidUrl(doc.iqamaNumber)
+                  ? doc.iqamaNumber.trim()
+                  : "N/A";
                 const otherFiles = OTHER_DOC_KEYS.filter(
                   (key) => doc.docs?.[key]
                 );
@@ -975,11 +1244,11 @@ export default function EmployeeDocuments() {
                 return (
                   <Card
                     key={doc.docId}
-                    className="relative flex h-full flex-col rounded-[36px] border-0 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.10)]"
+                    className="relative flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-3 shadow-sm transition-shadow hover:shadow-md"
                   >
                     {/* Document slider: Iqama / Passport / GACA */}
                     <div
-                      className="relative h-56 w-full overflow-hidden rounded-[28px]"
+                      className="relative h-36 w-full overflow-hidden rounded-xl"
                       style={{ backgroundColor: accent.soft }}
                       onMouseEnter={() => {
                         slideHover.current[doc.docId] = true;
@@ -1011,16 +1280,16 @@ export default function EmployeeDocuments() {
                                 onClick={() =>
                                   openPreview(url, `${doc.employeeName} — ${title}`)
                                 }
-                                className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+                                className="absolute inset-0 flex flex-col items-center justify-center gap-1"
                                 style={{ color: accent.ink }}
                               >
                                 {file ? (
-                                  <FileText className="h-14 w-14 opacity-60" />
+                                  <FileText className="h-9 w-9 opacity-60" />
                                 ) : (
-                                  <Plus className="h-14 w-14 opacity-40" />
+                                  <Plus className="h-9 w-9 opacity-40" />
                                 )}
-                                <span className="text-xs font-medium opacity-70">
-                                  {file ? "Tap to view" : `No ${title} yet`}
+                                <span className="text-[11px] font-medium opacity-70">
+                                  {file ? "Click to view" : `No ${title} yet`}
                                 </span>
                               </button>
                               {thumb && (
@@ -1048,13 +1317,13 @@ export default function EmployeeDocuments() {
                       </div>
 
                       {/* Type tab */}
-                      <div className="absolute left-0 top-0 z-10 max-w-[65%] truncate rounded-br-[22px] bg-white pb-2.5 pl-6 pr-6 pt-3 text-sm font-medium text-slate-700 shadow-[0_6px_12px_rgba(15,23,42,0.12)]">
+                      <div className="absolute left-0 top-0 z-10 max-w-[65%] truncate rounded-br-xl bg-white pb-1.5 pl-3 pr-3 pt-1.5 text-xs font-semibold text-slate-700 shadow-sm">
                         {activeTitle}
                       </div>
 
                       {/* Status */}
                       <span
-                        className="absolute right-3 top-3 z-10 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white"
+                        className="absolute right-2 top-2 z-10 rounded-full px-2 py-0.5 text-[10px] font-semibold text-white"
                         style={{ backgroundColor: activeFile ? accent.main : "#94a3b8" }}
                       >
                         {activeFile ? "Added" : "Not added"}
@@ -1065,38 +1334,38 @@ export default function EmployeeDocuments() {
                         type="button"
                         onClick={() => goTo(active - 1)}
                         title="Previous document"
-                        className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow transition hover:bg-white"
+                        className="absolute left-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-white"
                       >
-                        <ChevronLeft className="h-5 w-5 text-slate-700" />
+                        <ChevronLeft className="h-4 w-4 text-slate-700" />
                       </button>
                       <button
                         type="button"
                         onClick={() => goTo(active + 1)}
                         title="Next document"
-                        className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow transition hover:bg-white"
+                        className="absolute right-1.5 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:bg-white"
                       >
-                        <ChevronRight className="h-5 w-5 text-slate-700" />
+                        <ChevronRight className="h-4 w-4 text-slate-700" />
                       </button>
 
                       {/* Dots */}
-                      <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+                      <div className="absolute bottom-2 left-1/2 z-10 flex -translate-x-1/2 gap-1">
                         {slideKeys.map((key, dotIndex) => (
                           <button
                             key={key}
                             type="button"
                             onClick={() => goTo(dotIndex)}
                             title={docLabel(key, doc.nationality)}
-                            className={`h-2 rounded-full bg-white shadow transition-all ${
-                              dotIndex === active ? "w-6" : "w-2 opacity-60"
+                            className={`h-1.5 rounded-full bg-white shadow-sm transition-all ${
+                              dotIndex === active ? "w-4" : "w-1.5 opacity-60"
                             }`}
                           />
                         ))}
                       </div>
                     </div>
 
-                    {/* Name + completion pill */}
-                    <div className="mt-4 flex items-center justify-between gap-3 px-1">
-                      <div className="flex min-w-0 items-center gap-2.5">
+                    {/* Name + completion */}
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <div className="flex min-w-0 items-center gap-2">
                         {doc.photoUrl ? (
                           <button
                             type="button"
@@ -1112,26 +1381,34 @@ export default function EmployeeDocuments() {
                             <img
                               src={doc.photoUrl}
                               alt={doc.employeeName || "Employee"}
-                              className="h-10 w-10 rounded-full object-cover"
+                              className="h-8 w-8 rounded-full object-cover"
                             />
                           </button>
                         ) : (
                           <div
-                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold"
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[11px] font-bold"
                             style={{ backgroundColor: accent.soft, color: accent.ink }}
                           >
                             {getInitials(doc.employeeName)}
                           </div>
                         )}
-                        <h2
-                          className="line-clamp-1 text-lg font-extrabold text-slate-700"
-                          title={doc.employeeName}
-                        >
-                          {doc.employeeName || "Unnamed Employee"}
-                        </h2>
+                        <div className="min-w-0">
+                          <h2
+                            className="truncate text-sm font-bold leading-tight text-slate-800"
+                            title={doc.employeeName}
+                          >
+                            {doc.employeeName || "Unnamed Employee"}
+                          </h2>
+                          <p
+                            className="truncate text-xs text-slate-500"
+                            title={doc.designation}
+                          >
+                            {doc.designation || "No designation"}
+                          </p>
+                        </div>
                       </div>
                       <span
-                        className="shrink-0 rounded-full px-3.5 py-1 text-sm font-medium text-white"
+                        className="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
                         style={{ backgroundColor: accent.main }}
                         title={
                           missing.length === 0
@@ -1143,19 +1420,12 @@ export default function EmployeeDocuments() {
                       </span>
                     </div>
 
-                    <p
-                      className="mt-2 line-clamp-1 px-1 text-sm text-slate-500"
-                      title={doc.designation}
-                    >
-                      {doc.designation || "No designation"}
-                    </p>
-
                     {tags.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2 px-1">
+                      <div className="mt-2 flex flex-wrap gap-1">
                         {tags.map((tag) => (
                           <span
                             key={tag}
-                            className="rounded-full px-3 py-0.5 text-xs"
+                            className="max-w-full truncate rounded-full px-2 py-0.5 text-[10px] font-medium"
                             style={{ backgroundColor: accent.soft, color: accent.ink }}
                           >
                             {tag}
@@ -1164,8 +1434,21 @@ export default function EmployeeDocuments() {
                       </div>
                     )}
 
+                    {/* Iqama / National ID number from the JSON, N/A if empty */}
+                    <div className="mt-2 flex items-center justify-between gap-2 rounded-lg bg-slate-50 px-3 py-1.5 ring-1 ring-slate-100">
+                      <span className="text-[11px] font-medium text-slate-500">
+                        {idLabel(doc.nationality)} number
+                      </span>
+                      <span
+                        className="truncate text-xs font-bold text-slate-800"
+                        title={iqamaValue}
+                      >
+                        {iqamaValue}
+                      </span>
+                    </div>
+
                     {/* Document tabs (jump to a slide) */}
-                    <div className="mt-4 grid grid-cols-3 gap-2 px-1">
+                    <div className="mt-2 grid grid-cols-3 gap-1">
                       {slideKeys.map((key, tabIndex) => {
                         const isActive = tabIndex === active;
                         const has = Boolean(doc.docs?.[key]);
@@ -1174,11 +1457,11 @@ export default function EmployeeDocuments() {
                             key={key}
                             type="button"
                             onClick={() => goTo(tabIndex)}
-                            className="flex items-center justify-center gap-1.5 truncate rounded-full border px-2 py-1.5 text-[11px] font-bold transition"
+                            className="flex items-center justify-center gap-1 truncate rounded-md border px-1.5 py-1 text-[10px] font-semibold transition"
                             style={
                               isActive
                                 ? { backgroundColor: accent.main, borderColor: accent.main, color: "#fff" }
-                                : { borderColor: accent.soft, color: accent.ink }
+                                : { borderColor: "#e2e8f0", color: "#475569" }
                             }
                           >
                             <span
@@ -1198,144 +1481,133 @@ export default function EmployeeDocuments() {
                     </div>
 
                     {/* Actions for the document on the current slide */}
-                    <div className="mt-3 space-y-2 px-1">
+                    <div className="mt-2">
                       {activeFile ? (
-                        <>
+                        <div className="flex items-center gap-1.5">
                           <button
                             type="button"
                             onClick={() =>
                               openPreview(activeUrl, `${doc.employeeName} — ${activeTitle}`)
                             }
-                            className="flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-white transition hover:brightness-110"
+                            className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition hover:brightness-110"
                             style={{ backgroundColor: accent.main }}
                           >
-                            <Eye className="h-4 w-4" /> View {activeTitle}
+                            <Eye className="h-3.5 w-3.5" /> View
                           </button>
-                          <div className="grid grid-cols-2 gap-2">
-                            <button
-                              type="button"
-                              onClick={() => handleDownload(activeUrl, activeTitle)}
-                              className="flex h-10 items-center justify-center gap-1.5 rounded-full border text-xs font-bold transition hover:bg-slate-50"
-                              style={{ borderColor: accent.main, color: accent.main }}
-                            >
-                              <Download className="h-4 w-4" /> Download
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => openUpload(doc, activeKey)}
-                              className="flex h-10 items-center justify-center gap-1.5 rounded-full border text-xs font-bold transition hover:bg-slate-50"
-                              style={{ borderColor: accent.main, color: accent.main }}
-                            >
-                              <RefreshCw className="h-4 w-4" /> Update
-                            </button>
-                          </div>
-                        </>
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(activeUrl, activeTitle)}
+                            className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+                          >
+                            <Download className="h-3.5 w-3.5" /> Download
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openUpload(doc, activeKey)}
+                            title={`Update ${activeTitle}`}
+                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 text-slate-700 transition hover:bg-slate-50"
+                          >
+                            <RefreshCw className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       ) : (
                         <button
                           type="button"
                           onClick={() => openUpload(doc, activeKey)}
-                          className="flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-white transition hover:brightness-110"
+                          className="flex h-8 w-full items-center justify-center gap-1.5 rounded-lg text-xs font-semibold text-white transition hover:brightness-110"
                           style={{ backgroundColor: accent.main }}
                         >
-                          <Plus className="h-4 w-4" /> Add {activeTitle}
+                          <Plus className="h-3.5 w-3.5" /> Add {activeTitle}
                         </button>
                       )}
                     </div>
 
                     {/* Other documents (Job Offer, Joining, Others, A/ID, DACO ID) */}
-                    <div className="mt-4 px-1">
-                      <div className="rounded-2xl bg-slate-50 p-3">
-                        <div className="mb-2 flex items-center justify-between">
-                          <p className="text-xs font-bold text-slate-600">
-                            Other documents
-                          </p>
-                          <button
-                            type="button"
-                            onClick={() => openUploadOther(doc)}
-                            className="flex items-center gap-1 rounded-full border bg-white px-3 py-1 text-[11px] font-bold transition hover:bg-slate-50"
-                            style={{ borderColor: accent.main, color: accent.main }}
-                          >
-                            <Plus className="h-3 w-3" /> Add
-                          </button>
-                        </div>
-                        {otherFiles.length === 0 ? (
-                          <p className="text-xs text-slate-400">
-                            Job Offer, Joining, Others, A/ID and DACO ID files appear here.
-                          </p>
-                        ) : (
-                          <div className="flex flex-wrap gap-2">
-                            {otherFiles.map((key) => {
-                              const file = doc.docs?.[key];
-                              const title = docLabel(key, doc.nationality);
-                              return (
-                                <div
-                                  key={key}
-                                  className="flex items-center overflow-hidden rounded-full border bg-white text-xs font-medium"
-                                  style={{ borderColor: accent.soft, color: accent.ink }}
-                                >
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      openPreview(
-                                        getFileUrl(file),
-                                        `${doc.employeeName} — ${title}`
-                                      )
-                                    }
-                                    className="px-3 py-1.5 hover:bg-slate-50"
-                                    title={`View ${title}`}
-                                  >
-                                    {title}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDownload(getFileUrl(file), title)}
-                                    className="border-l px-2 py-1.5 hover:bg-slate-50"
-                                    style={{ borderColor: accent.soft }}
-                                    title={`Download ${title}`}
-                                  >
-                                    <Download className="h-3.5 w-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => openUpload(doc, key)}
-                                    className="border-l px-2 py-1.5 hover:bg-slate-50"
-                                    style={{ borderColor: accent.soft }}
-                                    title={`Update ${title}`}
-                                  >
-                                    <RefreshCw className="h-3.5 w-3.5" />
-                                  </button>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
+                    <div className="mt-2 rounded-lg border border-dashed border-slate-200 p-2">
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <p className="text-[11px] font-semibold text-slate-500">
+                          Other documents
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => openUploadOther(doc)}
+                          className="flex items-center gap-0.5 rounded-md border border-slate-200 px-2 py-0.5 text-[10px] font-semibold text-slate-600 transition hover:bg-slate-50"
+                        >
+                          <Plus className="h-3 w-3" /> Add
+                        </button>
                       </div>
+                      {otherFiles.length === 0 ? (
+                        <p className="text-[10px] text-slate-400">None added yet</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-1">
+                          {otherFiles.map((key) => {
+                            const file = doc.docs?.[key];
+                            const title = docLabel(key, doc.nationality);
+                            return (
+                              <div
+                                key={key}
+                                className="flex items-center overflow-hidden rounded-md border border-slate-200 bg-white text-[10px] font-medium text-slate-700"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openPreview(
+                                      getFileUrl(file),
+                                      `${doc.employeeName} — ${title}`
+                                    )
+                                  }
+                                  className="px-2 py-1 hover:bg-slate-50"
+                                  title={`View ${title}`}
+                                >
+                                  {title}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownload(getFileUrl(file), title)}
+                                  className="border-l border-slate-200 px-1.5 py-1 hover:bg-slate-50"
+                                  title={`Download ${title}`}
+                                >
+                                  <Download className="h-3 w-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openUpload(doc, key)}
+                                  className="border-l border-slate-200 px-1.5 py-1 hover:bg-slate-50"
+                                  title={`Update ${title}`}
+                                >
+                                  <RefreshCw className="h-3 w-3" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     {/* Footer */}
-                    <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-5">
-                      <span className="min-w-0 truncate text-xs text-slate-400">
+                    <div className="mt-auto flex items-center justify-between gap-2 border-t border-slate-100 pt-2.5">
+                      <span className="min-w-0 truncate text-[11px] text-slate-400">
                         Ref: {doc.refCode || "0"}
                       </span>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="flex shrink-0 items-center gap-1">
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleOpenEdit(doc)}
-                          className="h-8 gap-1.5 rounded-full px-3 text-xs hover:bg-blue-50 hover:text-blue-700"
+                          className="h-7 gap-1 rounded-md px-2 text-[11px] text-slate-600 hover:bg-blue-50 hover:text-blue-700"
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          <Pencil className="h-3 w-3" />
                           Edit
                         </Button>
                         <Button
                           type="button"
                           size="sm"
-                          variant="outline"
+                          variant="ghost"
                           onClick={() => handleOpenDelete(doc)}
-                          className="h-8 gap-1.5 rounded-full border-rose-100 px-3 text-xs text-rose-600 hover:bg-rose-50"
+                          className="h-7 gap-1 rounded-md px-2 text-[11px] text-rose-600 hover:bg-rose-50 hover:text-rose-700"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Trash2 className="h-3 w-3" />
                           Delete
                         </Button>
                       </div>
