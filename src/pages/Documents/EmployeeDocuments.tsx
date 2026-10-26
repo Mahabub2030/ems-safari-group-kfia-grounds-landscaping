@@ -4,16 +4,18 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Download,
+  Eye,
   FileSpreadsheet,
   FileText,
   Filter,
   Pencil,
   Plus,
+  RefreshCw,
   Search,
   Trash2,
   Users,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 
 import { Button } from "../../components/ui/button";
@@ -42,7 +44,13 @@ import initialDocuments from "../../data/Documents.json";
 const USE_API = false;
 const API_URL = "/api/employee-documents";
 
+// Slides on every card move on their own every 2 seconds
+const SLIDE_INTERVAL_MS = 2000;
+// After a manual click or touch, auto-play waits this long
+const SLIDE_RESUME_AFTER_MS = 6000;
+
 export type DocKey =
+  | "jobOffer"
   | "gacaCertificate"
   | "joining"
   | "iqama"
@@ -86,13 +94,27 @@ export interface EmployeeDocument {
 }
 
 const DOC_BUTTONS: { key: DocKey; label: string; header: string }[] = [
+  { key: "jobOffer", label: "JOB OFFER", header: "Job Offer" },
   { key: "gacaCertificate", label: "GACA", header: "GACA Certificate" },
   { key: "joining", label: "JOINING", header: "Joining" },
   { key: "iqama", label: "IQAMA", header: "Iqama / ID" },
   { key: "passport", label: "PASSPORT", header: "Passport" },
   { key: "others", label: "OTHERS", header: "Others" },
   { key: "aid", label: "A/ID", header: "A/ID" },
-  { key: "dacoId", label: "DACO", header: "Daco ID" },
+  { key: "dacoId", label: "DACO", header: "DACO ID" },
+];
+
+// The three documents that get their own section on every card
+const MAIN_DOC_KEYS: DocKey[] = ["iqama", "passport", "gacaCertificate"];
+const OTHER_DOC_KEYS: DocKey[] = DOC_BUTTONS.map((item) => item.key).filter(
+  (key) => !MAIN_DOC_KEYS.includes(key)
+);
+
+// Card colours (rotate per card, like the reference design)
+const CARD_ACCENTS = [
+  { main: "#c44a36", soft: "#ffcfc2", ink: "#7a2a1c" },
+  { main: "#4d8296", soft: "#a3ecff", ink: "#235063" },
+  { main: "#ff7f66", soft: "#ffd3c7", ink: "#8a3a2a" },
 ];
 
 type PreviewContent = {
@@ -132,6 +154,47 @@ const isValidUrl = (value: unknown): value is string => {
   );
 };
 
+const getDriveId = (url: string) =>
+  url.match(/\/d\/([a-zA-Z0-9_-]+)/)?.[1] ??
+  url.match(/[?&]id=([a-zA-Z0-9_-]+)/)?.[1];
+
+const isDropboxUrl = (url: string) => url.includes("dropbox.com");
+
+// Dropbox share links: raw=1 opens the file inline, dl=1 forces a download
+const toDropboxUrl = (url: string, mode: "raw" | "dl") => {
+  try {
+    const parsed = new URL(url);
+    parsed.searchParams.delete("dl");
+    parsed.searchParams.delete("raw");
+    parsed.searchParams.set(mode, "1");
+    return parsed.toString();
+  } catch {
+    return url;
+  }
+};
+
+const isImageUrl = (url: string) =>
+  /^data:image\//i.test(url) ||
+  /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url) ||
+  url.includes("images.unsplash.com");
+
+// Picture shown on the slide: an image link, an uploaded image, or a Drive thumbnail
+const getDocThumb = (file?: RelatedDocument) => {
+  if (!file) return "";
+  for (const candidate of [file.imgUrl, file.downloadUrl]) {
+    if (!isValidUrl(candidate)) continue;
+    if (isGoogleDriveUrl(candidate)) {
+      const id = getDriveId(candidate);
+      if (id) return `https://drive.google.com/thumbnail?id=${id}&sz=w800`;
+      continue;
+    }
+    if (isImageUrl(candidate)) {
+      return isDropboxUrl(candidate) ? toDropboxUrl(candidate, "raw") : candidate;
+    }
+  }
+  return "";
+};
+
 const getInitials = (name?: string) =>
   (name ?? "")
     .split(/\s+/)
@@ -142,6 +205,14 @@ const getInitials = (name?: string) =>
 
 const getMissingDocs = (doc: EmployeeDocument) =>
   DOC_BUTTONS.filter((item) => !doc.docs?.[item.key]);
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error("Could not read the file"));
+    reader.readAsDataURL(file);
+  });
 
 const normalizeDoc = (record: any): EmployeeDocument => {
   const docs: Partial<Record<DocKey, RelatedDocument>> = {};
@@ -154,9 +225,8 @@ const normalizeDoc = (record: any): EmployeeDocument => {
     const hasImage = isValidUrl(entry.imgUrl);
     if (!hasDownload && !hasImage) return;
 
-    if (DOC_BUTTONS.some((item) => item.key === key) || key === "jobOffer") {
-      const normalizedKey =
-        key === "jobOffer" ? "gacaCertificate" : (key as DocKey);
+    if (DOC_BUTTONS.some((item) => item.key === key)) {
+      const normalizedKey = key as DocKey;
       docs[normalizedKey] = {
         docName: isValidUrl(entry.docName) ? entry.docName : normalizedKey,
         downloadUrl: hasDownload ? entry.downloadUrl! : "",
@@ -178,15 +248,13 @@ const normalizeDoc = (record: any): EmployeeDocument => {
     if (main) {
       if (record.docType === "Passport") docs.passport = main;
       else if (record.docType === "Iqama") docs.iqama = main;
-      else if (
-        record.docType === "Job Offer" ||
-        record.docType === "GACA Certificate"
-      ) {
+      else if (record.docType === "Job Offer") docs.jobOffer = main;
+      else if (record.docType === "GACA Certificate") {
         docs.gacaCertificate = main;
       } else docs.others = main;
     }
 
-    if (record?.jobOfferDoc) docs.gacaCertificate = record.jobOfferDoc;
+    if (record?.jobOfferDoc) docs.jobOffer = record.jobOfferDoc;
     if (record?.otherDoc) docs.others = record.otherDoc;
   }
 
@@ -228,6 +296,22 @@ export default function EmployeeDocuments() {
   const [previewContent, setPreviewContent] = useState<PreviewContent | null>(
     null
   );
+
+  // Which document (slide) each employee card is showing
+  const [slides, setSlides] = useState<Record<string, number>>({});
+  const slideHover = useRef<Record<string, boolean>>({});
+  const slideTouched = useRef<Record<string, number>>({});
+
+  // Add / update a single document (iqama, passport, GACA, ...)
+  const [uploadTarget, setUploadTarget] = useState<{
+    docId: string;
+    lockedKey: boolean;
+  } | null>(null);
+  const [uploadKey, setUploadKey] = useState<DocKey>("iqama");
+  const [uploadLink, setUploadLink] = useState("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadError, setUploadError] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!USE_API) return;
@@ -316,10 +400,46 @@ export default function EmployeeDocuments() {
     return filteredDocs.slice(start, start + numericPageSize);
   }, [filteredDocs, currentPage, pageSize, numericPageSize]);
 
+  // Auto-play: next document slide on every card every 2 seconds
+  const anyDialogOpen =
+    previewModalOpen ||
+    isEditOpen ||
+    isAddOpen ||
+    isDeleteOpen ||
+    uploadTarget !== null;
+
+  useEffect(() => {
+    if (anyDialogOpen) return;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    const ids = paginatedDocs.map((doc) => doc.docId);
+    const timer = window.setInterval(() => {
+      const now = Date.now();
+      setSlides((previous) => {
+        const next = { ...previous };
+        ids.forEach((id) => {
+          if (slideHover.current[id]) return;
+          if (now - (slideTouched.current[id] ?? 0) < SLIDE_RESUME_AFTER_MS) {
+            return;
+          }
+          next[id] = ((previous[id] ?? 0) + 1) % MAIN_DOC_KEYS.length;
+        });
+        return next;
+      });
+    }, SLIDE_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [paginatedDocs, anyDialogOpen]);
+
   const handleDownload = (url: string, filename: string) => {
     if (!isValidUrl(url)) return;
     const targetUrl = isGoogleDriveUrl(url)
       ? getGoogleDriveDownloadUrl(url)
+      : isDropboxUrl(url)
+      ? toDropboxUrl(url, "dl")
       : url;
     const link = document.createElement("a");
     link.href = targetUrl;
@@ -340,17 +460,110 @@ export default function EmployeeDocuments() {
         type: "drive",
       });
     } else {
-      const isImage =
-        /\.(jpg|jpeg|png|webp|gif|svg)(\?.*)?$/i.test(url) ||
-        url.includes("images.unsplash.com");
       setPreviewContent({
-        url,
+        url: isDropboxUrl(url) ? toDropboxUrl(url, "raw") : url,
         title,
-        type: isImage ? "image" : "pdf",
+        type: isImageUrl(url) ? "image" : "pdf",
       });
     }
     setPreviewModalOpen(true);
   };
+
+  const getFileUrl = (file?: RelatedDocument) =>
+    file
+      ? isValidUrl(file.downloadUrl)
+        ? file.downloadUrl
+        : file.imgUrl || ""
+      : "";
+
+  const docLabel = (key: DocKey, nationality?: string) =>
+    key === "iqama"
+      ? idLabel(nationality)
+      : DOC_BUTTONS.find((item) => item.key === key)?.header ?? key;
+
+  /* ---------- add / update one document ---------- */
+
+  const openUpload = (
+    doc: EmployeeDocument,
+    key: DocKey,
+    lockedKey = true
+  ) => {
+    setUploadTarget({ docId: doc.docId, lockedKey });
+    setUploadKey(key);
+    setUploadLink("");
+    setUploadFile(null);
+    setUploadError("");
+  };
+
+  const openUploadOther = (doc: EmployeeDocument) => {
+    const firstMissing =
+      OTHER_DOC_KEYS.find((key) => !doc.docs?.[key]) ?? OTHER_DOC_KEYS[0];
+    openUpload(doc, firstMissing, false);
+  };
+
+  const closeUpload = () => {
+    setUploadTarget(null);
+    setUploadLink("");
+    setUploadFile(null);
+    setUploadError("");
+    setIsUploading(false);
+  };
+
+  const uploadDoc = uploadTarget
+    ? documents.find((doc) => doc.docId === uploadTarget.docId) ?? null
+    : null;
+  const uploadHasExisting = Boolean(uploadDoc?.docs?.[uploadKey]);
+
+  const handleSaveUpload = async () => {
+    if (!uploadDoc) return;
+    setUploadError("");
+
+    let url = uploadLink.trim();
+    try {
+      setIsUploading(true);
+      if (uploadFile) url = await readFileAsDataUrl(uploadFile);
+    } catch (error) {
+      setUploadError(
+        error instanceof Error ? error.message : "Could not read the file"
+      );
+      setIsUploading(false);
+      return;
+    }
+
+    if (!isValidUrl(url)) {
+      setUploadError("Paste a link or choose a file.");
+      setIsUploading(false);
+      return;
+    }
+
+    const entry: RelatedDocument = {
+      docName: docLabel(uploadKey, uploadDoc.nationality),
+      downloadUrl: url,
+    };
+    setDocuments((previous) =>
+      previous.map((doc) =>
+        doc.docId === uploadDoc.docId
+          ? { ...doc, docs: { ...doc.docs, [uploadKey]: entry } }
+          : doc
+      )
+    );
+    closeUpload();
+  };
+
+  const handleRemoveUploaded = () => {
+    if (!uploadDoc) return;
+    setDocuments((previous) =>
+      previous.map((doc) => {
+        if (doc.docId !== uploadDoc.docId) return doc;
+        const nextDocs = { ...doc.docs };
+        delete nextDocs[uploadKey];
+        return { ...doc, docs: nextDocs };
+      })
+    );
+    closeUpload();
+  };
+
+  /* ---------- employee edit / add / delete ---------- */
 
   const handleOpenEdit = (doc: EmployeeDocument) => {
     setSelectedDoc(doc);
@@ -459,6 +672,7 @@ export default function EmployeeDocuments() {
       Email: doc.email,
       Mobile: doc.mobile,
       Group: doc.group || "N/A",
+      "Job Offer": doc.docs?.jobOffer ? "Yes" : "No",
       "GACA Certificate": doc.docs?.gacaCertificate ? "Yes" : "No",
       Joining: doc.docs?.joining ? "Yes" : "No",
       "Iqama / National ID": doc.docs?.iqama ? "Yes" : "No",
@@ -568,7 +782,10 @@ export default function EmployeeDocuments() {
   );
 
   return (
-    <div className="mx-auto min-h-screen w-full space-y-7 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:22px_22px] p-4 md:p-8">
+    <div
+      className="mx-auto min-h-screen w-full space-y-7 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:22px_22px] p-4 md:p-8"
+      style={{ fontFamily: "'Montserrat', ui-sans-serif, system-ui, sans-serif" }}
+    >
       {/* Page heading */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -718,232 +935,411 @@ export default function EmployeeDocuments() {
               <p>No employees found matching your filters.</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
               {paginatedDocs.map((doc, index) => {
                 const missing = getMissingDocs(doc);
                 const completed = DOC_BUTTONS.length - missing.length;
                 const completion = Math.round(
                   (completed / DOC_BUTTONS.length) * 100
                 );
-                const globalIndex =
-                  pageSize === "all"
-                    ? index + 1
-                    : (currentPage - 1) * Number(pageSize) + index + 1;
+                const accent = CARD_ACCENTS[index % CARD_ACCENTS.length];
+                const slideKeys = MAIN_DOC_KEYS;
+                const active = Math.min(
+                  slides[doc.docId] ?? 0,
+                  slideKeys.length - 1
+                );
+                const activeKey = slideKeys[active];
+                const activeFile = doc.docs?.[activeKey];
+                const activeTitle = docLabel(activeKey, doc.nationality);
+                const activeUrl = getFileUrl(activeFile);
+                const goTo = (next: number) => {
+                  slideTouched.current[doc.docId] = Date.now();
+                  setSlides((previous) => ({
+                    ...previous,
+                    [doc.docId]:
+                      (next + slideKeys.length) % slideKeys.length,
+                  }));
+                };
+                const tags = [
+                  doc.group,
+                  doc.employeeId ? `ID ${doc.employeeId}` : "",
+                  doc.nationality,
+                  doc.iqamaNumber
+                    ? `${idLabel(doc.nationality)} ${doc.iqamaNumber}`
+                    : "",
+                ].filter(Boolean) as string[];
+                const otherFiles = OTHER_DOC_KEYS.filter(
+                  (key) => doc.docs?.[key]
+                );
 
                 return (
                   <Card
                     key={doc.docId}
-                    className="group relative flex h-full flex-col overflow-hidden rounded-[28px] border border-white bg-white/95 pt-3 shadow-[0_8px_28px_rgba(15,23,42,0.08)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_18px_42px_rgba(15,23,42,0.14)]"
+                    className="relative flex h-full flex-col rounded-[36px] border-0 bg-white p-4 shadow-[0_10px_30px_rgba(15,23,42,0.10)]"
                   >
-                    <div className="absolute left-5 top-0 z-10 max-w-[70%] truncate rounded-b-2xl bg-white px-4 pb-2 pt-2 text-xs font-semibold tracking-wide text-slate-600 shadow-[0_4px_10px_rgba(15,23,42,0.12)]" title={doc.group || "Unassigned Group"}>
-                      {doc.group || "Unassigned Group"}
+                    {/* Document slider: Iqama / Passport / GACA */}
+                    <div
+                      className="relative h-56 w-full overflow-hidden rounded-[28px]"
+                      style={{ backgroundColor: accent.soft }}
+                      onMouseEnter={() => {
+                        slideHover.current[doc.docId] = true;
+                      }}
+                      onMouseLeave={() => {
+                        slideHover.current[doc.docId] = false;
+                      }}
+                      onTouchStart={() => {
+                        slideTouched.current[doc.docId] = Date.now();
+                      }}
+                    >
+                      <div
+                        className="flex h-full transition-transform duration-300 ease-out"
+                        style={{ transform: `translateX(-${active * 100}%)` }}
+                      >
+                        {slideKeys.map((key) => {
+                          const file = doc.docs?.[key];
+                          const title = docLabel(key, doc.nationality);
+                          const thumb = getDocThumb(file);
+                          const url = getFileUrl(file);
+                          return (
+                            <div
+                              key={key}
+                              className="relative h-full w-full shrink-0"
+                            >
+                              <button
+                                type="button"
+                                disabled={!file}
+                                onClick={() =>
+                                  openPreview(url, `${doc.employeeName} — ${title}`)
+                                }
+                                className="absolute inset-0 flex flex-col items-center justify-center gap-2"
+                                style={{ color: accent.ink }}
+                              >
+                                {file ? (
+                                  <FileText className="h-14 w-14 opacity-60" />
+                                ) : (
+                                  <Plus className="h-14 w-14 opacity-40" />
+                                )}
+                                <span className="text-xs font-medium opacity-70">
+                                  {file ? "Tap to view" : `No ${title} yet`}
+                                </span>
+                              </button>
+                              {thumb && (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    openPreview(url || thumb, `${doc.employeeName} — ${title}`)
+                                  }
+                                  className="absolute inset-0 block h-full w-full"
+                                  title={`View ${title}`}
+                                >
+                                  <img
+                                    src={thumb}
+                                    alt={`${title} of ${doc.employeeName}`}
+                                    className="h-full w-full object-cover"
+                                    onError={(event) => {
+                                      event.currentTarget.style.display = "none";
+                                    }}
+                                  />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+
+                      {/* Type tab */}
+                      <div className="absolute left-0 top-0 z-10 max-w-[65%] truncate rounded-br-[22px] bg-white pb-2.5 pl-6 pr-6 pt-3 text-sm font-medium text-slate-700 shadow-[0_6px_12px_rgba(15,23,42,0.12)]">
+                        {activeTitle}
+                      </div>
+
+                      {/* Status */}
+                      <span
+                        className="absolute right-3 top-3 z-10 rounded-full px-2.5 py-0.5 text-[11px] font-bold text-white"
+                        style={{ backgroundColor: activeFile ? accent.main : "#94a3b8" }}
+                      >
+                        {activeFile ? "Added" : "Not added"}
+                      </span>
+
+                      {/* Arrows */}
+                      <button
+                        type="button"
+                        onClick={() => goTo(active - 1)}
+                        title="Previous document"
+                        className="absolute left-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow transition hover:bg-white"
+                      >
+                        <ChevronLeft className="h-5 w-5 text-slate-700" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => goTo(active + 1)}
+                        title="Next document"
+                        className="absolute right-2 top-1/2 z-10 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-white/90 shadow transition hover:bg-white"
+                      >
+                        <ChevronRight className="h-5 w-5 text-slate-700" />
+                      </button>
+
+                      {/* Dots */}
+                      <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 gap-1.5">
+                        {slideKeys.map((key, dotIndex) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => goTo(dotIndex)}
+                            title={docLabel(key, doc.nationality)}
+                            className={`h-2 rounded-full bg-white shadow transition-all ${
+                              dotIndex === active ? "w-6" : "w-2 opacity-60"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
-                    <CardHeader className="space-y-4 pb-4 pt-5">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex min-w-0 items-center gap-3">
-                          {doc.photoUrl ? (
+
+                    {/* Name + completion pill */}
+                    <div className="mt-4 flex items-center justify-between gap-3 px-1">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        {doc.photoUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openPreview(
+                                doc.photoUrl!,
+                                `${doc.employeeName} — Photo`
+                              )
+                            }
+                            title="View employee photo"
+                            className="shrink-0"
+                          >
+                            <img
+                              src={doc.photoUrl}
+                              alt={doc.employeeName || "Employee"}
+                              className="h-10 w-10 rounded-full object-cover"
+                            />
+                          </button>
+                        ) : (
+                          <div
+                            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-extrabold"
+                            style={{ backgroundColor: accent.soft, color: accent.ink }}
+                          >
+                            {getInitials(doc.employeeName)}
+                          </div>
+                        )}
+                        <h2
+                          className="line-clamp-1 text-lg font-extrabold text-slate-700"
+                          title={doc.employeeName}
+                        >
+                          {doc.employeeName || "Unnamed Employee"}
+                        </h2>
+                      </div>
+                      <span
+                        className="shrink-0 rounded-full px-3.5 py-1 text-sm font-medium text-white"
+                        style={{ backgroundColor: accent.main }}
+                        title={
+                          missing.length === 0
+                            ? "All documents added"
+                            : `Missing: ${missing.map((m) => m.header).join(", ")}`
+                        }
+                      >
+                        {completion}%
+                      </span>
+                    </div>
+
+                    <p
+                      className="mt-2 line-clamp-1 px-1 text-sm text-slate-500"
+                      title={doc.designation}
+                    >
+                      {doc.designation || "No designation"}
+                    </p>
+
+                    {tags.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2 px-1">
+                        {tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="rounded-full px-3 py-0.5 text-xs"
+                            style={{ backgroundColor: accent.soft, color: accent.ink }}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Document tabs (jump to a slide) */}
+                    <div className="mt-4 grid grid-cols-3 gap-2 px-1">
+                      {slideKeys.map((key, tabIndex) => {
+                        const isActive = tabIndex === active;
+                        const has = Boolean(doc.docs?.[key]);
+                        return (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => goTo(tabIndex)}
+                            className="flex items-center justify-center gap-1.5 truncate rounded-full border px-2 py-1.5 text-[11px] font-bold transition"
+                            style={
+                              isActive
+                                ? { backgroundColor: accent.main, borderColor: accent.main, color: "#fff" }
+                                : { borderColor: accent.soft, color: accent.ink }
+                            }
+                          >
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{
+                                backgroundColor: has
+                                  ? isActive ? "#fff" : accent.main
+                                  : "#cbd5e1",
+                              }}
+                            />
+                            <span className="truncate">
+                              {docLabel(key, doc.nationality).replace(" Certificate", "")}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Actions for the document on the current slide */}
+                    <div className="mt-3 space-y-2 px-1">
+                      {activeFile ? (
+                        <>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              openPreview(activeUrl, `${doc.employeeName} — ${activeTitle}`)
+                            }
+                            className="flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-white transition hover:brightness-110"
+                            style={{ backgroundColor: accent.main }}
+                          >
+                            <Eye className="h-4 w-4" /> View {activeTitle}
+                          </button>
+                          <div className="grid grid-cols-2 gap-2">
                             <button
                               type="button"
-                              onClick={() =>
-                                openPreview(
-                                  doc.photoUrl!,
-                                  `${doc.employeeName} — Photo`
-                                )
-                              }
-                              title="View employee photo"
-                              className="shrink-0"
+                              onClick={() => handleDownload(activeUrl, activeTitle)}
+                              className="flex h-10 items-center justify-center gap-1.5 rounded-full border text-xs font-bold transition hover:bg-slate-50"
+                              style={{ borderColor: accent.main, color: accent.main }}
                             >
-                              <img
-                                src={doc.photoUrl}
-                                alt={doc.employeeName || "Employee"}
-                                className="h-16 w-16 rounded-2xl border border-slate-200 object-cover transition group-hover:scale-105"
-                              />
+                              <Download className="h-4 w-4" /> Download
                             </button>
-                          ) : (
-                            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-50 to-teal-100 text-lg font-bold text-emerald-700 ring-1 ring-emerald-100">
-                              {getInitials(doc.employeeName)}
-                            </div>
-                          )}
-                          <div className="min-w-0">
-                            <p className="text-xs font-medium text-slate-500">
-                              Employee #{globalIndex}
-                            </p>
-                            <CardTitle
-                              className="mt-1 line-clamp-2 text-base font-bold leading-5 text-slate-900"
-                              title={doc.employeeName}
+                            <button
+                              type="button"
+                              onClick={() => openUpload(doc, activeKey)}
+                              className="flex h-10 items-center justify-center gap-1.5 rounded-full border text-xs font-bold transition hover:bg-slate-50"
+                              style={{ borderColor: accent.main, color: accent.main }}
                             >
-                              {doc.employeeName || "Unnamed Employee"}
-                            </CardTitle>
-                            <p
-                              className="mt-1 truncate text-xs text-slate-500"
-                              title={doc.designation}
-                            >
-                              {doc.designation || "No designation"}
-                            </p>
+                              <RefreshCw className="h-4 w-4" /> Update
+                            </button>
                           </div>
-                        </div>
-                        <span
-                          className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                            missing.length === 0
-                              ? "bg-emerald-50 text-emerald-700"
-                              : "bg-amber-50 text-amber-700"
-                          }`}
+                        </>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openUpload(doc, activeKey)}
+                          className="flex h-12 w-full items-center justify-center gap-2 rounded-full text-sm font-bold text-white transition hover:brightness-110"
+                          style={{ backgroundColor: accent.main }}
                         >
-                          {missing.length === 0 ? "Complete" : "Incomplete"}
-                        </span>
-                      </div>
+                          <Plus className="h-4 w-4" /> Add {activeTitle}
+                        </button>
+                      )}
+                    </div>
 
-                      <div className="grid grid-cols-2 gap-3 rounded-xl bg-slate-50 p-3">
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Employee ID
+                    {/* Other documents (Job Offer, Joining, Others, A/ID, DACO ID) */}
+                    <div className="mt-4 px-1">
+                      <div className="rounded-2xl bg-slate-50 p-3">
+                        <div className="mb-2 flex items-center justify-between">
+                          <p className="text-xs font-bold text-slate-600">
+                            Other documents
                           </p>
-                          <p className="mt-1 truncate text-sm font-semibold text-slate-800">
-                            {doc.employeeId || "N/A"}
-                          </p>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            {idLabel(doc.nationality)}
-                          </p>
-                          <p
-                            className="mt-1 truncate text-sm font-semibold text-slate-800"
-                            title={doc.iqamaNumber}
+                          <button
+                            type="button"
+                            onClick={() => openUploadOther(doc)}
+                            className="flex items-center gap-1 rounded-full border bg-white px-3 py-1 text-[11px] font-bold transition hover:bg-slate-50"
+                            style={{ borderColor: accent.main, color: accent.main }}
                           >
-                            {doc.iqamaNumber || "N/A"}
-                          </p>
+                            <Plus className="h-3 w-3" /> Add
+                          </button>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Nationality
+                        {otherFiles.length === 0 ? (
+                          <p className="text-xs text-slate-400">
+                            Job Offer, Joining, Others, A/ID and DACO ID files appear here.
                           </p>
-                          <p className="mt-1 truncate text-sm text-slate-700">
-                            {doc.nationality || "N/A"}
-                          </p>
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
-                            Group
-                          </p>
-                          <p className="mt-1 truncate text-sm text-slate-700">
-                            {doc.group || "N/A"}
-                          </p>
-                        </div>
-                      </div>
-                    </CardHeader>
-
-                    <CardContent className="flex flex-1 flex-col gap-4 pt-0">
-                      <div>
-                        <div className="mb-3 flex items-center justify-between gap-2">
-                          <h3 className="text-sm font-bold text-slate-800">
-                            Employee Documents
-                          </h3>
-                          <span className="text-xs text-slate-500">
-                            {["iqama", "passport", "dacoId", "gacaCertificate"].filter((key) => doc.docs?.[key as DocKey]).length}/4 key documents available
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                          {([
-                            { key: "iqama", title: isSaudi(doc.nationality) ? "National ID" : "Iqama", hint: "Identity document", accent: "border-emerald-200 bg-emerald-50/60 text-emerald-800" },
-                            { key: "passport", title: "Passport", hint: "Passport document", accent: "border-blue-200 bg-blue-50/60 text-blue-800" },
-                            { key: "dacoId", title: "DACO ID", hint: "Airport access ID", accent: "border-violet-200 bg-violet-50/60 text-violet-800" },
-                            { key: "gacaCertificate", title: "GACA", hint: "GACA certificate", accent: "border-amber-200 bg-amber-50/60 text-amber-800" },
-                          ] as const).map((item) => {
-                            const file = doc.docs?.[item.key];
-                            return (
-                              <div key={item.key} className={`min-h-[142px] rounded-2xl border p-3.5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${file ? item.accent : "border-slate-200 bg-slate-50 text-slate-700"}`}>
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="min-w-0">
-                                    <p className="text-sm font-bold">{item.title}</p>
-                                    <p className="mt-1 text-[11px] opacity-75">{item.hint}</p>
-                                  </div>
-                                  <span className={`rounded-full px-2 py-1 text-[10px] font-bold ${file ? "bg-white/80" : "bg-white text-slate-500"}`}>
-                                    {file ? "Added" : "Not added"}
-                                  </span>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {otherFiles.map((key) => {
+                              const file = doc.docs?.[key];
+                              const title = docLabel(key, doc.nationality);
+                              return (
+                                <div
+                                  key={key}
+                                  className="flex items-center overflow-hidden rounded-full border bg-white text-xs font-medium"
+                                  style={{ borderColor: accent.soft, color: accent.ink }}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      openPreview(
+                                        getFileUrl(file),
+                                        `${doc.employeeName} — ${title}`
+                                      )
+                                    }
+                                    className="px-3 py-1.5 hover:bg-slate-50"
+                                    title={`View ${title}`}
+                                  >
+                                    {title}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownload(getFileUrl(file), title)}
+                                    className="border-l px-2 py-1.5 hover:bg-slate-50"
+                                    style={{ borderColor: accent.soft }}
+                                    title={`Download ${title}`}
+                                  >
+                                    <Download className="h-3.5 w-3.5" />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openUpload(doc, key)}
+                                    className="border-l px-2 py-1.5 hover:bg-slate-50"
+                                    style={{ borderColor: accent.soft }}
+                                    title={`Update ${title}`}
+                                  >
+                                    <RefreshCw className="h-3.5 w-3.5" />
+                                  </button>
                                 </div>
-                                {file ? (
-                                  <div className="mt-3 flex flex-wrap gap-2">
-                                    <Button type="button" size="sm" variant="outline" className="h-8 gap-1 bg-white text-xs" onClick={() => openPreview(isValidUrl(file.downloadUrl) ? file.downloadUrl : file.imgUrl || "", `${doc.employeeName} — ${file.docName}`)}>
-                                      <FileText className="h-3.5 w-3.5" /> View {item.title}
-                                    </Button>
-                                    <Button type="button" size="sm" variant="outline" className="h-8 gap-1 bg-white text-xs" onClick={() => handleDownload(isValidUrl(file.downloadUrl) ? file.downloadUrl : file.imgUrl || "", file.docName || item.title)}>
-                                      <Download className="h-3.5 w-3.5" /> Download
-                                    </Button>
-                                  </div>
-                                ) : (
-                                  <p className="mt-3 text-xs text-slate-500">Use Edit to add this document.</p>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                        {DOC_BUTTONS.some((item) => !["iqama", "passport", "dacoId", "gacaCertificate"].includes(item.key as string) && doc.docs?.[item.key]) && (
-                          <div className="mt-3 rounded-xl border border-slate-200 p-3">
-                            <p className="mb-2 text-xs font-bold uppercase tracking-wide text-slate-500">Other documents</p>
-                            <div className="flex flex-wrap gap-2">
-                              {DOC_BUTTONS.filter((item) => !["iqama", "passport", "dacoId", "gacaCertificate"].includes(item.key as string) && doc.docs?.[item.key]).map((item) => {
-                                const file = doc.docs?.[item.key];
-                                if (!file) return null;
-                                return <Button key={item.key} type="button" size="sm" variant="outline" className="gap-1 text-xs" onClick={() => openPreview(isValidUrl(file.downloadUrl) ? file.downloadUrl : file.imgUrl || "", `${doc.employeeName} — ${file.docName}`)}><FileText className="h-3.5 w-3.5" />{item.header}</Button>;
-                              })}
-                            </div>
+                              );
+                            })}
                           </div>
                         )}
                       </div>
+                    </div>
 
-                      <div className="mt-auto border-t border-slate-100 px-1 pt-4">
-                        <div className="mb-2 flex items-center justify-between text-xs">
-                          <span className="font-medium text-slate-500">
-                            Document completion
-                          </span>
-                          <span className="font-bold text-slate-700">
-                            {completion}%
-                          </span>
-                        </div>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
-                          <div
-                            className={`h-full rounded-full transition-all ${
-                              missing.length === 0
-                                ? "bg-emerald-500"
-                                : "bg-amber-400"
-                            }`}
-                            style={{ width: `${completion}%` }}
-                          />
-                        </div>
-                        {missing.length > 0 && (
-                          <p className="mt-2 text-xs text-amber-700">
-                            Missing: {missing.map((item) => item.header).join(", ")}
-                          </p>
-                        )}
-                        <div className="mt-4 flex items-center justify-between gap-2">
-                          <span className="min-w-0 truncate text-xs text-slate-400">
-                            Ref: {doc.refCode || "0"}
-                          </span>
-                          <div className="flex shrink-0 items-center gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenEdit(doc)}
-                              className="h-8 gap-1.5 rounded-lg px-3 text-xs hover:bg-blue-50 hover:text-blue-700"
-                            >
-                              <Pencil className="h-3.5 w-3.5" />
-                              Edit
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleOpenDelete(doc)}
-                              className="h-8 gap-1.5 rounded-lg border-rose-100 px-3 text-xs text-rose-600 hover:bg-rose-50"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                              Delete
-                            </Button>
-                          </div>
-                        </div>
+                    {/* Footer */}
+                    <div className="mt-auto flex items-center justify-between gap-2 px-1 pt-5">
+                      <span className="min-w-0 truncate text-xs text-slate-400">
+                        Ref: {doc.refCode || "0"}
+                      </span>
+                      <div className="flex shrink-0 items-center gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenEdit(doc)}
+                          className="h-8 gap-1.5 rounded-full px-3 text-xs hover:bg-blue-50 hover:text-blue-700"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                          Edit
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleOpenDelete(doc)}
+                          className="h-8 gap-1.5 rounded-full border-rose-100 px-3 text-xs text-rose-600 hover:bg-rose-50"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Delete
+                        </Button>
                       </div>
-                    </CardContent>
+                    </div>
                   </Card>
                 );
               })}
@@ -1025,6 +1421,125 @@ export default function EmployeeDocuments() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Add / update one document */}
+      <Dialog
+        open={uploadTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) closeUpload();
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {uploadHasExisting ? "Update" : "Add"}{" "}
+              {docLabel(uploadKey, uploadDoc?.nationality)}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {uploadDoc && (
+              <p className="text-sm text-muted-foreground">
+                {uploadDoc.employeeName || "Unnamed Employee"}
+              </p>
+            )}
+
+            {uploadTarget && !uploadTarget.lockedKey && (
+              <Select
+                value={uploadKey}
+                onValueChange={(value) => {
+                  setUploadKey(value as DocKey);
+                  setUploadError("");
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Document type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {OTHER_DOC_KEYS.map((key) => (
+                    <SelectItem key={key} value={key}>
+                      {docLabel(key, uploadDoc?.nationality)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-slate-600">
+                Paste a link
+              </p>
+              <Input
+                placeholder="https://drive.google.com/file/d/..."
+                value={uploadLink}
+                disabled={Boolean(uploadFile)}
+                onChange={(event) => {
+                  setUploadLink(event.target.value);
+                  setUploadError("");
+                }}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <p className="text-xs font-semibold text-slate-600">
+                Or upload a file (PDF or image)
+              </p>
+              <Input
+                type="file"
+                accept="application/pdf,image/*"
+                onChange={(event) => {
+                  setUploadFile(event.target.files?.[0] ?? null);
+                  setUploadError("");
+                }}
+              />
+              {uploadFile && (
+                <button
+                  type="button"
+                  className="text-xs text-rose-600 underline"
+                  onClick={() => setUploadFile(null)}
+                >
+                  Remove selected file ({uploadFile.name})
+                </button>
+              )}
+            </div>
+
+            {uploadError && (
+              <p className="text-xs text-rose-600">{uploadError}</p>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              {uploadHasExisting ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-1.5 border-rose-100 text-rose-600 hover:bg-rose-50"
+                  onClick={handleRemoveUploaded}
+                >
+                  <Trash2 className="h-4 w-4" /> Remove
+                </Button>
+              ) : (
+                <span />
+              )}
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" onClick={closeUpload}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => void handleSaveUpload()}
+                  disabled={isUploading}
+                  className="bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  {isUploading
+                    ? "Saving..."
+                    : uploadHasExisting
+                    ? "Update Document"
+                    : "Save Document"}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Document preview modal */}
       <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>
