@@ -582,6 +582,1286 @@
         "docName": "Other Document",
         "downloadUrl": "NA"
       },
+      "Cv": {
+        "docName": "CV",
+        "downloadUrl": "https://drive.google.com/file/d/1f6XwKGB9WWQzZTGQ_rNp-ZBK3gW6Zzq9/view?usp=sharing"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-010-9406",
+    "employeeName": "Assauduzamman",
+    "designation": "Supervisor",
+    "employeeId": "65959",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2237075912",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "https://drive.google.com/file/d/1L9u_INTiVAKTuE3aeYS9cSVWjwG2ag9K/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1L9u_INTiVAKTuE3aeYS9cSVWjwG2ag9K/view?usp=sharing"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "https://drive.google.com/file/d/1yIKcEkpVzHNZuGkRFEmVTNMFbHlMbJLO/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1yIKcEkpVzHNZuGkRFEmVTNMFbHlMbJLO/view?usp=sharing"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "Cv": {
+        "docName": "CV",
+        "downloadUrl": "https://drive.google.com/file/d/1ufiqOOw2ie-gnfyutPocow0kZx2seHo-/view?usp=sharing"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "https://drive.google.com/file/d/1O5zQQN5_Y8inY1jnsrMzyMbgWnwYHTnU/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1O5zQQN5_Y8inY1jnsrMzyMbgWnwYHTnU/view?usp=sharing"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-6938",
+    "employeeName": "Muhammad Wasid Sayed",
+    "designation": "Technician",
+    "employeeId": "68569",
+    "nationality": "Indian",
+    "iqamaNumber": "2383739907",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "https://drive.google.com/file/d/1e-vYzDcFgGVQ-WyXSZHNqFN9TpmvQvIV/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1e-vYzDcFgGVQ-WyXSZHNqFN9TpmvQvIV/view?usp=sharing"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "https://drive.google.com/file/d/1e-vYzDcFgGVQ-WyXSZHNqFN9TpmvQvIV/view?usp=sharing"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "0",
+    "employeeName": "MD Sohag",
+    "designation": "labor",
+    "employeeId": "67490",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2523266126",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "https://drive.google.com/file/d/1zVK_wefUwsQgdFCUjHQr9B8C-j1AUgP_/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1zVK_wefUwsQgdFCUjHQr9B8C-j1AUgP_/view?usp=sharing"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-7040",
+    "employeeName": "MOHAMMED MUSLIM",
+    "designation": "labor",
+    "employeeId": "68576",
+    "nationality": "Indian",
+    "iqamaNumber": "2255145613",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "Shahbaz Khan Banaras Khan",
+    "designation": "labor",
+    "employeeId": "68543",
+    "nationality": "Pakistani",
+    "iqamaNumber": "2345076778",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "Coyle Kay",
+    "designation": "labor",
+    "employeeId": "68544",
+    "nationality": "Nepali",
+    "iqamaNumber": "2396566198",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "MAZIBUR RAHMAN",
+    "designation": "labor",
+    "employeeId": "68560",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2495728608",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "ASHARFUL ISLAM",
+    "designation": "labor",
+    "employeeId": "68570",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2547721387",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "Rafiq Robiul",
+    "designation": "labor",
+    "employeeId": "68555",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2556727580",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0283",
+    "employeeName": "Mahadi Hassan",
+    "designation": "Technician",
+    "employeeId": "68103",
+    "nationality": "Saudi",
+    "iqamaNumber": "1114777830",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0522",
+    "employeeName": "ZAKEER HUSSAIN",
+    "designation": "Technician",
+    "employeeId": "65960",
+    "nationality": "Indian",
+    "iqamaNumber": "2397587276",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0510",
+    "employeeName": "Mohammad Aslam Mohammad Juhar",
+    "designation": "Technician",
+    "employeeId": "67728",
+    "nationality": "Indian",
+    "iqamaNumber": "2338250380",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "Julio Jr Corpuz Doria",
+    "designation": "Technician",
+    "employeeId": "67723",
+    "nationality": "Filipino",
+    "iqamaNumber": "2272779600",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-010-9675",
+    "employeeName": "MOHAMMAD LUQMAN",
+    "designation": "Technician",
+    "employeeId": "65651",
+    "nationality": "Indian",
+    "iqamaNumber": "2268099096",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-011-0517",
+    "employeeName": "MOHAMMAD ALAMIN MIAH",
+    "designation": "labor",
+    "employeeId": "65559",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2484839572",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-010-9420",
+    "employeeName": "MANNAN PRODHAN",
+    "designation": "labor",
+    "employeeId": "65558",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2495724227",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-012-3208",
+    "employeeName": "Kazi Menhaj Ahmed",
+    "designation": "Supervisor",
+    "employeeId": "29643",
+    "nationality": "Indian",
+    "iqamaNumber": "2150142210",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-010-8410",
+    "employeeName": "Ghulam Qaiser",
+    "designation": "labor",
+    "employeeId": "68503",
+    "nationality": "Pakistani",
+    "iqamaNumber": "2636519080",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "MD Jahidur Rahman",
+    "designation": "labor",
+    "employeeId": "68766",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2576353243",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "MD Iqbalal Hasan",
+    "designation": "labor",
+    "employeeId": "68763",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2627978048",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-012-1766",
+    "employeeName": "Zeeshan Hussain Shah",
+    "designation": "labor",
+    "employeeId": "68753",
+    "nationality": "Pakistani",
+    "iqamaNumber": "2636518140",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "DMM-010-9478",
+    "employeeName": "Saefarz Ahemd",
+    "designation": "labor",
+    "employeeId": "68758",
+    "nationality": "Pakistani",
+    "iqamaNumber": "2637188778",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "Ismail Uddin",
+    "designation": "labor",
+    "employeeId": "68785",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2626890988",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
+      "aid": {
+        "docName": "A/ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      },
+      "dacoId": {
+        "docName": "DACO ID",
+        "downloadUrl": "NA",
+        "imgUrl": "NA"
+      }
+    }
+  },
+  {
+    "docId": "N/A",
+    "employeeName": "MD Suman",
+    "designation": "labor",
+    "employeeId": "68768",
+    "nationality": "Bangladeshi",
+    "iqamaNumber": "2622835896",
+    "refCode": "0",
+    "email": "",
+    "mobile": "",
+    "photoUrl": "",
+    "group": "Irrigation",
+    "docs": {
+      "jobOffer": {
+        "docName": "Job Offer",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "gacaCertificate": {
+        "docName": "GACA Certificate",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "joining": {
+        "docName": "Joining Document",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "iqama": {
+        "docName": "Iqama",
+        "downloadUrl": "N/A",
+        "imgUrl": "N/A"
+      },
+      "passport": {
+        "docName": "Passport",
+        "downloadUrl": "N/A"
+      },
+      "others": {
+        "docName": "Other Document",
+        "downloadUrl": "NA"
+      },
       "aid": {
         "docName": "A/ID",
         "downloadUrl": "NA",

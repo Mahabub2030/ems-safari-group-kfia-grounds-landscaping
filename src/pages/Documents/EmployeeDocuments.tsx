@@ -790,7 +790,7 @@ export default function EmployeeDocuments() {
 
   return (
     <div
-      className="mx-auto min-h-screen w-full space-y-7 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:22px_22px] p-4 md:p-8"
+      className="mx-auto  min-h-screen w-full space-y-7 bg-[linear-gradient(to_right,#e2e8f0_1px,transparent_1px),linear-gradient(to_bottom,#e2e8f0_1px,transparent_1px)] bg-[size:22px_22px] p-4 md:p-8"
       style={{ fontFamily: "'Montserrat', ui-sans-serif, system-ui, sans-serif" }}
     >
       {/* Page heading */}
