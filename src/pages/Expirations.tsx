@@ -22,14 +22,20 @@ import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
- Building2,
+ AlertTriangle,
+ CalendarDays,
+ CheckCircle2,
+ Clock,
  Download,
  FileText,
+ Hourglass,
  Pencil,
  Plus,
  RefreshCw,
  RotateCcw,
  ShieldAlert,
+ Users,
+ XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -143,27 +149,65 @@ const getStatusKey = (days: number | null): StatusKey => {
  return "VALID";
 };
 
-const STATUS_STYLES: Record<StatusKey, string> = {
- EXPIRED:
-  "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/20 animate-pulse",
- URGENT: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/20",
- SOON: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border-orange-500/20",
- NEAR: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/20",
- VALID:
-  "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
- UNKNOWN: "bg-muted text-muted-foreground border-border",
+// Short label for the status pill
+const SHORT_LABEL: Record<StatusKey, string> = {
+ EXPIRED: "Expired",
+ URGENT: "Urgent",
+ SOON: "Expiring Soon",
+ NEAR: "Near Expiry",
+ VALID: "Valid",
+ UNKNOWN: "No Date",
 };
 
-// Text shown in the badge
-const getStatusLabel = (days: number | null): string => {
- const key = getStatusKey(days);
- if (days === null) return "No Date";
- if (key === "EXPIRED") return `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? "" : "s"} ago`;
- if (days === 0) return "Expires Today";
- if (key === "URGENT") return `Urgent • ${days} Days Left`;
- if (key === "SOON") return `Expiring Soon • ${days} Days Left`;
- if (key === "NEAR") return `Near Expiry • ${days} Days Left`;
- return `Valid • ${days} Days Left`;
+// Colour of the "Remaining" text
+const REMAINING_STYLES: Record<StatusKey, string> = {
+ EXPIRED: "text-purple-600 dark:text-purple-400",
+ URGENT: "text-rose-600 dark:text-rose-400",
+ SOON: "text-orange-600 dark:text-orange-400",
+ NEAR: "text-amber-600 dark:text-amber-400",
+ VALID: "text-emerald-600 dark:text-emerald-400",
+ UNKNOWN: "text-muted-foreground",
+};
+
+// Soft pill (background + text + thin border)
+const PILL_STYLES: Record<StatusKey, string> = {
+ EXPIRED:
+  "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20",
+ URGENT:
+  "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20",
+ SOON: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20",
+ NEAR: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
+ VALID:
+  "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
+ UNKNOWN: "bg-muted text-muted-foreground border border-border",
+};
+
+// Small dot inside the status pill
+const DOT_STYLES: Record<StatusKey, string> = {
+ EXPIRED: "bg-purple-500",
+ URGENT: "bg-rose-500",
+ SOON: "bg-orange-500",
+ NEAR: "bg-amber-500",
+ VALID: "bg-emerald-500",
+ UNKNOWN: "bg-muted-foreground/50",
+};
+
+// Progress bar colour
+const BAR_STYLES: Record<StatusKey, string> = {
+ EXPIRED: "bg-purple-500",
+ URGENT: "bg-rose-500",
+ SOON: "bg-orange-500",
+ NEAR: "bg-amber-500",
+ VALID: "bg-emerald-500",
+ UNKNOWN: "bg-muted-foreground/30",
+};
+
+// "20753d overdue" / "45d left" / "Today"
+const getRemainingText = (days: number | null) => {
+ if (days === null) return "—";
+ if (days < 0) return `${Math.abs(days)}d overdue`;
+ if (days === 0) return "Today";
+ return `${days}d left`;
 };
 
 // Plain text version (for Excel / PDF)
@@ -186,18 +230,28 @@ const getOverallDays = (item: MockDocumentExpiry): number | null => {
  return list.length ? Math.min(...list) : null;
 };
 
-// Badge with date + dynamic status
-const renderExpiryBadge = (dateString?: string) => {
- const days = getDaysRemaining(dateString);
- if (days === null) return <span className="text-muted-foreground">—</span>;
+// Initials for the avatar (e.g. "Shoeib Abou Zied" => "SA")
+const getInitials = (name?: string) => {
+ const parts = String(name ?? "").trim().split(/\s+/).filter(Boolean);
+ if (parts.length === 0) return "?";
+ if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+ return (parts[0][0] + parts[1][0]).toUpperCase();
+};
 
+// Date + small days-left chip (used for Iqama / DACO expiry columns)
+const renderExpiryCell = (date?: string) => {
+ const days = getDaysRemaining(date);
+ if (days === null) {
+  return <span className="text-muted-foreground">—</span>;
+ }
+ const key = getStatusKey(days);
  return (
-  <div className="flex flex-col gap-0.5">
-   <span className="text-xs font-mono font-medium">{dateString}</span>
+  <div className="flex flex-col gap-1">
+   <span className="font-mono text-[13px] text-foreground">{date}</span>
    <span
-    className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold inline-block text-center w-fit ${STATUS_STYLES[getStatusKey(days)]}`}
+    className={`inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${PILL_STYLES[key]}`}
    >
-    {getStatusLabel(days)}
+    {getRemainingText(days)}
    </span>
   </div>
  );
@@ -209,6 +263,65 @@ const filterStatusOptions: FilterOption[] = [
  { label: `Expiring Soon (≤ ${SOON_DAYS} Days)`, value: "SOON" },
  { label: `Near Expiry (≤ ${NEAR_DAYS} Days)`, value: "NEAR" },
  { label: "Valid", value: "VALID" },
+];
+
+// Summary cards shown above the table (click a card to filter the table)
+const STAT_CARDS: {
+ key: StatusKey | "ALL";
+ label: string;
+ icon: typeof Users;
+ iconClass: string;
+ valueClass: string;
+ accentClass: string;
+}[] = [
+ {
+  key: "ALL",
+  label: "Total Employees",
+  icon: Users,
+  iconClass: "bg-primary/10 text-primary",
+  valueClass: "text-foreground",
+  accentClass: "bg-primary",
+ },
+ {
+  key: "VALID",
+  label: "Valid",
+  icon: CheckCircle2,
+  iconClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  valueClass: "text-emerald-600 dark:text-emerald-400",
+  accentClass: "bg-emerald-500",
+ },
+ {
+  key: "NEAR",
+  label: `Near Expiry (≤ ${NEAR_DAYS}d)`,
+  icon: Clock,
+  iconClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  valueClass: "text-amber-600 dark:text-amber-400",
+  accentClass: "bg-amber-500",
+ },
+ {
+  key: "SOON",
+  label: `Expiring Soon (≤ ${SOON_DAYS}d)`,
+  icon: Hourglass,
+  iconClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  valueClass: "text-orange-600 dark:text-orange-400",
+  accentClass: "bg-orange-500",
+ },
+ {
+  key: "URGENT",
+  label: `Urgent (≤ ${URGENT_DAYS}d)`,
+  icon: AlertTriangle,
+  iconClass: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+  valueClass: "text-rose-600 dark:text-rose-400",
+  accentClass: "bg-rose-500",
+ },
+ {
+  key: "EXPIRED",
+  label: "Expired",
+  icon: XCircle,
+  iconClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  valueClass: "text-purple-600 dark:text-purple-400",
+  accentClass: "bg-purple-500",
+ },
 ];
 
 const emptyForm: Partial<MockDocumentExpiry> = {
@@ -243,7 +356,7 @@ export default function Expiration() {
   return SEED_DATA;
  });
 
- // Persist every change (add / edit)
+ // Persist every change (add / edit / remark)
  useEffect(() => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
  }, [data]);
@@ -252,7 +365,7 @@ export default function Expiration() {
  const [groupFilter, setGroupFilter] = useState("all");
  const [expiryStatusFilter, setExpiryStatusFilter] = useState("all");
  const [pageSize, setPageSize] = useState<number>(10);
- const [page, setPage] = useState(1); // FIX: was 2, so table opened on an empty page
+ const [page, setPage] = useState(1);
  const [dialogOpen, setDialogOpen] = useState(false);
  const [editingRecord, setEditingRecord] = useState<MockDocumentExpiry | null>(
   null,
@@ -263,7 +376,7 @@ export default function Expiration() {
  const resetToJson = () => {
   localStorage.removeItem(STORAGE_KEY);
   setData(SEED_DATA);
-  setPage(1); // FIX: was 2
+  setPage(1);
   toast.success("Data reset from Expiration.json");
  };
 
@@ -273,6 +386,23 @@ export default function Expiration() {
    new Set(data.map((e) => e.group).filter(Boolean)),
   );
   return uniqueGroups.map((g) => ({ label: g, value: g }));
+ }, [data]);
+
+ // Counts for the summary cards (based on ALL records)
+ const stats = useMemo(() => {
+  const counts: Record<StatusKey | "ALL", number> = {
+   ALL: data.length,
+   EXPIRED: 0,
+   URGENT: 0,
+   SOON: 0,
+   NEAR: 0,
+   VALID: 0,
+   UNKNOWN: 0,
+  };
+  data.forEach((item) => {
+   counts[getStatusKey(getOverallDays(item))] += 1;
+  });
+  return counts;
  }, [data]);
 
  // Search + filters
@@ -288,7 +418,8 @@ export default function Expiration() {
     has(item.idNumber) ||
     has(item.dacoId) ||
     has(item.group) ||
-    has(item.companyName);
+    has(item.companyName) ||
+    has(item.remark);
 
    const matchGroup = groupFilter === "all" || item.group === groupFilter;
 
@@ -316,6 +447,19 @@ export default function Expiration() {
   setEditingRecord(record);
   setForm({ ...record });
   setDialogOpen(true);
+ };
+
+ // Save a comment typed directly in the table
+ const updateRemark = (slNo: number, value: string) => {
+  const trimmed = value.trim();
+  const current = data.find((d) => d.slNo === slNo);
+  if (!current || (current.remark ?? "") === trimmed) return;
+  setData((prev) =>
+   prev.map((item) =>
+    item.slNo === slNo ? { ...item, remark: trimmed } : item,
+   ),
+  );
+  toast.success("Remark saved");
  };
 
  const handleSave = () => {
@@ -359,8 +503,8 @@ export default function Expiration() {
 
  const exportExcel = () => {
   const ws = XLSX.utils.json_to_sheet(
-   filtered.map((e) => ({
-    "SL No": e.slNo,
+   filtered.map((e, i) => ({
+    "Sr No": i + 1,
     "Employee ID": e.employeeId,
     Name: e.name,
     "Iqama / ID": e.idNumber,
@@ -392,7 +536,7 @@ export default function Expiration() {
    startY: 22,
    head: [
     [
-     "#",
+     "Sr No",
      "Emp ID",
      "Name",
      "Iqama No.",
@@ -401,11 +545,11 @@ export default function Expiration() {
      "DACO ID",
      "DACO Expiry",
      "DACO Status",
-     "Group",
+     "Remark",
     ],
    ],
-   body: filtered.map((e) => [
-    e.slNo,
+   body: filtered.map((e, i) => [
+    i + 1,
     e.employeeId,
     e.name,
     e.idNumber,
@@ -414,9 +558,10 @@ export default function Expiration() {
     e.dacoId || "—",
     e.dacoExpiryDate || "—",
     getStatusText(getDaysRemaining(e.dacoExpiryDate)),
-    e.group,
+    e.remark || "",
    ]),
    styles: { fontSize: 8 },
+   headStyles: { fillColor: [30, 41, 59] },
   });
   doc.save("iqama_daco_expiry_report.pdf");
   toast.success("PDF report downloaded");
@@ -424,114 +569,144 @@ export default function Expiration() {
 
  const columns: Column<MockDocumentExpiry>[] = [
   {
-   key: "slNo",
-   label: "#",
+   // Running serial number (1, 2, 3 ...) that follows search / filters / pages
+   key: "srNo",
+   label: "SR NO",
    render: (emp) => (
-    <span className="text-xs text-muted-foreground font-mono font-medium">
-     {emp.slNo}
-    </span>
-   ),
-  },
-  {
-   key: "employeeId",
-   label: "Emp ID",
-   render: (emp) => (
-    <span className="font-semibold text-xs text-primary font-mono">
-     {emp.employeeId}
+    <span className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-md bg-muted/60 px-1.5 text-[11px] font-mono font-semibold text-muted-foreground">
+     {filtered.findIndex((x) => x.slNo === emp.slNo) + 1}
     </span>
    ),
   },
   {
    key: "name",
-   label: "Employee",
-   render: (emp) => (
-    <div className="flex items-center gap-2.5 min-w-[170px]">
-     <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0 font-bold text-xs border border-primary/20">
-      {emp.name.slice(0, 2).toUpperCase()}
-     </div>
-     <div className="truncate">
-      <p className="font-medium text-xs leading-none text-foreground">
-       {emp.name}
-      </p>
-      <p className="text-[11px] text-muted-foreground truncate mt-1">
-       {emp.designation} • {emp.nationality}
-      </p>
-     </div>
-    </div>
-   ),
-  },
-  {
-   key: "iqamaExpiryDate",
-   label: "Iqama / ID Expiry",
-   render: (emp) => (
-    <div className="min-w-[140px]">
-     <p className="text-[11px] text-muted-foreground font-mono mb-0.5">
-      ID: {emp.idNumber}
-     </p>
-     {renderExpiryBadge(emp.iqamaExpiryDate)}
-    </div>
-   ),
-  },
-  {
-   key: "dacoExpiryDate",
-   label: "DACO ID Expiry",
-   render: (emp) => (
-    <div className="min-w-[140px]">
-     <p className="text-[11px] text-muted-foreground font-mono mb-0.5">
-      DACO: {emp.dacoId || "—"}
-     </p>
-     {renderExpiryBadge(emp.dacoExpiryDate)}
-    </div>
-   ),
-  },
-  {
-   key: "group",
-   label: "Group & Company",
-   render: (emp) => (
-    <div className="min-w-[150px]">
-     <p className="text-xs font-medium text-foreground">{emp.group}</p>
-     <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
-      <Building2 className="h-3 w-3 shrink-0" />
-      <span className="truncate">{emp.companyName}</span>
-     </div>
-    </div>
-   ),
-  },
-  {
-   // Dynamic overall status (calculated from dates, not from JSON "status")
-   key: "status",
-   label: "Status / Remark",
+   label: "EMPLOYEE",
    render: (emp) => {
-    const days = getOverallDays(emp);
+    const key = getStatusKey(getOverallDays(emp));
     return (
-     <div className="flex flex-col gap-1 min-w-[150px]">
-      <span
-       className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold w-fit ${STATUS_STYLES[getStatusKey(days)]}`}
+     <div className="flex items-center gap-3 min-w-[220px]">
+      <div
+       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${PILL_STYLES[key]}`}
       >
-       {getStatusLabel(days)}
-      </span>
-      {emp.remark && (
-       <span className="text-[11px] text-muted-foreground italic truncate max-w-[150px] block">
-        {emp.remark}
-       </span>
-      )}
+       {getInitials(emp.name)}
+      </div>
+      <div className="min-w-0">
+       <p className="truncate text-sm font-semibold leading-tight text-foreground">
+        {emp.name}
+       </p>
+       <p className="mt-0.5 truncate text-xs text-muted-foreground">
+        <span className="font-mono">{emp.employeeId}</span>
+        <span className="mx-1.5 text-muted-foreground/40">•</span>
+        {emp.designation}
+       </p>
+      </div>
      </div>
     );
    },
   },
   {
+   key: "idNumber",
+   label: "IQAMA NO.",
+   render: (emp) => (
+    <span className="font-mono text-[13px] tracking-wide text-foreground/80">
+     {emp.idNumber}
+    </span>
+   ),
+  },
+  {
+   key: "iqamaExpiryDate",
+   label: "IQAMA EXPIRY",
+   render: (emp) => renderExpiryCell(emp.iqamaExpiryDate),
+  },
+  {
+   key: "dacoId",
+   label: "DACO ID",
+   render: (emp) => (
+    <span className="font-mono text-[13px] tracking-wide text-foreground/80">
+     {emp.dacoId || "—"}
+    </span>
+   ),
+  },
+  {
+   key: "dacoExpiryDate",
+   label: "DACO EXPIRY",
+   render: (emp) => renderExpiryCell(emp.dacoExpiryDate),
+  },
+  {
+   key: "remaining",
+   label: "REMAINING",
+   render: (emp) => {
+    const days = getOverallDays(emp); // worst of Iqama / DACO
+    const key = getStatusKey(days);
+    // bar = how much of a 365 day window is left (full bar when overdue)
+    const pct =
+     days === null
+      ? 0
+      : days < 0
+       ? 100
+       : Math.max(4, Math.min(100, (days / 365) * 100));
+    return (
+     <div className="min-w-[120px]">
+      <span
+       className={`font-mono text-[13px] font-semibold ${REMAINING_STYLES[key]}`}
+      >
+       {getRemainingText(days)}
+      </span>
+      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+       <div
+        className={`h-full rounded-full ${BAR_STYLES[key]}`}
+        style={{ width: `${pct}%` }}
+       />
+      </div>
+     </div>
+    );
+   },
+  },
+  {
+   key: "status",
+   label: "STATUS",
+   render: (emp) => {
+    const key = getStatusKey(getOverallDays(emp));
+    return (
+     <span
+      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${PILL_STYLES[key]}`}
+     >
+      <span className={`h-1.5 w-1.5 rounded-full ${DOT_STYLES[key]}`} />
+      {SHORT_LABEL[key]}
+     </span>
+    );
+   },
+  },
+  {
+   // Type a comment and press Enter (or click outside) to save
+   key: "remark",
+   label: "REMARK",
+   render: (emp) => (
+    <input
+     key={`${emp.slNo}-${emp.remark ?? ""}`}
+     defaultValue={emp.remark ?? ""}
+     placeholder="Add comment..."
+     onClick={(e) => e.stopPropagation()}
+     onBlur={(e) => updateRemark(emp.slNo, e.target.value)}
+     onKeyDown={(e) => {
+      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+     }}
+     className="h-8 w-[200px] rounded-md border border-dashed border-transparent bg-transparent px-2 text-xs text-foreground placeholder:text-muted-foreground/50 hover:border-border focus:border-solid focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
+    />
+   ),
+  },
+  {
    key: "actions",
-   label: "Actions",
-   className:
-    "text-right sticky right-0 bg-background/95 backdrop-blur-sm z-10",
+   label: "",
+   className: "text-right",
    render: (emp) => (
     <div
-     className="flex items-center justify-end gap-1"
+     className="flex items-center justify-end"
      onClick={(e) => e.stopPropagation()}
     >
      <button
       onClick={() => openEdit(emp)}
-      className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+      className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-primary"
       title="Update Expiry Dates"
      >
       <Pencil className="h-3.5 w-3.5" />
@@ -541,23 +716,85 @@ export default function Expiration() {
   },
  ];
 
+ const todayLabel = new Date().toLocaleDateString("en-GB", {
+  day: "2-digit",
+  month: "short",
+  year: "numeric",
+ });
+
  return (
   <motion.div
-   initial={{ opacity: 0 }}
-   animate={{ opacity: 1 }}
-   className="space-y-4 p-4 md:p-6"
+   initial={{ opacity: 0, y: 6 }}
+   animate={{ opacity: 1, y: 0 }}
+   className="space-y-5 p-4 md:p-6"
   >
    {/* Header Bar */}
    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-    <div>
-     <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
-      <ShieldAlert className="h-6 w-6 text-amber-500" />
-      Iqama & DACO Expiry Tracker
-     </h1>
-     <p className="text-muted-foreground text-xs mt-0.5">
-      Monitoring document expiration dates and remaining countdown days
-     </p>
+    <div className="flex items-center gap-3">
+     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm">
+      <ShieldAlert className="h-5 w-5" />
+     </div>
+     <div>
+      <h1 className="text-2xl font-bold tracking-tight leading-tight">
+       Iqama & DACO Expiry Tracker
+      </h1>
+      <p className="text-muted-foreground text-xs mt-0.5">
+       Monitoring document expiration dates and remaining countdown days
+      </p>
+     </div>
     </div>
+    <div className="flex items-center gap-1.5 rounded-lg border bg-card px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
+     <CalendarDays className="h-3.5 w-3.5" />
+     <span>As of</span>
+     <span className="font-semibold text-foreground">{todayLabel}</span>
+    </div>
+   </div>
+
+   {/* Summary Cards (click to filter) */}
+   <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+    {STAT_CARDS.map((card) => {
+     const Icon = card.icon;
+     const value = filterValueFor(card.key);
+     const active = expiryStatusFilter === value;
+     const share =
+      stats.ALL > 0 ? Math.round((stats[card.key] / stats.ALL) * 100) : 0;
+     return (
+      <button
+       key={card.key}
+       type="button"
+       onClick={() => {
+        setExpiryStatusFilter(active ? "all" : value);
+        setPage(1);
+       }}
+       className={`group relative overflow-hidden rounded-xl border bg-card p-3.5 text-left shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md ${active ? "ring-2 ring-primary border-primary" : ""
+        }`}
+      >
+       <span
+        className={`absolute inset-x-0 top-0 h-0.5 ${card.accentClass}`}
+       />
+       <div className="flex items-start justify-between">
+        <div
+         className={`flex h-9 w-9 items-center justify-center rounded-lg ${card.iconClass}`}
+        >
+         <Icon className="h-[18px] w-[18px]" />
+        </div>
+        {card.key !== "ALL" && (
+         <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">
+          {share}%
+         </span>
+        )}
+       </div>
+       <p
+        className={`mt-3 text-3xl font-bold leading-none tracking-tight ${card.valueClass}`}
+       >
+        {stats[card.key]}
+       </p>
+       <p className="mt-1.5 truncate text-[11px] font-medium text-muted-foreground">
+        {card.label}
+       </p>
+      </button>
+     );
+    })}
    </div>
 
    {/* Control Bar */}
@@ -611,12 +848,21 @@ export default function Expiration() {
     </div>
    </div>
 
-   {/* Main Table */}
+   {/* Main Table
+       The [&_...] classes style the table inside DataTable: grey sticky header,
+       uppercase labels, row hover and comfortable row height. */}
    <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
     <div
-     className={`w-full overflow-x-auto ${paginated.length > 10
-      ? "max-h-[520px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
-      : "overflow-y-visible"
+     className={`w-full overflow-x-auto
+      [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10
+      [&_thead_th]:bg-muted/60 [&_thead_th]:backdrop-blur
+      [&_thead_th]:whitespace-nowrap [&_thead_th]:text-[11px] [&_thead_th]:font-semibold
+      [&_thead_th]:uppercase [&_thead_th]:tracking-wider [&_thead_th]:text-muted-foreground
+      [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-muted/40
+      [&_tbody_td]:py-3 [&_tbody_td]:align-middle
+      ${paginated.length > 10
+       ? "max-h-[560px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
+       : "overflow-y-visible"
       }`}
     >
      <DataTable<MockDocumentExpiry>
@@ -628,7 +874,7 @@ export default function Expiration() {
        setSearch(v);
        setPage(1);
       }}
-      searchPlaceholder="Search Employee, Iqama, DACO ID, Group..."
+      searchPlaceholder="Search Employee, Iqama, DACO ID, Remark..."
       filterValue={expiryStatusFilter}
       onFilterChange={(v) => {
        setExpiryStatusFilter(v);
@@ -805,4 +1051,9 @@ export default function Expiration() {
    </Dialog>
   </motion.div>
  );
+}
+
+// "ALL" card => filter value "all", other cards => their status key
+function filterValueFor(key: StatusKey | "ALL"): string {
+ return key === "ALL" ? "all" : key;
 }
