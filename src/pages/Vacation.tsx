@@ -6,6 +6,8 @@ import {
  ChevronLeft,
  ChevronRight,
  Clock,
+ Download,
+ ExternalLink,
  FileSpreadsheet,
  FileText,
  Hourglass,
@@ -27,8 +29,8 @@ import vacationsJson from "@/data/Vacations.json";
 // TYPES & INTERFACES
 // ==========================================
 
-// Document status values used in the JSON:
-// "Received" | "Pending" | "Not Required" | ""  (empty = not recorded yet)
+// A document is "Received" only when its JSON value is a link (https://...).
+// Empty or any other text = "-" (shows the Add button).
 export type DocStatus = "Received" | "Pending" | "Not Required" | "-";
 
 export type DocKey = "visa" | "guaranteeForm" | "ticket" | "other";
@@ -57,10 +59,11 @@ export interface RawEmployeeData {
  ticketStatus?: string;
  otherDocStatus?: string;
  totalVacationDays?: number;
- totalAllowance: number;
- usedDays: number;
- pendingDays: number;
- remainingDays: number;
+ // Day counts may be left empty ("") in the JSON
+ totalAllowance: number | string;
+ usedDays: number | string;
+ pendingDays: number | string;
+ remainingDays: number | string;
  nextLeaveDate?: string;
  remark?: string;
  avatarUrl?: string;
@@ -69,6 +72,7 @@ export interface RawEmployeeData {
 export type VacationStatus =
  | "Active"
  | "Pending"
+ | "Approved"
  | "On Leave"
  | "Upcoming"
  | "Re-joined"
@@ -87,6 +91,8 @@ export interface EmployeeVacationRecord extends RawEmployeeData {
  guaranteeForm: DocStatus;
  ticket: DocStatus;
  other: DocStatus;
+ // Document links taken from the JSON (when the value is a URL)
+ links: Partial<Record<DocKey, string>>;
 }
 
 interface EmployeeVacationTablePageProps {
@@ -100,6 +106,10 @@ interface EmployeeVacationTablePageProps {
 const DASH = "-";
 const show = (v: unknown): string =>
  v === undefined || v === null || v === "" ? DASH : String(v);
+
+// "14" -> "14 d", empty -> "-"
+const fmtDays = (v: unknown): string =>
+ v === undefined || v === null || v === "" ? DASH : `${v} d`;
 
 const MONTHS: Record<string, number> = {
  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
@@ -154,24 +164,46 @@ const extractRecords = (json: unknown): RawEmployeeData[] => {
  return [];
 };
 
-// "received", "done", "ready" -> Received | "pending" -> Pending | "n/a" -> Not Required
-const normalizeDoc = (v?: string): DocStatus => {
- const k = (v ?? "").toLowerCase().replace(/[\s_-]/g, "");
- if (["received", "done", "ready", "issued", "yes"].includes(k)) return "Received";
- if (k === "pending" || k === "waiting") return "Pending";
- if (["notrequired", "na", "none", "no"].includes(k) && k !== "") {
-  return k === "no" ? "-" : "Not Required";
- }
- return "-";
+// Returns the value only when it is a web link
+const getLink = (v?: string): string | undefined => {
+ const s = (v ?? "").trim();
+ return /^https?:\/\//i.test(s) ? s : undefined;
 };
 
-// Click order for a document button: - -> Pending -> Received -> Not Required -> -
-const DOC_CYCLE: DocStatus[] = ["-", "Pending", "Received", "Not Required"];
-const nextDoc = (c: DocStatus): DocStatus =>
- DOC_CYCLE[(DOC_CYCLE.indexOf(c) + 1) % DOC_CYCLE.length];
+// Google Drive share link (.../file/d/ID/view) -> direct download link.
+// Any other link is returned unchanged.
+const toDownloadUrl = (url: string): string => {
+ const m = url.match(/drive\.google\.com\/file\/d\/([^/?#]+)/);
+ return m ? `https://drive.google.com/uc?export=download&id=${m[1]}` : url;
+};
 
-// Document changes are saved in the browser (Vacations.json is static)
-const STORAGE_KEY = "vacation-doc-overrides";
+// Merge extra links into a record and refresh the document statuses.
+// A document counts as Received only when it has a link.
+const applyLinks = (
+ e: EmployeeVacationRecord,
+ extra: Partial<Record<DocKey, string>> = {},
+): EmployeeVacationRecord => {
+ const links = { ...e.links, ...extra };
+ return {
+  ...e,
+  links,
+  visa: links.visa ? "Received" : "-",
+  guaranteeForm: links.guaranteeForm ? "Received" : "-",
+  ticket: links.ticket ? "Received" : "-",
+  other: links.other ? "Received" : "-",
+ };
+};
+
+// Button names shown once a document is received
+const DOC_LABELS: Record<DocKey, string> = {
+ visa: "Visa",
+ guaranteeForm: "Guarantee Form",
+ ticket: "Ticket",
+ other: "Other",
+};
+
+// Links added with the "Add" button are saved in the browser (Vacations.json is static)
+const STORAGE_KEY = "vacation-doc-links";
 
 // Inactive and Cancelled rows cannot be edited
 const isLocked = (s: VacationStatus) => s === "Inactive" || s === "Cancelled";
@@ -185,6 +217,8 @@ const transformEmployeeData = (
 
  if (statusKey === "ONLEAVE") formattedStatus = "On Leave";
  else if (statusKey === "PENDING") formattedStatus = "Pending";
+ else if (statusKey === "APPROVED" || statusKey === "APPROVE")
+  formattedStatus = "Approved";
  else if (statusKey === "UPCOMING") formattedStatus = "Upcoming";
  else if (
   ["REJOINED", "REJOINING", "REJOIN", "RETURNED"].includes(statusKey)
@@ -219,10 +253,16 @@ const transformEmployeeData = (
   serial: raw.serialNo ?? index + 1,
   vacationDays,
   monthLabel: raw.month || getMonthLabel(leaveDate),
-  visa: normalizeDoc(raw.visaStatus),
-  guaranteeForm: normalizeDoc(raw.guaranteeFormStatus),
-  ticket: normalizeDoc(raw.ticketStatus),
-  other: normalizeDoc(raw.otherDocStatus),
+  visa: getLink(raw.visaStatus) ? "Received" : "-",
+  guaranteeForm: getLink(raw.guaranteeFormStatus) ? "Received" : "-",
+  ticket: getLink(raw.ticketStatus) ? "Received" : "-",
+  other: getLink(raw.otherDocStatus) ? "Received" : "-",
+  links: {
+   visa: getLink(raw.visaStatus),
+   guaranteeForm: getLink(raw.guaranteeFormStatus),
+   ticket: getLink(raw.ticketStatus),
+   other: getLink(raw.otherDocStatus),
+  },
  };
 };
 
@@ -256,8 +296,8 @@ export const EmployeeVacationTablePage: React.FC<
   try {
    const records = extractRecords(vacationsJson);
 
-   // Re-apply document changes saved in the browser
-   let saved: Record<string, Partial<Record<DocKey, DocStatus>>> = {};
+   // Re-apply links added in the browser
+   let saved: Record<string, Partial<Record<DocKey, string>>> = {};
    try {
     saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
    } catch {
@@ -267,7 +307,7 @@ export const EmployeeVacationTablePage: React.FC<
    setAllEmployees(
     records
      .map(transformEmployeeData)
-     .map((e) => ({ ...e, ...(saved[e._id] ?? {}) })),
+     .map((e) => applyLinks(e, saved[e._id])),
    );
   } catch (err: any) {
    console.error("Failed to read Vacations.json:", err);
@@ -295,15 +335,19 @@ export const EmployeeVacationTablePage: React.FC<
  ]);
 
  // ------------------------------------------
- // UPDATE A DOCUMENT STATUS (button click)
+ // ADD A DOCUMENT LINK ("Add" button click)
  // ------------------------------------------
- const updateDoc = (id: string, key: DocKey, value: DocStatus) => {
+ const addDocLink = (id: string, key: DocKey) => {
+  const input = window.prompt(`Paste the ${DOC_LABELS[key]} link (https://...)`);
+  const link = getLink(input ?? "");
+  if (!link) return; // cancelled or not a valid link: nothing changes
+
   setAllEmployees((prev) =>
-   prev.map((e) => (e._id === id ? { ...e, [key]: value } : e)),
+   prev.map((e) => (e._id === id ? applyLinks(e, { [key]: link }) : e)),
   );
   try {
    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
-   saved[id] = { ...saved[id], [key]: value };
+   saved[id] = { ...saved[id], [key]: link };
    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
   } catch {
    /* storage unavailable: change stays in memory only */
@@ -525,10 +569,10 @@ export const EmployeeVacationTablePage: React.FC<
    emp.ticket,
    emp.other,
    emp.vacationDays,
-   `${emp.totalAllowance} d`,
-   `${emp.usedDays} d`,
-   `${emp.pendingDays} d`,
-   `${emp.remainingDays} d`,
+   fmtDays(emp.totalAllowance),
+   fmtDays(emp.usedDays),
+   fmtDays(emp.pendingDays),
+   fmtDays(emp.remainingDays),
    show(emp.remark),
   ]);
 
@@ -598,45 +642,49 @@ export const EmployeeVacationTablePage: React.FC<
    </span>
   );
 
- // Document cell as a button. Click to cycle:
- // Add (-) -> Pending -> Received -> N/A (Not Required) -> Add
+ // Document cell:
+ //  link available -> named button (Visa / Guarantee Form / Ticket) + download icon
+ //  no link        -> "Add" button (click to paste a link)
  const renderDocButton = (emp: EmployeeVacationRecord, key: DocKey) => {
-  const value = emp[key];
-  const locked = isLocked(emp.formattedStatus);
+  const link = emp.links?.[key];
+  const label = DOC_LABELS[key];
 
-  let cls =
-   "border-dashed border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700";
-  let content: React.ReactNode = (
-   <>
-    <Plus className="w-3 h-3" /> Add
-   </>
-  );
-
-  if (value === "Received") {
-   cls = "border-green-600 bg-green-600 text-white hover:bg-green-700";
-   content = (
-    <>
-     <Check className="w-3.5 h-3.5" /> Received
-    </>
+  if (link)
+   return (
+    <span className="inline-flex items-center gap-1">
+     <a
+      href={link}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`Open ${label}`}
+      className="inline-flex items-center justify-center gap-1 min-w-[84px] px-2.5 py-1 rounded-md text-xs font-semibold border border-green-600 bg-green-600 text-white hover:bg-green-700 transition"
+     >
+      <Check className="w-3.5 h-3.5" /> {label}
+      <ExternalLink className="w-3 h-3" />
+     </a>
+     <a
+      href={toDownloadUrl(link)}
+      target="_blank"
+      rel="noopener noreferrer"
+      download
+      title={`Download ${label}`}
+      aria-label={`Download ${label}`}
+      className="inline-flex items-center justify-center p-1.5 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-700 transition"
+     >
+      <Download className="w-3.5 h-3.5" />
+     </a>
+    </span>
    );
-  } else if (value === "Pending") {
-   cls = "border-yellow-500 bg-yellow-400 text-yellow-950 hover:bg-yellow-300";
-   content = "Pending";
-  } else if (value === "Not Required") {
-   cls =
-    "border-slate-300 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300";
-   content = "N/A";
-  }
 
   return (
    <button
     type="button"
-    disabled={locked}
-    onClick={() => updateDoc(emp._id, key, nextDoc(value))}
-    title={locked ? "Row is locked" : "Click to change status"}
-    className={`inline-flex items-center justify-center gap-1 min-w-[84px] px-2.5 py-1 rounded-md text-xs font-semibold border transition disabled:cursor-not-allowed disabled:opacity-60 ${cls}`}
+    disabled={isLocked(emp.formattedStatus)}
+    onClick={() => addDocLink(emp._id, key)}
+    title={`Add ${label} link`}
+    className="inline-flex items-center justify-center gap-1 min-w-[84px] px-2.5 py-1 rounded-md text-xs font-semibold border border-dashed border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 transition disabled:cursor-not-allowed disabled:opacity-60"
    >
-    {content}
+    <Plus className="w-3 h-3" /> Add
    </button>
   );
  };
@@ -803,6 +851,7 @@ export const EmployeeVacationTablePage: React.FC<
       <option value="All">Status: All</option>
       <option value="Active">Status: Active</option>
       <option value="Pending">Status: Pending</option>
+      <option value="Approved">Status: Approved</option>
       <option value="On Leave">Status: On Leave</option>
       <option value="Upcoming">Status: Upcoming</option>
       <option value="Re-joined">Status: Re-joined</option>
@@ -934,16 +983,16 @@ export const EmployeeVacationTablePage: React.FC<
            {typeof employee.vacationDays === "number" ? " d" : ""}
           </td>
           <td className="py-3.5 px-4 text-center font-medium">
-           {employee.totalAllowance} d
+           {fmtDays(employee.totalAllowance)}
           </td>
           <td className="py-3.5 px-4 text-center font-medium">
-           {employee.usedDays} d
+           {fmtDays(employee.usedDays)}
           </td>
           <td className="py-3.5 px-4 text-center font-medium">
-           {employee.pendingDays} d
+           {fmtDays(employee.pendingDays)}
           </td>
           <td className="py-3.5 px-4 text-center font-bold">
-           {employee.remainingDays} d
+           {fmtDays(employee.remainingDays)}
           </td>
           <td className="py-3.5 px-4 text-xs min-w-[280px] max-w-[420px] whitespace-normal break-words">
            {show(employee.remark)}
