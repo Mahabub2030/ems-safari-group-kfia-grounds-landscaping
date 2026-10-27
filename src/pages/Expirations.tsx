@@ -1,23 +1,11 @@
 import { Button } from "@/components/ui/button";
 import {
- DataTable,
- type Column,
- type FilterOption,
-} from "@/components/ui/DataTable";
-import {
  Dialog,
  DialogContent,
  DialogHeader,
  DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
- Select,
- SelectContent,
- SelectItem,
- SelectTrigger,
- SelectValue,
-} from "@/components/ui/select";
 import { motion } from "framer-motion";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -25,19 +13,28 @@ import {
  AlertTriangle,
  CalendarDays,
  CheckCircle2,
+ ChevronDown,
+ ChevronUp,
+ ChevronsUpDown,
  Clock,
- Download,
+ Copy,
+ Eye,
+ FileDown,
+ FileSpreadsheet,
  FileText,
+ Filter,
+ FilterX,
  Hourglass,
  Pencil,
  Plus,
+ Printer,
  RefreshCw,
  RotateCcw,
  ShieldAlert,
  Users,
  XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -149,7 +146,7 @@ const getStatusKey = (days: number | null): StatusKey => {
  return "VALID";
 };
 
-// Short label for the status pill
+// Short label for the status cell
 const SHORT_LABEL: Record<StatusKey, string> = {
  EXPIRED: "Expired",
  URGENT: "Urgent",
@@ -159,7 +156,7 @@ const SHORT_LABEL: Record<StatusKey, string> = {
  UNKNOWN: "No Date",
 };
 
-// Colour of the "Remaining" text
+// Colour of the days text
 const REMAINING_STYLES: Record<StatusKey, string> = {
  EXPIRED: "text-purple-600 dark:text-purple-400",
  URGENT: "text-rose-600 dark:text-rose-400",
@@ -169,45 +166,34 @@ const REMAINING_STYLES: Record<StatusKey, string> = {
  UNKNOWN: "text-muted-foreground",
 };
 
-// Soft pill (background + text + thin border)
-const PILL_STYLES: Record<StatusKey, string> = {
- EXPIRED:
-  "bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20",
- URGENT:
-  "bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20",
- SOON: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20",
- NEAR: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20",
- VALID:
-  "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20",
- UNKNOWN: "bg-muted text-muted-foreground border border-border",
+// Whole STATUS cell is filled with colour (like the "Pending" cell in the reference)
+const STATUS_CELL: Record<StatusKey, string> = {
+ EXPIRED: "bg-purple-600 text-white",
+ URGENT: "bg-rose-500 text-white",
+ SOON: "bg-orange-500 text-white",
+ NEAR: "bg-amber-400 text-amber-950",
+ VALID: "bg-emerald-500 text-white",
+ UNKNOWN: "bg-slate-300 text-slate-700 dark:bg-slate-600 dark:text-slate-100",
 };
 
-// Small dot inside the status pill
-const DOT_STYLES: Record<StatusKey, string> = {
- EXPIRED: "bg-purple-500",
- URGENT: "bg-rose-500",
- SOON: "bg-orange-500",
- NEAR: "bg-amber-500",
- VALID: "bg-emerald-500",
- UNKNOWN: "bg-muted-foreground/50",
+// Light tint for the REMAINING cell
+const REMAINING_TINT: Record<StatusKey, string> = {
+ EXPIRED: "bg-purple-500/10",
+ URGENT: "bg-rose-500/10",
+ SOON: "bg-orange-500/10",
+ NEAR: "bg-amber-500/10",
+ VALID: "bg-emerald-500/10",
+ UNKNOWN: "",
 };
 
-// Progress bar colour
-const BAR_STYLES: Record<StatusKey, string> = {
- EXPIRED: "bg-purple-500",
- URGENT: "bg-rose-500",
- SOON: "bg-orange-500",
- NEAR: "bg-amber-500",
- VALID: "bg-emerald-500",
- UNKNOWN: "bg-muted-foreground/30",
-};
-
-// "20753d overdue" / "45d left" / "Today"
+// "26 days" / "1 day" / "Today" / "12 days overdue"
 const getRemainingText = (days: number | null) => {
  if (days === null) return "—";
- if (days < 0) return `${Math.abs(days)}d overdue`;
+ const n = Math.abs(days);
+ const unit = n === 1 ? "day" : "days";
+ if (days < 0) return `${n} ${unit} overdue`;
  if (days === 0) return "Today";
- return `${days}d left`;
+ return `${days} ${unit}`;
 };
 
 // Plain text version (for Excel / PDF)
@@ -230,15 +216,7 @@ const getOverallDays = (item: MockDocumentExpiry): number | null => {
  return list.length ? Math.min(...list) : null;
 };
 
-// Initials for the avatar (e.g. "Shoeib Abou Zied" => "SA")
-const getInitials = (name?: string) => {
- const parts = String(name ?? "").trim().split(/\s+/).filter(Boolean);
- if (parts.length === 0) return "?";
- if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
- return (parts[0][0] + parts[1][0]).toUpperCase();
-};
-
-// Date + small days-left chip (used for Iqama / DACO expiry columns)
+// Date + days left in the same line (used for Iqama / DACO expiry columns)
 const renderExpiryCell = (date?: string) => {
  const days = getDaysRemaining(date);
  if (days === null) {
@@ -246,23 +224,158 @@ const renderExpiryCell = (date?: string) => {
  }
  const key = getStatusKey(days);
  return (
-  <div className="flex flex-col gap-1">
-   <span className="font-mono text-[13px] text-foreground">{date}</span>
+  <span className="whitespace-nowrap">
+   <span className="font-mono">{date}</span>
    <span
-    className={`inline-flex w-fit items-center rounded-md px-1.5 py-0.5 text-[10px] font-semibold ${PILL_STYLES[key]}`}
+    className={`ml-2 text-[11px] font-semibold ${REMAINING_STYLES[key]}`}
    >
-    {getRemainingText(days)}
+    ({getRemainingText(days)})
    </span>
-  </div>
+  </span>
  );
 };
 
-const filterStatusOptions: FilterOption[] = [
+type FilterOpt = { label: string; value: string };
+
+const filterStatusOptions: FilterOpt[] = [
  { label: "Expired", value: "EXPIRED" },
  { label: `Urgent (≤ ${URGENT_DAYS} Days)`, value: "URGENT" },
  { label: `Expiring Soon (≤ ${SOON_DAYS} Days)`, value: "SOON" },
  { label: `Near Expiry (≤ ${NEAR_DAYS} Days)`, value: "NEAR" },
  { label: "Valid", value: "VALID" },
+];
+
+/* ------------------------------------------------------------------ */
+/* Table column definitions                                            */
+/* ------------------------------------------------------------------ */
+
+type ColKey =
+ | "srNo"
+ | "employeeId"
+ | "name"
+ | "designation"
+ | "idNumber"
+ | "iqamaExpiryDate"
+ | "dacoId"
+ | "dacoExpiryDate"
+ | "remaining"
+ | "status"
+ | "remark"
+ | "actions";
+
+type ColMeta = {
+ key: ColKey;
+ label: string;
+ sortable: boolean;
+ filter: "text" | "select" | "none";
+ minW?: string;
+ // text used by the column filter box
+ text?: (e: MockDocumentExpiry) => string;
+ // value used for sorting
+ sortValue?: (e: MockDocumentExpiry) => string | number | null;
+ // extra classes for the whole cell (full-cell colour)
+ cellClass?: (e: MockDocumentExpiry) => string;
+};
+
+const s = (v: unknown) => String(v ?? "");
+
+const COL_META: ColMeta[] = [
+ { key: "srNo", label: "Sr No", sortable: true, filter: "none", minW: "min-w-[70px]" },
+ {
+  key: "employeeId",
+  label: "Emp ID",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[100px]",
+  text: (e) => s(e.employeeId),
+  sortValue: (e) => s(e.employeeId),
+ },
+ {
+  key: "name",
+  label: "Employee",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[200px]",
+  text: (e) => s(e.name),
+  sortValue: (e) => s(e.name),
+ },
+ {
+  key: "designation",
+  label: "Designation",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[150px]",
+  text: (e) => s(e.designation),
+  sortValue: (e) => s(e.designation),
+ },
+ {
+  key: "idNumber",
+  label: "Iqama No.",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[130px]",
+  text: (e) => s(e.idNumber),
+  sortValue: (e) => s(e.idNumber),
+ },
+ {
+  key: "iqamaExpiryDate",
+  label: "Iqama Expiry",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[190px]",
+  text: (e) =>
+   `${s(e.iqamaExpiryDate)} ${getRemainingText(getDaysRemaining(e.iqamaExpiryDate))}`,
+  sortValue: (e) => getDaysRemaining(e.iqamaExpiryDate),
+ },
+ {
+  key: "dacoId",
+  label: "DACO ID",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[110px]",
+  text: (e) => s(e.dacoId),
+  sortValue: (e) => s(e.dacoId),
+ },
+ {
+  key: "dacoExpiryDate",
+  label: "DACO Expiry",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[190px]",
+  text: (e) =>
+   `${s(e.dacoExpiryDate)} ${getRemainingText(getDaysRemaining(e.dacoExpiryDate))}`,
+  sortValue: (e) => getDaysRemaining(e.dacoExpiryDate),
+ },
+ {
+  key: "remaining",
+  label: "Remaining",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[140px]",
+  text: (e) => getRemainingText(getOverallDays(e)),
+  sortValue: (e) => getOverallDays(e),
+  cellClass: (e) => REMAINING_TINT[getStatusKey(getOverallDays(e))],
+ },
+ {
+  key: "status",
+  label: "Status",
+  sortable: true,
+  filter: "select",
+  minW: "min-w-[150px]",
+  sortValue: (e) => getOverallDays(e),
+  cellClass: (e) =>
+   `text-center ${STATUS_CELL[getStatusKey(getOverallDays(e))]}`,
+ },
+ {
+  key: "remark",
+  label: "Remark",
+  sortable: true,
+  filter: "text",
+  minW: "min-w-[220px]",
+  text: (e) => s(e.remark),
+  sortValue: (e) => s(e.remark),
+ },
+ { key: "actions", label: "", sortable: false, filter: "none", minW: "min-w-[56px]" },
 ];
 
 // Summary cards shown above the table (click a card to filter the table)
@@ -341,6 +454,14 @@ const emptyForm: Partial<MockDocumentExpiry> = {
  status: "Active",
 };
 
+// Small ghost button used in the top-right toolbar (Print / Excel / CSV / Copy ...)
+const toolBtn =
+ "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm text-slate-600 transition-colors hover:bg-purple-500/10 hover:text-purple-700 dark:text-slate-300 dark:hover:text-purple-300";
+
+// Small native select used in the toolbar / filter row
+const selectCls =
+ "h-8 w-full appearance-none rounded-md border border-input bg-background text-xs text-foreground focus:border-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500/20";
+
 export default function Expiration() {
  // Load from localStorage; if empty/corrupted, fall back to Expiration.json
  const [data, setData] = useState<MockDocumentExpiry[]>(() => {
@@ -364,7 +485,12 @@ export default function Expiration() {
  const [search, setSearch] = useState("");
  const [groupFilter, setGroupFilter] = useState("all");
  const [expiryStatusFilter, setExpiryStatusFilter] = useState("all");
- const [pageSize, setPageSize] = useState<number>(10);
+ const [colFilters, setColFilters] = useState<Record<string, string>>({});
+ const [sortKey, setSortKey] = useState<ColKey>("srNo");
+ const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+ const [hiddenCols, setHiddenCols] = useState<Record<string, boolean>>({});
+ const [colMenuOpen, setColMenuOpen] = useState(false);
+ const [pageSize, setPageSize] = useState<number>(25);
  const [page, setPage] = useState(1);
  const [dialogOpen, setDialogOpen] = useState(false);
  const [editingRecord, setEditingRecord] = useState<MockDocumentExpiry | null>(
@@ -405,7 +531,7 @@ export default function Expiration() {
   return counts;
  }, [data]);
 
- // Search + filters
+ // Search + column filters + status / group filters
  const filtered = useMemo(() => {
   const q = search.toLowerCase();
   return data.filter((item) => {
@@ -417,6 +543,7 @@ export default function Expiration() {
     has(item.employeeId) ||
     has(item.idNumber) ||
     has(item.dacoId) ||
+    has(item.designation) ||
     has(item.group) ||
     has(item.companyName) ||
     has(item.remark);
@@ -428,14 +555,87 @@ export default function Expiration() {
     expiryStatusFilter === "all" ||
     getStatusKey(getOverallDays(item)) === expiryStatusFilter;
 
-   return matchSearch && matchGroup && matchExpiry;
-  });
- }, [data, search, groupFilter, expiryStatusFilter]);
+   // Filter boxes under the column headers
+   const matchColumns = COL_META.every((c) => {
+    const f = (colFilters[c.key] ?? "").trim().toLowerCase();
+    if (!f || !c.text) return true;
+    return c.text(item).toLowerCase().includes(f);
+   });
 
- const paginated = useMemo(() => {
-  if (pageSize === 0) return filtered;
-  return filtered.slice((page - 1) * pageSize, page * pageSize);
- }, [filtered, page, pageSize]);
+   return matchSearch && matchGroup && matchExpiry && matchColumns;
+  });
+ }, [data, search, groupFilter, expiryStatusFilter, colFilters]);
+
+ // Original position of every record (used when sorting by "Sr No")
+ const orderMap = useMemo(
+  () => new Map(data.map((d, i) => [d.slNo, i])),
+  [data],
+ );
+
+ // Sorting (click a column header)
+ const sorted = useMemo(() => {
+  const meta = COL_META.find((c) => c.key === sortKey);
+  if (!meta || !meta.sortable) return filtered;
+  const dir = sortDir === "asc" ? 1 : -1;
+  const val = (e: MockDocumentExpiry): string | number | null =>
+   sortKey === "srNo" ? (orderMap.get(e.slNo) ?? 0) : (meta.sortValue?.(e) ?? null);
+
+  return [...filtered].sort((a, b) => {
+   const va = val(a);
+   const vb = val(b);
+   if (va === null && vb === null) return 0;
+   if (va === null) return 1; // empty values always go to the bottom
+   if (vb === null) return -1;
+   if (typeof va === "number" && typeof vb === "number") return (va - vb) * dir;
+   return (
+    String(va).localeCompare(String(vb), undefined, {
+     numeric: true,
+     sensitivity: "base",
+    }) * dir
+   );
+  });
+ }, [filtered, sortKey, sortDir, orderMap]);
+
+ // Pagination
+ const total = sorted.length;
+ const totalPages = pageSize === 0 ? 1 : Math.max(1, Math.ceil(total / pageSize));
+ const safePage = Math.min(page, totalPages);
+ const startIdx = pageSize === 0 ? 0 : (safePage - 1) * pageSize;
+ const pageRows =
+  pageSize === 0 ? sorted : sorted.slice(startIdx, startIdx + pageSize);
+
+ const pageNumbers: number[] = [];
+ {
+  const first = Math.max(1, Math.min(safePage - 2, totalPages - 4));
+  const last = Math.min(totalPages, first + 4);
+  for (let p = first; p <= last; p++) pageNumbers.push(p);
+ }
+
+ const visibleCols = COL_META.filter((c) => !hiddenCols[c.key]);
+
+ const toggleSort = (key: ColKey) => {
+  if (sortKey === key) {
+   setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+  } else {
+   setSortKey(key);
+   setSortDir("asc");
+  }
+ };
+
+ const setColFilter = (key: string, value: string) => {
+  setColFilters((prev) => ({ ...prev, [key]: value }));
+  setPage(1);
+ };
+
+ const clearFilters = () => {
+  setSearch("");
+  setColFilters({});
+  setGroupFilter("all");
+  setExpiryStatusFilter("all");
+  setSortKey("srNo");
+  setSortDir("asc");
+  setPage(1);
+ };
 
  const openAdd = () => {
   setEditingRecord(null);
@@ -501,31 +701,105 @@ export default function Expiration() {
   setDialogOpen(false);
  };
 
+ /* ---------------- Export / print / copy (uses current filter + sort) ---------------- */
+
+ const buildExportRows = () =>
+  sorted.map((e, i) => ({
+   "Sr No": i + 1,
+   "Employee ID": e.employeeId,
+   Name: e.name,
+   Designation: e.designation || "",
+   "Iqama / ID": e.idNumber,
+   "Iqama Expiry": e.iqamaExpiryDate || "N/A",
+   "Iqama Days Left": getDaysRemaining(e.iqamaExpiryDate) ?? "N/A",
+   "Iqama Status": getStatusText(getDaysRemaining(e.iqamaExpiryDate)),
+   "DACO ID": e.dacoId || "",
+   "DACO Expiry": e.dacoExpiryDate || "",
+   "DACO Days Left": getDaysRemaining(e.dacoExpiryDate) ?? "N/A",
+   "DACO Status": getStatusText(getDaysRemaining(e.dacoExpiryDate)),
+   Remaining: getRemainingText(getOverallDays(e)),
+   "Overall Status": getStatusText(getOverallDays(e)),
+   Group: e.group,
+   Company: e.companyName,
+   Location: e.workLocation || "",
+   Remark: e.remark || "",
+  }));
+
  const exportExcel = () => {
-  const ws = XLSX.utils.json_to_sheet(
-   filtered.map((e, i) => ({
-    "Sr No": i + 1,
-    "Employee ID": e.employeeId,
-    Name: e.name,
-    "Iqama / ID": e.idNumber,
-    "Iqama Expiry": e.iqamaExpiryDate || "N/A",
-    "Iqama Days Left": getDaysRemaining(e.iqamaExpiryDate) ?? "N/A",
-    "Iqama Status": getStatusText(getDaysRemaining(e.iqamaExpiryDate)),
-    "DACO ID": e.dacoId || "",
-    "DACO Expiry": e.dacoExpiryDate || "",
-    "DACO Days Left": getDaysRemaining(e.dacoExpiryDate) ?? "N/A",
-    "DACO Status": getStatusText(getDaysRemaining(e.dacoExpiryDate)),
-    "Overall Status": getStatusText(getOverallDays(e)),
-    Group: e.group,
-    Company: e.companyName,
-    Location: e.workLocation || "",
-    Remark: e.remark || "",
-   })),
-  );
+  const ws = XLSX.utils.json_to_sheet(buildExportRows());
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "Expiry_Report");
   XLSX.writeFile(wb, "iqama_daco_expiry_report.xlsx");
   toast.success("Excel report downloaded");
+ };
+
+ const exportCSV = () => {
+  const ws = XLSX.utils.json_to_sheet(buildExportRows());
+  const csv = XLSX.utils.sheet_to_csv(ws);
+  // BOM so Excel opens Arabic / special characters correctly
+  const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "iqama_daco_expiry_report.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+  toast.success("CSV downloaded");
+ };
+
+ const copyTable = async () => {
+  const rows = buildExportRows() as Record<string, unknown>[];
+  if (rows.length === 0) {
+   toast.error("Nothing to copy");
+   return;
+  }
+  const headers = Object.keys(rows[0]);
+  const text = [
+   headers.join("\t"),
+   ...rows.map((r) => headers.map((h) => String(r[h] ?? "")).join("\t")),
+  ].join("\n");
+  try {
+   await navigator.clipboard.writeText(text);
+   toast.success(`${rows.length} rows copied`);
+  } catch {
+   toast.error("Copy failed");
+  }
+ };
+
+ const printTable = () => {
+  const rows = buildExportRows() as Record<string, unknown>[];
+  const w = window.open("", "_blank");
+  if (!w) {
+   toast.error("Please allow pop-ups to print");
+   return;
+  }
+  const headers = rows.length ? Object.keys(rows[0]) : [];
+  const esc = (v: unknown) =>
+   String(v ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  w.document.write(
+   `<html><head><title>Iqama &amp; DACO Expiry Report</title>
+<style>
+ body{font-family:Arial,sans-serif;padding:16px}
+ h2{margin:0 0 12px}
+ table{border-collapse:collapse;width:100%;font-size:11px}
+ th,td{border:1px solid #999;padding:4px 6px;text-align:left}
+ th{background:#eee}
+</style></head><body>
+<h2>Safari Group - Iqama &amp; DACO Expiry Monitoring Report</h2>
+<table><thead><tr>${headers.map((h) => `<th>${esc(h)}</th>`).join("")}</tr></thead>
+<tbody>${rows
+    .map(
+     (r) =>
+      `<tr>${headers.map((h) => `<td>${esc(r[h])}</td>`).join("")}</tr>`,
+    )
+    .join("")}</tbody></table></body></html>`,
+  );
+  w.document.close();
+  w.focus();
+  w.print();
  };
 
  const exportPDF = () => {
@@ -548,7 +822,7 @@ export default function Expiration() {
      "Remark",
     ],
    ],
-   body: filtered.map((e, i) => [
+   body: sorted.map((e, i) => [
     i + 1,
     e.employeeId,
     e.name,
@@ -567,154 +841,88 @@ export default function Expiration() {
   toast.success("PDF report downloaded");
  };
 
- const columns: Column<MockDocumentExpiry>[] = [
-  {
-   // Running serial number (1, 2, 3 ...) that follows search / filters / pages
-   key: "srNo",
-   label: "SR NO",
-   render: (emp) => (
-    <span className="inline-flex h-6 min-w-[28px] items-center justify-center rounded-md bg-muted/60 px-1.5 text-[11px] font-mono font-semibold text-muted-foreground">
-     {filtered.findIndex((x) => x.slNo === emp.slNo) + 1}
-    </span>
-   ),
-  },
-  {
-   key: "name",
-   label: "EMPLOYEE",
-   render: (emp) => {
-    const key = getStatusKey(getOverallDays(emp));
+ /* ---------------- Cell content ---------------- */
+
+ const renderCell = (
+  key: ColKey,
+  emp: MockDocumentExpiry,
+  rowNo: number,
+ ): ReactNode => {
+  switch (key) {
+   case "srNo":
     return (
-     <div className="flex items-center gap-3 min-w-[220px]">
-      <div
-       className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold ${PILL_STYLES[key]}`}
-      >
-       {getInitials(emp.name)}
-      </div>
-      <div className="min-w-0">
-       <p className="truncate text-sm font-semibold leading-tight text-foreground">
-        {emp.name}
-       </p>
-       <p className="mt-0.5 truncate text-xs text-muted-foreground">
-        <span className="font-mono">{emp.employeeId}</span>
-        <span className="mx-1.5 text-muted-foreground/40">•</span>
-        {emp.designation}
-       </p>
-      </div>
-     </div>
+     <span className="font-mono text-xs text-muted-foreground">{rowNo}</span>
     );
-   },
-  },
-  {
-   key: "idNumber",
-   label: "IQAMA NO.",
-   render: (emp) => (
-    <span className="font-mono text-[13px] tracking-wide text-foreground/80">
-     {emp.idNumber}
-    </span>
-   ),
-  },
-  {
-   key: "iqamaExpiryDate",
-   label: "IQAMA EXPIRY",
-   render: (emp) => renderExpiryCell(emp.iqamaExpiryDate),
-  },
-  {
-   key: "dacoId",
-   label: "DACO ID",
-   render: (emp) => (
-    <span className="font-mono text-[13px] tracking-wide text-foreground/80">
-     {emp.dacoId || "—"}
-    </span>
-   ),
-  },
-  {
-   key: "dacoExpiryDate",
-   label: "DACO EXPIRY",
-   render: (emp) => renderExpiryCell(emp.dacoExpiryDate),
-  },
-  {
-   key: "remaining",
-   label: "REMAINING",
-   render: (emp) => {
-    const days = getOverallDays(emp); // worst of Iqama / DACO
-    const key = getStatusKey(days);
-    // bar = how much of a 365 day window is left (full bar when overdue)
-    const pct =
-     days === null
-      ? 0
-      : days < 0
-       ? 100
-       : Math.max(4, Math.min(100, (days / 365) * 100));
+   case "employeeId":
     return (
-     <div className="min-w-[120px]">
-      <span
-       className={`font-mono text-[13px] font-semibold ${REMAINING_STYLES[key]}`}
-      >
-       {getRemainingText(days)}
-      </span>
-      <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
-       <div
-        className={`h-full rounded-full ${BAR_STYLES[key]}`}
-        style={{ width: `${pct}%` }}
-       />
-      </div>
-     </div>
-    );
-   },
-  },
-  {
-   key: "status",
-   label: "STATUS",
-   render: (emp) => {
-    const key = getStatusKey(getOverallDays(emp));
-    return (
-     <span
-      className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-semibold ${PILL_STYLES[key]}`}
-     >
-      <span className={`h-1.5 w-1.5 rounded-full ${DOT_STYLES[key]}`} />
-      {SHORT_LABEL[key]}
+     <span className="font-mono font-semibold text-primary">
+      {emp.employeeId}
      </span>
     );
-   },
-  },
-  {
-   // Type a comment and press Enter (or click outside) to save
-   key: "remark",
-   label: "REMARK",
-   render: (emp) => (
-    <input
-     key={`${emp.slNo}-${emp.remark ?? ""}`}
-     defaultValue={emp.remark ?? ""}
-     placeholder="Add comment..."
-     onClick={(e) => e.stopPropagation()}
-     onBlur={(e) => updateRemark(emp.slNo, e.target.value)}
-     onKeyDown={(e) => {
-      if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-     }}
-     className="h-8 w-[200px] rounded-md border border-dashed border-transparent bg-transparent px-2 text-xs text-foreground placeholder:text-muted-foreground/50 hover:border-border focus:border-solid focus:border-primary focus:bg-background focus:outline-none focus:ring-2 focus:ring-primary/20"
-    />
-   ),
-  },
-  {
-   key: "actions",
-   label: "",
-   className: "text-right",
-   render: (emp) => (
-    <div
-     className="flex items-center justify-end"
-     onClick={(e) => e.stopPropagation()}
-    >
+   case "name":
+    return (
+     <div className="max-w-[260px] truncate font-medium" title={emp.name}>
+      {emp.name}
+     </div>
+    );
+   case "designation":
+    return (
+     <div className="max-w-[200px] truncate" title={emp.designation}>
+      {emp.designation}
+     </div>
+    );
+   case "idNumber":
+    return <span className="font-mono">{emp.idNumber}</span>;
+   case "iqamaExpiryDate":
+    return renderExpiryCell(emp.iqamaExpiryDate);
+   case "dacoId":
+    return <span className="font-mono">{emp.dacoId || "—"}</span>;
+   case "dacoExpiryDate":
+    return renderExpiryCell(emp.dacoExpiryDate);
+   case "remaining": {
+    const days = getOverallDays(emp); // worst of Iqama / DACO
+    return (
+     <span
+      className={`font-mono font-semibold ${REMAINING_STYLES[getStatusKey(days)]}`}
+     >
+      {getRemainingText(days)}
+     </span>
+    );
+   }
+   case "status":
+    return (
+     <span className="font-semibold">
+      {SHORT_LABEL[getStatusKey(getOverallDays(emp))]}
+     </span>
+    );
+   case "remark":
+    // Type a comment and press Enter (or click outside) to save
+    return (
+     <input
+      key={`${emp.slNo}-${emp.remark ?? ""}`}
+      defaultValue={emp.remark ?? ""}
+      placeholder="Add comment..."
+      onBlur={(e) => updateRemark(emp.slNo, e.target.value)}
+      onKeyDown={(e) => {
+       if (e.key === "Enter") (e.target as HTMLInputElement).blur();
+      }}
+      className="h-7 w-full rounded border border-dashed border-transparent bg-transparent px-1.5 text-[13px] text-foreground placeholder:text-muted-foreground/50 hover:border-border focus:border-solid focus:border-purple-600 focus:bg-background focus:outline-none focus:ring-2 focus:ring-purple-500/20"
+     />
+    );
+   case "actions":
+    return (
      <button
       onClick={() => openEdit(emp)}
-      className="rounded-md border border-transparent p-1.5 text-muted-foreground transition-colors hover:border-border hover:bg-muted hover:text-primary"
+      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-purple-500/10 hover:text-purple-700"
       title="Update Expiry Dates"
      >
       <Pencil className="h-3.5 w-3.5" />
      </button>
-    </div>
-   ),
-  },
- ];
+    );
+   default:
+    return null;
+  }
+ };
 
  const todayLabel = new Date().toLocaleDateString("en-GB", {
   day: "2-digit",
@@ -797,133 +1005,306 @@ export default function Expiration() {
     })}
    </div>
 
-   {/* Control Bar */}
-   <div className="flex flex-wrap items-center justify-between gap-3 bg-card p-3 border rounded-xl shadow-sm">
-    <div className="flex flex-wrap items-center gap-4">
+   {/* Table card */}
+   <div className="rounded-xl border bg-card p-4 shadow-sm">
+    {/* Row 1: left = Add / Reset, right = Clear Filters, Columns, Print, Excel, CSV, Copy, PDF */}
+    <div className="flex flex-wrap items-center justify-between gap-3">
      <div className="flex items-center gap-2">
-      <span className="text-xs text-muted-foreground font-medium">
-       Group:
-      </span>
-      <Select
-       value={groupFilter}
-       onValueChange={(v) => {
-        setGroupFilter(v);
-        setPage(1);
-       }}
+      <Button size="sm" onClick={openAdd} className="h-8 text-xs bg-primary">
+       <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Track Record
+      </Button>
+      <Button
+       variant="outline"
+       size="sm"
+       onClick={resetToJson}
+       className="h-8 text-xs"
+       title="Reload data from Expiration.json"
       >
-       <SelectTrigger className="h-8 text-xs w-[180px]">
-        <SelectValue placeholder="All Groups" />
-       </SelectTrigger>
-       <SelectContent>
-        <SelectItem value="all">All Groups</SelectItem>
-        {groupOptions.map((g) => (
-         <SelectItem key={g.value} value={g.value}>
-          {g.label}
-         </SelectItem>
-        ))}
-       </SelectContent>
-      </Select>
+       <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
+      </Button>
+     </div>
+
+     <div className="flex flex-wrap items-center justify-end gap-0.5">
+      <button type="button" onClick={clearFilters} className={toolBtn}>
+       <FilterX className="h-4 w-4" /> Clear Filters
+      </button>
+
+      {/* Columns show / hide */}
+      <div className="relative">
+       <button
+        type="button"
+        onClick={() => setColMenuOpen((o) => !o)}
+        className={toolBtn}
+       >
+        <Eye className="h-4 w-4" /> Columns
+       </button>
+       {colMenuOpen && (
+        <>
+         <div
+          className="fixed inset-0 z-20"
+          onClick={() => setColMenuOpen(false)}
+         />
+         <div className="absolute right-0 top-full z-30 mt-1 w-52 rounded-lg border bg-popover p-2 text-popover-foreground shadow-lg">
+          {COL_META.filter((c) => c.label).map((c) => (
+           <label
+            key={c.key}
+            className="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs hover:bg-muted"
+           >
+            <input
+             type="checkbox"
+             checked={!hiddenCols[c.key]}
+             onChange={() =>
+              setHiddenCols((prev) => ({ ...prev, [c.key]: !prev[c.key] }))
+             }
+             className="accent-purple-600"
+            />
+            {c.label}
+           </label>
+          ))}
+         </div>
+        </>
+       )}
+      </div>
+
+      <button type="button" onClick={printTable} className={toolBtn}>
+       <Printer className="h-4 w-4" /> Print
+      </button>
+      <button type="button" onClick={exportExcel} className={toolBtn}>
+       <FileSpreadsheet className="h-4 w-4" /> Excel
+      </button>
+      <button type="button" onClick={exportCSV} className={toolBtn}>
+       <FileText className="h-4 w-4" /> CSV
+      </button>
+      <button type="button" onClick={exportPDF} className={toolBtn}>
+       <FileDown className="h-4 w-4" /> PDF
+      </button>
+      <button type="button" onClick={copyTable} className={toolBtn}>
+       <Copy className="h-4 w-4" /> Copy
+      </button>
      </div>
     </div>
 
-    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-     <span>Rows per page:</span>
-     <Select
-      value={String(pageSize)}
-      onValueChange={(v) => {
-       setPageSize(Number(v));
-       setPage(1);
-      }}
-     >
-      <SelectTrigger className="h-8 text-xs w-[80px]">
-       <SelectValue />
-      </SelectTrigger>
-      <SelectContent>
-       <SelectItem value="10">10</SelectItem>
-       <SelectItem value="50">50</SelectItem>
-       <SelectItem value="100">100</SelectItem>
-       <SelectItem value="0">All</SelectItem>
-      </SelectContent>
-     </Select>
-    </div>
-   </div>
-
-   {/* Main Table
-       The [&_...] classes style the table inside DataTable: grey sticky header,
-       uppercase labels, row hover and comfortable row height. */}
-   <div className="border rounded-xl shadow-sm bg-card overflow-hidden">
-    <div
-     className={`w-full overflow-x-auto
-      [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-10
-      [&_thead_th]:bg-muted/60 [&_thead_th]:backdrop-blur
-      [&_thead_th]:whitespace-nowrap [&_thead_th]:text-[11px] [&_thead_th]:font-semibold
-      [&_thead_th]:uppercase [&_thead_th]:tracking-wider [&_thead_th]:text-muted-foreground
-      [&_tbody_tr]:transition-colors [&_tbody_tr:hover]:bg-muted/40
-      [&_tbody_td]:py-3 [&_tbody_td]:align-middle
-      ${paginated.length > 10
-       ? "max-h-[560px] overflow-y-auto scrollbar-thin scrollbar-thumb-muted-foreground/20"
-       : "overflow-y-visible"
-      }`}
-    >
-     <DataTable<MockDocumentExpiry>
-      data={paginated}
-      columns={columns}
-      rowKey={(e) => String(e.slNo)}
-      search={search}
-      onSearchChange={(v) => {
-       setSearch(v);
-       setPage(1);
-      }}
-      searchPlaceholder="Search Employee, Iqama, DACO ID, Remark..."
-      filterValue={expiryStatusFilter}
-      onFilterChange={(v) => {
-       setExpiryStatusFilter(v);
-       setPage(1);
-      }}
-      filterOptions={filterStatusOptions}
-      filterPlaceholder="All Expiry Statuses"
-      page={page}
-      pageSize={pageSize === 0 ? filtered.length || 1 : pageSize}
-      total={filtered.length}
-      onPageChange={setPage}
-      emptyMessage="No matching document expiration records found"
-      actions={
-       <div className="flex items-center gap-2">
-        <Button
-         variant="outline"
-         size="sm"
-         onClick={resetToJson}
-         className="h-8 text-xs"
-         title="Reload data from Expiration.json"
+    {/* Row 2: Show N entries + Group  |  Search */}
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+     <div className="flex flex-wrap items-center gap-5">
+      <div className="flex items-center gap-2 text-sm">
+       <span className="font-bold">Show</span>
+       <div className="relative w-[84px]">
+        <select
+         value={String(pageSize)}
+         onChange={(e) => {
+          setPageSize(Number(e.target.value));
+          setPage(1);
+         }}
+         className={`${selectCls} pl-3 pr-7`}
         >
-         <RotateCcw className="h-3.5 w-3.5 mr-1.5" /> Reset
-        </Button>
-        <Button
-         variant="outline"
-         size="sm"
-         onClick={exportExcel}
-         className="h-8 text-xs"
-        >
-         <Download className="h-3.5 w-3.5 mr-1.5" /> Excel
-        </Button>
-        <Button
-         variant="outline"
-         size="sm"
-         onClick={exportPDF}
-         className="h-8 text-xs"
-        >
-         <FileText className="h-3.5 w-3.5 mr-1.5" /> PDF
-        </Button>
-        <Button
-         size="sm"
-         onClick={openAdd}
-         className="h-8 text-xs bg-primary"
-        >
-         <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Track Record
-        </Button>
+         <option value="10">10</option>
+         <option value="25">25</option>
+         <option value="50">50</option>
+         <option value="100">100</option>
+         <option value="0">All</option>
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
        </div>
-      }
-     />
+       <span className="font-bold">entries</span>
+      </div>
+
+      <div className="flex items-center gap-2 text-sm">
+       <span className="font-bold">Group:</span>
+       <div className="relative w-[190px]">
+        <select
+         value={groupFilter}
+         onChange={(e) => {
+          setGroupFilter(e.target.value);
+          setPage(1);
+         }}
+         className={`${selectCls} pl-3 pr-7`}
+        >
+         <option value="all">All Groups</option>
+         {groupOptions.map((g) => (
+          <option key={g.value} value={g.value}>
+           {g.label}
+          </option>
+         ))}
+        </select>
+        <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+       </div>
+      </div>
+     </div>
+
+     <div className="flex items-center gap-2 text-sm">
+      <span className="font-bold">Search:</span>
+      <input
+       value={search}
+       onChange={(e) => {
+        setSearch(e.target.value);
+        setPage(1);
+       }}
+       placeholder="Employee, Iqama, DACO ID, Remark..."
+       className="h-8 w-[260px] border-0 border-b border-border bg-transparent px-1 text-sm placeholder:text-muted-foreground/60 focus:border-purple-600 focus:outline-none"
+      />
+     </div>
+    </div>
+
+    {/* Table */}
+    <div className="mt-4 overflow-hidden rounded-xl border border-foreground/70">
+     <div className="w-full overflow-x-auto">
+      <table className="w-full border-collapse text-[13px]">
+       <thead>
+        {/* Header row (click to sort) */}
+        <tr>
+         {visibleCols.map((c) => {
+          const active = sortKey === c.key;
+          return (
+           <th
+            key={c.key}
+            onClick={c.sortable ? () => toggleSort(c.key) : undefined}
+            className={`border border-border border-b-2 border-b-slate-300 bg-card px-3 py-3.5 text-left text-[13px] font-bold text-purple-700 dark:border-b-slate-600 dark:text-purple-300 whitespace-nowrap select-none ${c.minW ?? ""} ${c.sortable ? "cursor-pointer hover:bg-purple-500/5" : ""
+             }`}
+           >
+            <span className="inline-flex items-center gap-1.5">
+             {c.label}
+             {c.sortable &&
+              (active ? (
+               sortDir === "asc" ? (
+                <ChevronUp className="h-3.5 w-3.5" />
+               ) : (
+                <ChevronDown className="h-3.5 w-3.5" />
+               )
+              ) : (
+               <ChevronsUpDown className="h-3 w-3 opacity-30" />
+              ))}
+            </span>
+           </th>
+          );
+         })}
+        </tr>
+
+        {/* Filter row (box under each header) */}
+        <tr>
+         {visibleCols.map((c) => (
+          <th
+           key={c.key}
+           className="border border-border bg-card px-3 py-2.5 text-left font-normal"
+          >
+           {c.filter === "text" && (
+            <input
+             value={colFilters[c.key] ?? ""}
+             onChange={(e) => setColFilter(c.key, e.target.value)}
+             placeholder={c.label}
+             className="h-7 w-full border-0 border-b border-border bg-transparent px-0.5 text-xs text-foreground placeholder:text-muted-foreground/60 focus:border-purple-600 focus:outline-none"
+            />
+           )}
+           {c.filter === "select" && (
+            <div className="relative">
+             <Filter className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+             <select
+              value={expiryStatusFilter}
+              onChange={(e) => {
+               setExpiryStatusFilter(e.target.value);
+               setPage(1);
+              }}
+              className={`${selectCls} pl-7 pr-2`}
+             >
+              <option value="all">All Statuses</option>
+              {filterStatusOptions.map((o) => (
+               <option key={o.value} value={o.value}>
+                {o.label}
+               </option>
+              ))}
+             </select>
+            </div>
+           )}
+           {c.filter === "none" && c.key === "srNo" && (
+            <span className="text-xs text-muted-foreground/70">{c.label}</span>
+           )}
+          </th>
+         ))}
+        </tr>
+       </thead>
+
+       <tbody>
+        {pageRows.length === 0 ? (
+         <tr>
+          <td
+           colSpan={visibleCols.length}
+           className="border border-border px-3 py-10 text-center text-sm text-muted-foreground"
+          >
+           No matching document expiration records found
+          </td>
+         </tr>
+        ) : (
+         pageRows.map((emp, i) => (
+          <tr
+           key={emp.slNo}
+           className="bg-card transition-colors even:bg-muted/40 hover:bg-purple-500/5"
+          >
+           {visibleCols.map((c) => (
+            <td
+             key={c.key}
+             className={`border border-border px-3 py-2.5 align-middle text-foreground ${c.cellClass ? c.cellClass(emp) : ""
+              }`}
+            >
+             {renderCell(c.key, emp, startIdx + i + 1)}
+            </td>
+           ))}
+          </tr>
+         ))
+        )}
+       </tbody>
+      </table>
+     </div>
+    </div>
+
+    {/* Footer: info + pagination */}
+    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
+     <span>
+      Showing{" "}
+      <span className="font-semibold text-foreground">
+       {total === 0 ? 0 : startIdx + 1}
+      </span>{" "}
+      to{" "}
+      <span className="font-semibold text-foreground">
+       {startIdx + pageRows.length}
+      </span>{" "}
+      of <span className="font-semibold text-foreground">{total}</span>{" "}
+      entries
+      {total !== data.length && (
+       <span> (filtered from {data.length} total entries)</span>
+      )}
+     </span>
+
+     <div className="flex items-center gap-1">
+      <button
+       type="button"
+       disabled={safePage <= 1}
+       onClick={() => setPage(safePage - 1)}
+       className="h-8 rounded-md border px-3 text-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+      >
+       Previous
+      </button>
+      {pageNumbers.map((p) => (
+       <button
+        key={p}
+        type="button"
+        onClick={() => setPage(p)}
+        className={`h-8 min-w-8 rounded-md border px-2.5 text-xs transition-colors ${p === safePage
+         ? "border-primary bg-primary text-primary-foreground"
+         : "hover:bg-muted"
+         }`}
+       >
+        {p}
+       </button>
+      ))}
+      <button
+       type="button"
+       disabled={safePage >= totalPages}
+       onClick={() => setPage(safePage + 1)}
+       className="h-8 rounded-md border px-3 text-xs transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-40"
+      >
+       Next
+      </button>
+     </div>
     </div>
    </div>
 
@@ -963,6 +1344,16 @@ export default function Expiration() {
       <div className="grid grid-cols-2 gap-3">
        <div>
         <label className="font-medium text-muted-foreground mb-1 block">
+         Designation
+        </label>
+        <Input
+         value={form.designation || ""}
+         onChange={(e) => setForm({ ...form, designation: e.target.value })}
+         placeholder="Engineer"
+        />
+       </div>
+       <div>
+        <label className="font-medium text-muted-foreground mb-1 block">
          Iqama / ID Number
         </label>
         <Input
@@ -971,6 +1362,9 @@ export default function Expiration() {
          placeholder="1063800229"
         />
        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
        <div>
         <label className="font-medium text-muted-foreground mb-1 block">
          Iqama Expiry Date *
@@ -983,9 +1377,6 @@ export default function Expiration() {
          }
         />
        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
        <div>
         <label className="font-medium text-muted-foreground mb-1 block">
          DACO ID
@@ -996,6 +1387,9 @@ export default function Expiration() {
          placeholder="DAC-9011"
         />
        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
        <div>
         <label className="font-medium text-muted-foreground mb-1 block">
          DACO Expiry Date
@@ -1008,9 +1402,6 @@ export default function Expiration() {
          }
         />
        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3">
        <div>
         <label className="font-medium text-muted-foreground mb-1 block">
          Group / Department
@@ -1020,15 +1411,16 @@ export default function Expiration() {
          onChange={(e) => setForm({ ...form, group: e.target.value })}
         />
        </div>
-       <div>
-        <label className="font-medium text-muted-foreground mb-1 block">
-         Company Name
-        </label>
-        <Input
-         value={form.companyName || ""}
-         onChange={(e) => setForm({ ...form, companyName: e.target.value })}
-        />
-       </div>
+      </div>
+
+      <div>
+       <label className="font-medium text-muted-foreground mb-1 block">
+        Company Name
+       </label>
+       <Input
+        value={form.companyName || ""}
+        onChange={(e) => setForm({ ...form, companyName: e.target.value })}
+       />
       </div>
 
       <div>
