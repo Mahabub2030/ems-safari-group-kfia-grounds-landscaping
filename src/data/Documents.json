@@ -1341,8 +1341,8 @@
       },
       "dacoId": {
         "docName": "DACO ID",
-        "downloadUrl": "NA",
-        "imgUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1Xy2LCDGX4ayC7frLpW--Fa4AmHlg9ECt/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1Xy2LCDGX4ayC7frLpW--Fa4AmHlg9ECt/view?usp=sharing"
       }
     }
   },
@@ -1366,8 +1366,8 @@
       },
       "gacaCertificate": {
         "docName": "GACA Certificate",
-        "downloadUrl": "N/A",
-        "imgUrl": "N/A"
+        "downloadUrl": "https://drive.google.com/file/d/1W9-uaFf9DHsBkzPV_uXi8mULJYzPSaTt/view?usp=sharing",
+        "imgUrl": "https://drive.google.com/file/d/1W9-uaFf9DHsBkzPV_uXi8mULJYzPSaTt/view?usp=sharing"
       },
       "joining": {
         "docName": "Joining Document",
@@ -1385,7 +1385,7 @@
       },
       "others": {
         "docName": "Other Document",
-        "downloadUrl": "NA"
+        "downloadUrl": "https://drive.google.com/file/d/1igcJjY4jkl-vX3JIi58QmAmP0j36pk33/view?usp=sharing"
       },
       "aid": {
         "docName": "A/ID",

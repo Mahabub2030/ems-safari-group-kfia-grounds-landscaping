@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import {
  Briefcase,
+ Check,
  ChevronLeft,
  ChevronRight,
  Clock,
@@ -26,30 +27,41 @@ import vacationsJson from "@/data/Vacations.json";
 // TYPES & INTERFACES
 // ==========================================
 
+// Document status values used in the JSON:
+// "Received" | "Pending" | "Not Required" | ""  (empty = not recorded yet)
+export type DocStatus = "Received" | "Pending" | "Not Required" | "-";
+
+export type DocKey = "visa" | "guaranteeForm" | "ticket" | "other";
+
 export interface RawEmployeeData {
  _id: string;
- serialNo?: number | string; // Serial number
+ serialNo?: number | string;
  employeeId: string;
- emdId?: string; // EMD ID number
- iqamaNumber?: string; // Iqama number
+ emdId?: string;
+ iqamaNumber?: string;
  name: string;
  email: string;
  jobTitle: string;
  group: string;
  nationality?: "Saudi" | "Non-Saudi" | string;
- vacationType?: string; // Annual, Sick, Emergency, Unpaid ...
+ vacationType?: string;
  status: "Active" | "ON_LEAVE" | "UPCOMING" | string;
  applyDate?: string;
  leaveDate?: string;
- month?: string; // optional; derived from leaveDate when missing
+ month?: string;
  returnDate?: string;
  joiningDate?: string;
+ // Travel documents
+ visaStatus?: string;
+ guaranteeFormStatus?: string;
+ ticketStatus?: string;
+ otherDocStatus?: string;
  totalVacationDays?: number;
  totalAllowance: number;
  usedDays: number;
  pendingDays: number;
  remainingDays: number;
- nextLeaveDate?: string; // legacy field (fallback for leaveDate)
+ nextLeaveDate?: string;
  remark?: string;
  avatarUrl?: string;
 }
@@ -71,6 +83,10 @@ export interface EmployeeVacationRecord extends RawEmployeeData {
  serial: number | string;
  vacationDays: number | string;
  monthLabel: string;
+ visa: DocStatus;
+ guaranteeForm: DocStatus;
+ ticket: DocStatus;
+ other: DocStatus;
 }
 
 interface EmployeeVacationTablePageProps {
@@ -85,25 +101,49 @@ const DASH = "-";
 const show = (v: unknown): string =>
  v === undefined || v === null || v === "" ? DASH : String(v);
 
-// Calendar days from leave date up to return date.
-const diffDays = (from?: string, to?: string): number | null => {
- if (!from || !to) return null;
- const a = new Date(from).getTime();
- const b = new Date(to).getTime();
- if (Number.isNaN(a) || Number.isNaN(b) || b < a) return null;
- return Math.round((b - a) / 86400000);
+const MONTHS: Record<string, number> = {
+ jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+ jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
-// Month name + year from a date string, e.g. "2026-09-20" -> "September 2026"
+// Parses "2026-09-01", "01-Sep-2026", "1 Sep 2026" and "01/09/2026" (DD/MM/YYYY).
+// Returns a UTC timestamp (so daylight saving never shifts the day count).
+const parseDate = (value?: string): number | null => {
+ if (!value) return null;
+ const s = value.trim();
+ let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); // ISO
+ if (m) return Date.UTC(+m[1], +m[2] - 1, +m[3]);
+ m = s.match(/^(\d{1,2})[-\s/]([A-Za-z]{3})[A-Za-z]*[-\s/,]*(\d{4})$/); // 01-Sep-2026
+ if (m) {
+  const mon = MONTHS[m[2].toLowerCase()];
+  if (mon !== undefined) return Date.UTC(+m[3], mon, +m[1]);
+ }
+ m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); // 01/09/2026
+ if (m) return Date.UTC(+m[3], +m[2] - 1, +m[1]);
+ const t = new Date(s).getTime();
+ return Number.isNaN(t) ? null : t;
+};
+
+// Total vacation days, counting BOTH the leave day and the return day.
+// 01-Sep-2026 to 30-Sep-2026 = 30 days.
+const diffDays = (from?: string, to?: string): number | null => {
+ const a = parseDate(from);
+ const b = parseDate(to);
+ if (a === null || b === null || b < a) return null;
+ return Math.round((b - a) / 86400000) + 1;
+};
+
 const getMonthLabel = (date?: string): string => {
  if (!date) return DASH;
- const d = new Date(date);
- if (Number.isNaN(d.getTime())) return DASH;
- return d.toLocaleString("en-US", { month: "long", year: "numeric" });
+ const t = parseDate(date);
+ if (t === null) return DASH;
+ return new Date(t).toLocaleString("en-US", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+ });
 };
 
-// Supports both a plain array: [ {...}, {...} ]
-// and a wrapped object: { "data": [ {...} ] } or { "employees": [ {...} ] }
 const extractRecords = (json: unknown): RawEmployeeData[] => {
  if (Array.isArray(json)) return json as RawEmployeeData[];
  if (json && typeof json === "object") {
@@ -114,43 +154,53 @@ const extractRecords = (json: unknown): RawEmployeeData[] => {
  return [];
 };
 
-// DATA TRANSFORMER
+// "received", "done", "ready" -> Received | "pending" -> Pending | "n/a" -> Not Required
+const normalizeDoc = (v?: string): DocStatus => {
+ const k = (v ?? "").toLowerCase().replace(/[\s_-]/g, "");
+ if (["received", "done", "ready", "issued", "yes"].includes(k)) return "Received";
+ if (k === "pending" || k === "waiting") return "Pending";
+ if (["notrequired", "na", "none", "no"].includes(k) && k !== "") {
+  return k === "no" ? "-" : "Not Required";
+ }
+ return "-";
+};
+
+// Click order for a document button: - -> Pending -> Received -> Not Required -> -
+const DOC_CYCLE: DocStatus[] = ["-", "Pending", "Received", "Not Required"];
+const nextDoc = (c: DocStatus): DocStatus =>
+ DOC_CYCLE[(DOC_CYCLE.indexOf(c) + 1) % DOC_CYCLE.length];
+
+// Document changes are saved in the browser (Vacations.json is static)
+const STORAGE_KEY = "vacation-doc-overrides";
+
+// Inactive and Cancelled rows cannot be edited
+const isLocked = (s: VacationStatus) => s === "Inactive" || s === "Cancelled";
+
 const transformEmployeeData = (
  raw: RawEmployeeData,
  index: number,
 ): EmployeeVacationRecord => {
  let formattedStatus: VacationStatus = "Active";
- // "Final Exit", "final-exit", "FINAL_EXIT" -> "FINALEXIT"
  const statusKey = (raw.status ?? "").toUpperCase().replace(/[\s_-]/g, "");
 
- if (statusKey === "ONLEAVE") {
-  formattedStatus = "On Leave";
- } else if (statusKey === "PENDING") {
-  formattedStatus = "Pending";
- } else if (statusKey === "UPCOMING") {
-  formattedStatus = "Upcoming";
- } else if (
-  statusKey === "REJOINED" ||
-  statusKey === "REJOINING" ||
-  statusKey === "REJOIN" ||
-  statusKey === "RETURNED"
- ) {
+ if (statusKey === "ONLEAVE") formattedStatus = "On Leave";
+ else if (statusKey === "PENDING") formattedStatus = "Pending";
+ else if (statusKey === "UPCOMING") formattedStatus = "Upcoming";
+ else if (
+  ["REJOINED", "REJOINING", "REJOIN", "RETURNED"].includes(statusKey)
+ )
   formattedStatus = "Re-joined";
- } else if (statusKey === "FINALEXIT") {
-  formattedStatus = "Final Exit";
- } else if (statusKey === "TERMINATED" || statusKey === "TERMINATE") {
+ else if (statusKey === "FINALEXIT") formattedStatus = "Final Exit";
+ else if (statusKey === "TERMINATED" || statusKey === "TERMINATE")
   formattedStatus = "Terminated";
- } else if (statusKey === "INACTIVE") {
-  formattedStatus = "Inactive";
- } else if (
+ else if (statusKey === "INACTIVE") formattedStatus = "Inactive";
+ else if (
   statusKey === "CANCELLED" ||
   statusKey === "CANCELED" ||
   statusKey === "CENCELLED"
- ) {
+ )
   formattedStatus = "Cancelled";
- }
 
- // Normalize nationality: "saudi" -> Saudi, "non saudi"/"non-saudi" -> Non-Saudi
  const nat = raw.nationality?.toLowerCase().replace(/[\s_-]/g, "") || "";
  let formattedNationality: "Saudi" | "Non-Saudi" | "-" = "-";
  if (nat === "saudi") formattedNationality = "Saudi";
@@ -159,7 +209,7 @@ const transformEmployeeData = (
  const leaveDate = raw.leaveDate ?? raw.nextLeaveDate;
  const computedDays = diffDays(leaveDate, raw.returnDate);
  const vacationDays =
-  raw.totalVacationDays ?? (computedDays !== null ? computedDays : DASH);
+  computedDays !== null ? computedDays : (raw.totalVacationDays ?? DASH);
 
  return {
   ...raw,
@@ -169,6 +219,10 @@ const transformEmployeeData = (
   serial: raw.serialNo ?? index + 1,
   vacationDays,
   monthLabel: raw.month || getMonthLabel(leaveDate),
+  visa: normalizeDoc(raw.visaStatus),
+  guaranteeForm: normalizeDoc(raw.guaranteeFormStatus),
+  ticket: normalizeDoc(raw.ticketStatus),
+  other: normalizeDoc(raw.otherDocStatus),
  };
 };
 
@@ -185,7 +239,6 @@ export const EmployeeVacationTablePage: React.FC<
  const [isLoading, setIsLoading] = useState<boolean>(true);
  const [error, setError] = useState<string | null>(null);
 
- // Filters & Pagination State
  const [searchTerm, setSearchTerm] = useState<string>("");
  const [selectedGroup, setSelectedGroup] = useState<string>("All");
  const [selectedStatus, setSelectedStatus] = useState<string>("All");
@@ -193,19 +246,29 @@ export const EmployeeVacationTablePage: React.FC<
  const [selectedVacationType, setSelectedVacationType] =
   useState<string>("All");
  const [selectedMonth, setSelectedMonth] = useState<string>("All");
+ const [selectedDocs, setSelectedDocs] = useState<string>("All");
  const [currentPage, setCurrentPage] = useState<number>(1);
  const [rowsPerPage, setRowsPerPage] = useState<number | "All">(10);
 
- // ------------------------------------------
- // Data Loading (from src/data/Vacations.json)
- // ------------------------------------------
  const loadEmployeeData = useCallback(() => {
   setIsLoading(true);
   setError(null);
-
   try {
    const records = extractRecords(vacationsJson);
-   setAllEmployees(records.map(transformEmployeeData));
+
+   // Re-apply document changes saved in the browser
+   let saved: Record<string, Partial<Record<DocKey, DocStatus>>> = {};
+   try {
+    saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+   } catch {
+    saved = {};
+   }
+
+   setAllEmployees(
+    records
+     .map(transformEmployeeData)
+     .map((e) => ({ ...e, ...(saved[e._id] ?? {}) })),
+   );
   } catch (err: any) {
    console.error("Failed to read Vacations.json:", err);
    setError(err?.message ?? "Failed to load vacation data");
@@ -219,7 +282,6 @@ export const EmployeeVacationTablePage: React.FC<
   loadEmployeeData();
  }, [loadEmployeeData]);
 
- // Reset pagination on filter change
  useEffect(() => {
   setCurrentPage(1);
  }, [
@@ -229,11 +291,25 @@ export const EmployeeVacationTablePage: React.FC<
   selectedNationality,
   selectedVacationType,
   selectedMonth,
+  selectedDocs,
  ]);
 
  // ------------------------------------------
- // Memoized Metrics & Filter Options
+ // UPDATE A DOCUMENT STATUS (button click)
  // ------------------------------------------
+ const updateDoc = (id: string, key: DocKey, value: DocStatus) => {
+  setAllEmployees((prev) =>
+   prev.map((e) => (e._id === id ? { ...e, [key]: value } : e)),
+  );
+  try {
+   const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
+   saved[id] = { ...saved[id], [key]: value };
+   localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+  } catch {
+   /* storage unavailable: change stays in memory only */
+  }
+ };
+
  const departments = useMemo(() => {
   const groups = Array.from(new Set(allEmployees.map((e) => e.group)));
   return ["All", ...groups.sort()];
@@ -246,12 +322,11 @@ export const EmployeeVacationTablePage: React.FC<
   return ["All", ...types.sort()];
  }, [allEmployees]);
 
- // Month options (e.g. "August 2026", "September 2026"), oldest -> newest
  const months = useMemo(() => {
   const sortKey = new Map<string, number>();
   allEmployees.forEach((e) => {
    if (!e.monthLabel || e.monthLabel === DASH) return;
-   let t = e.leaveDate ? new Date(e.leaveDate).getTime() : NaN;
+   let t = parseDate(e.leaveDate) ?? NaN;
    if (Number.isNaN(t)) t = new Date(`1 ${e.monthLabel}`).getTime();
    if (Number.isNaN(t)) t = Number.MAX_SAFE_INTEGER;
    const prev = sortKey.get(e.monthLabel);
@@ -273,14 +348,9 @@ export const EmployeeVacationTablePage: React.FC<
    onLeave: count("On Leave"),
    upcoming: count("Upcoming"),
    rejoined: count("Re-joined"),
-   finalExit: count("Final Exit"),
-   cancelled: count("Cancelled"),
   };
  }, [allEmployees]);
 
- // ------------------------------------------
- // Filtering & Pagination Logic
- // ------------------------------------------
  const filteredEmployees = useMemo(() => {
   const term = searchTerm.toLowerCase();
   const has = (v?: string | number) =>
@@ -309,13 +379,23 @@ export const EmployeeVacationTablePage: React.FC<
    const matchesMonth =
     selectedMonth === "All" || emp.monthLabel === selectedMonth;
 
+   // Documents filter: "Missing" = any document not yet received
+   const docs = [emp.visa, emp.guaranteeForm, emp.ticket, emp.other];
+   const matchesDocs =
+    selectedDocs === "All" ||
+    (selectedDocs === "Missing" &&
+     docs.some((d) => d !== "Received" && d !== "Not Required")) ||
+    (selectedDocs === "Complete" &&
+     docs.every((d) => d === "Received" || d === "Not Required"));
+
    return (
     matchesSearch &&
     matchesGroup &&
     matchesStatus &&
     matchesNationality &&
     matchesVacationType &&
-    matchesMonth
+    matchesMonth &&
+    matchesDocs
    );
   });
  }, [
@@ -326,11 +406,11 @@ export const EmployeeVacationTablePage: React.FC<
   selectedNationality,
   selectedVacationType,
   selectedMonth,
+  selectedDocs,
  ]);
 
  const itemsPerPage =
   rowsPerPage === "All" ? Math.max(filteredEmployees.length, 1) : rowsPerPage;
-
  const totalPages = Math.ceil(filteredEmployees.length / itemsPerPage) || 1;
 
  const paginatedEmployees = useMemo(() => {
@@ -359,6 +439,10 @@ export const EmployeeVacationTablePage: React.FC<
    "Leave Date": show(emp.leaveDate),
    "Returning Date": show(emp.returnDate),
    "Joining Date": show(emp.joiningDate),
+   Visa: emp.visa,
+   "Guarantee Form": emp.guaranteeForm,
+   Ticket: emp.ticket,
+   "Other Docs": emp.other,
    "Total Vacation Days": emp.vacationDays,
    "Total Allowance": emp.totalAllowance,
    "Used Days": emp.usedDays,
@@ -383,7 +467,8 @@ export const EmployeeVacationTablePage: React.FC<
   doc.text("Employee Vacation Tracker Report", 14, 15);
   doc.setFontSize(10);
   doc.text(
-   `Generated on: ${new Date().toLocaleDateString()}${selectedMonth !== "All" ? `  |  Month: ${selectedMonth}` : ""
+   `Generated on: ${new Date().toLocaleDateString()}${
+    selectedMonth !== "All" ? `  |  Month: ${selectedMonth}` : ""
    }`,
    14,
    22,
@@ -406,6 +491,10 @@ export const EmployeeVacationTablePage: React.FC<
     "Leave Date",
     "Return Date",
     "Joining Date",
+    "Visa",
+    "Guarantee",
+    "Ticket",
+    "Other",
     "Vac. Days",
     "Allow.",
     "Used",
@@ -431,6 +520,10 @@ export const EmployeeVacationTablePage: React.FC<
    show(emp.leaveDate),
    show(emp.returnDate),
    show(emp.joiningDate),
+   emp.visa,
+   emp.guaranteeForm,
+   emp.ticket,
+   emp.other,
    emp.vacationDays,
    `${emp.totalAllowance} d`,
    `${emp.usedDays} d`,
@@ -444,157 +537,123 @@ export const EmployeeVacationTablePage: React.FC<
    body: tableRows,
    startY: 28,
    theme: "striped",
-   headStyles: { fillColor: [79, 70, 229] }, // Indigo color
+   headStyles: { fillColor: [51, 65, 85] }, // neutral slate
    styles: { fontSize: 7, overflow: "linebreak" },
-   // Full remark text, wrapped over several lines
-   columnStyles: { 20: { cellWidth: 70 } },
+   columnStyles: { 24: { cellWidth: 60 } }, // Remark column
   });
 
   doc.save(`Employee_Vacation_Report_${Date.now()}.pdf`);
  };
 
- // Helper for Status Badge Styling
- const renderStatusBadge = (
-  status: EmployeeVacationRecord["formattedStatus"],
- ) => {
-  switch (status) {
-   case "Active":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-500"></span>
-      Active
-     </span>
-    );
-   case "Pending":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-orange-500"></span>
-      Pending
-     </span>
-    );
-   case "On Leave":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-amber-500"></span>
-      On Leave
-     </span>
-    );
-   case "Upcoming":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-blue-500"></span>
-      Upcoming
-     </span>
-    );
-   case "Re-joined":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-teal-500"></span>
-      Re-joined
-     </span>
-    );
-   case "Final Exit":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-300 text-red-900 border border-red-400/50">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-red-700"></span>
-      Final Exit
-     </span>
-    );
-   case "Terminated":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-700 text-white">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-white"></span>
-      Terminated
-     </span>
-    );
-   case "Inactive":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-200 text-slate-700 border border-slate-300">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-slate-500"></span>
-      Inactive
-     </span>
-    );
-   case "Cancelled":
-    return (
-     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-yellow-50 text-yellow-700 border border-yellow-200">
-      <span className="w-1.5 h-1.5 mr-1.5 rounded-full bg-yellow-500"></span>
-      Cancelled
-     </span>
-    );
-   default:
-    return null;
-  }
+ // ------------------------------------------
+ // STATUS BUTTON
+ //  Pending    -> yellow
+ //  On Leave   -> green
+ //  Re-joined  -> purple
+ //  Final Exit -> red
+ //  Cancelled  -> red
+ //  Inactive   -> faded grey (whole row is disabled)
+ //  others     -> plain neutral
+ // ------------------------------------------
+ const renderStatusBadge = (status: VacationStatus) => {
+  const base =
+   "inline-flex items-center px-3 py-1 rounded-md text-xs font-semibold border";
+  let cls =
+   "bg-white text-slate-700 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600";
+
+  if (status === "Pending")
+   cls = "bg-yellow-400 text-yellow-950 border-yellow-500";
+  else if (status === "On Leave")
+   cls = "bg-green-600 text-white border-green-700";
+  else if (status === "Re-joined")
+   cls = "bg-purple-600 text-white border-purple-700";
+  else if (status === "Final Exit")
+   cls = "bg-red-600 text-white border-red-700";
+  else if (status === "Cancelled")
+   cls = "bg-red-500 text-white border-red-600";
+  else if (status === "Inactive")
+   cls = "bg-slate-200 text-slate-500 border-slate-300";
+
+  return <span className={`${base} ${cls}`}>{status}</span>;
  };
 
- // Row color per status:
- // Final Exit = full red row, Terminated = dark gray, Inactive = yellow,
- // Pending = orange, On Leave = amber, Upcoming = blue, Re-joined = teal
+ // Row color:
+ //  Cancelled -> red row
+ //  Inactive  -> whole row disabled (faded, greyscale, not clickable)
  const getRowClasses = (status: VacationStatus) => {
-  switch (status) {
-   case "Final Exit":
-    return "bg-red-300/80 hover:bg-red-300 [&>td]:text-red-950";
-   case "Terminated":
-    return "bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 [&>td]:text-slate-500 dark:[&>td]:text-slate-400";
-   case "Inactive":
-    return "bg-slate-100 hover:bg-slate-200 [&>td]:text-slate-600";
-   case "Pending":
-    return "bg-orange-50 dark:bg-orange-900/20 hover:bg-orange-100 dark:hover:bg-orange-900/40";
-   case "On Leave":
-    return "bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/40";
-   case "Upcoming":
-    return "bg-blue-50 dark:bg-blue-900/20 hover:bg-blue-100 dark:hover:bg-blue-900/40";
-   case "Re-joined":
-    return "bg-teal-50 dark:bg-teal-900/20 hover:bg-teal-100 dark:hover:bg-teal-900/40";
-   case "Cancelled":
-    return "bg-yellow-50 hover:bg-yellow-100 [&>td]:text-yellow-800";
-   default:
-    return "hover:bg-slate-50 dark:hover:bg-slate-700/30";
-  }
+  if (status === "Cancelled")
+   return "bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 [&>td]:text-red-800 dark:[&>td]:text-red-200";
+  if (status === "Inactive")
+   return "bg-slate-100 dark:bg-slate-800 opacity-50 grayscale pointer-events-none select-none";
+  return "hover:bg-slate-50 dark:hover:bg-slate-700/30";
  };
 
- // Helper for Nationality Badge Styling
- const renderNationalityBadge = (
-  nationality: EmployeeVacationRecord["formattedNationality"],
- ) => {
-  if (nationality === "Saudi") {
-   return (
-    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
-     Saudi
-    </span>
-   );
-  }
-  if (nationality === "Non-Saudi") {
-   return (
-    <span className="inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400">
-     Non-Saudi
-    </span>
-   );
-  }
-  return <span className="text-slate-400">{DASH}</span>;
- };
+ // Plain text nationality / vacation type (no colors)
+ const renderPlainTag = (value?: string) =>
+  !value || value === DASH ? (
+   <span className="text-slate-400">{DASH}</span>
+  ) : (
+   <span className="inline-flex px-2.5 py-0.5 rounded-md text-xs font-medium border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200">
+    {value}
+   </span>
+  );
 
- // Helper for Vacation Type Badge:
- // Emergency = red bg + white text, Annual = green bg + white text,
- // any other type = neutral gray
- const renderVacationTypeBadge = (type?: string) => {
-  if (!type) return <span className="text-slate-400">{DASH}</span>;
+ // Document cell as a button. Click to cycle:
+ // Add (-) -> Pending -> Received -> N/A (Not Required) -> Add
+ const renderDocButton = (emp: EmployeeVacationRecord, key: DocKey) => {
+  const value = emp[key];
+  const locked = isLocked(emp.formattedStatus);
 
-  const key = type.trim().toLowerCase();
-  let colorClasses =
-   "bg-slate-200 text-slate-800 dark:bg-slate-600 dark:text-slate-100";
-  if (key === "emergency") colorClasses = "bg-red-600 text-white ring-1 ring-white";
-  else if (key === "annual") colorClasses = "bg-green-600 text-white";
+  let cls =
+   "border-dashed border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700";
+  let content: React.ReactNode = (
+   <>
+    <Plus className="w-3 h-3" /> Add
+   </>
+  );
+
+  if (value === "Received") {
+   cls = "border-green-600 bg-green-600 text-white hover:bg-green-700";
+   content = (
+    <>
+     <Check className="w-3.5 h-3.5" /> Received
+    </>
+   );
+  } else if (value === "Pending") {
+   cls = "border-yellow-500 bg-yellow-400 text-yellow-950 hover:bg-yellow-300";
+   content = "Pending";
+  } else if (value === "Not Required") {
+   cls =
+    "border-slate-300 bg-slate-100 text-slate-500 hover:bg-slate-200 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-300";
+   content = "N/A";
+  }
 
   return (
-   <span
-    className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-semibold ${colorClasses}`}
+   <button
+    type="button"
+    disabled={locked}
+    onClick={() => updateDoc(emp._id, key, nextDoc(value))}
+    title={locked ? "Row is locked" : "Click to change status"}
+    className={`inline-flex items-center justify-center gap-1 min-w-[84px] px-2.5 py-1 rounded-md text-xs font-semibold border transition disabled:cursor-not-allowed disabled:opacity-60 ${cls}`}
    >
-    {type}
-   </span>
+    {content}
+   </button>
   );
  };
 
- const TABLE_COLUMNS = 19;
+ const TABLE_COLUMNS = 23;
+
+ const metricCards = [
+  { label: "Total Employees", value: metrics.total, Icon: Briefcase },
+  { label: "Active On-Duty", value: metrics.active, Icon: UserCheck },
+  { label: "Currently On Leave", value: metrics.onLeave, Icon: UserX },
+  { label: "Upcoming Leave", value: metrics.upcoming, Icon: Clock },
+  { label: "Pending", value: metrics.pending, Icon: Hourglass },
+  { label: "Re-joined", value: metrics.rejoined, Icon: UserPlus },
+ ];
+
+ const selectCls =
+  "px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400";
 
  return (
   <div className="p-6 w-full mx-auto space-y-6 bg-slate-50 dark:bg-slate-900 min-h-screen text-slate-900 dark:text-slate-100">
@@ -605,7 +664,7 @@ export const EmployeeVacationTablePage: React.FC<
       Employee Vacation Tracker
      </h1>
      <p className="text-sm text-slate-500 dark:text-slate-400">
-      Monitor allowance balances, active leaves, and upcoming schedules.
+      Monitor allowance balances, leaves, and travel documents.
      </p>
     </div>
     <div className="flex flex-wrap items-center gap-3">
@@ -614,29 +673,26 @@ export const EmployeeVacationTablePage: React.FC<
       className="p-2 border border-slate-300 dark:border-slate-700 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition"
       title="Refresh Data"
      >
-      <RefreshCw
-       className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-      />
+      <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
      </button>
 
-     {/* Export Buttons */}
      <button
       onClick={handleExportExcel}
-      className="flex items-center gap-2 border border-emerald-600 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 px-3.5 py-2 rounded-lg text-sm font-medium transition"
+      className="flex items-center gap-2 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 px-3.5 py-2 rounded-lg text-sm font-medium transition"
      >
       <FileSpreadsheet className="w-4 h-4" /> Excel
      </button>
 
      <button
       onClick={handleExportPDF}
-      className="flex items-center gap-2 border border-rose-600 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/30 px-3.5 py-2 rounded-lg text-sm font-medium transition"
+      className="flex items-center gap-2 border border-slate-300 dark:border-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 px-3.5 py-2 rounded-lg text-sm font-medium transition"
      >
       <FileText className="w-4 h-4" /> PDF
      </button>
 
      <button
       onClick={onAssignVacation}
-      className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
+      className="flex items-center gap-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-100 dark:hover:bg-white dark:text-slate-900 text-white px-4 py-2 rounded-lg text-sm font-medium transition shadow-sm"
      >
       <Plus className="w-4 h-4" /> Assign Vacation
      </button>
@@ -644,84 +700,29 @@ export const EmployeeVacationTablePage: React.FC<
    </div>
 
    {error && (
-    <div className="p-3 rounded-lg border border-rose-300 bg-rose-50 text-rose-700 text-sm dark:bg-rose-950/30 dark:border-rose-800 dark:text-rose-300">
+    <div className="p-3 rounded-lg border border-slate-300 bg-white text-slate-700 text-sm dark:bg-slate-800 dark:border-slate-600 dark:text-slate-200">
      {error}
     </div>
    )}
 
-   {/* Metrics Cards */}
+   {/* Metrics Cards (neutral) */}
    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-     <div className="p-3 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-lg">
-      <Briefcase className="w-6 h-6" />
+    {metricCards.map(({ label, value, Icon }) => (
+     <div
+      key={label}
+      className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4"
+     >
+      <div className="p-3 bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 rounded-lg">
+       <Icon className="w-6 h-6" />
+      </div>
+      <div>
+       <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+        {label}
+       </p>
+       <p className="text-2xl font-semibold">{value}</p>
+      </div>
      </div>
-     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-       Total Employees
-      </p>
-      <p className="text-2xl font-semibold">{metrics.total}</p>
-     </div>
-    </div>
-
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-     <div className="p-3 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-lg">
-      <UserCheck className="w-6 h-6" />
-     </div>
-     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-       Active On-Duty
-      </p>
-      <p className="text-2xl font-semibold">{metrics.active}</p>
-     </div>
-    </div>
-
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-     <div className="p-3 bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 rounded-lg">
-      <UserX className="w-6 h-6" />
-     </div>
-     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-       Currently On Leave
-      </p>
-      <p className="text-2xl font-semibold">{metrics.onLeave}</p>
-     </div>
-    </div>
-
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-     <div className="p-3 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-lg">
-      <Clock className="w-6 h-6" />
-     </div>
-     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-       Upcoming Leave
-      </p>
-      <p className="text-2xl font-semibold">{metrics.upcoming}</p>
-     </div>
-    </div>
-
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-     <div className="p-3 bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 rounded-lg">
-      <Hourglass className="w-6 h-6" />
-     </div>
-     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-       Pending
-      </p>
-      <p className="text-2xl font-semibold">{metrics.pending}</p>
-     </div>
-    </div>
-
-    <div className="p-4 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
-     <div className="p-3 bg-teal-50 dark:bg-teal-900/30 text-teal-600 dark:text-teal-400 rounded-lg">
-      <UserPlus className="w-6 h-6" />
-     </div>
-     <div>
-      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
-       Re-joined
-      </p>
-      <p className="text-2xl font-semibold">{metrics.rejoined}</p>
-     </div>
-    </div>
+    ))}
    </div>
 
    {/* Filter Bar */}
@@ -733,7 +734,7 @@ export const EmployeeVacationTablePage: React.FC<
       placeholder="Search name, ID, EMD, Iqama, title..."
       value={searchTerm}
       onChange={(e) => setSearchTerm(e.target.value)}
-      className="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className="w-full pl-9 pr-4 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400"
      />
     </div>
 
@@ -741,7 +742,7 @@ export const EmployeeVacationTablePage: React.FC<
      <select
       value={selectedMonth}
       onChange={(e) => setSelectedMonth(e.target.value)}
-      className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className={selectCls}
      >
       {months.map((m) => (
        <option key={m} value={m}>
@@ -753,7 +754,7 @@ export const EmployeeVacationTablePage: React.FC<
      <select
       value={selectedGroup}
       onChange={(e) => setSelectedGroup(e.target.value)}
-      className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className={selectCls}
      >
       {departments.map((dept) => (
        <option key={dept} value={dept}>
@@ -765,7 +766,7 @@ export const EmployeeVacationTablePage: React.FC<
      <select
       value={selectedNationality}
       onChange={(e) => setSelectedNationality(e.target.value)}
-      className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className={selectCls}
      >
       <option value="All">Nationality: All</option>
       <option value="Saudi">Nationality: Saudi</option>
@@ -775,7 +776,7 @@ export const EmployeeVacationTablePage: React.FC<
      <select
       value={selectedVacationType}
       onChange={(e) => setSelectedVacationType(e.target.value)}
-      className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className={selectCls}
      >
       {vacationTypes.map((type) => (
        <option key={type} value={type}>
@@ -785,9 +786,19 @@ export const EmployeeVacationTablePage: React.FC<
      </select>
 
      <select
+      value={selectedDocs}
+      onChange={(e) => setSelectedDocs(e.target.value)}
+      className={selectCls}
+     >
+      <option value="All">Documents: All</option>
+      <option value="Missing">Documents: Missing</option>
+      <option value="Complete">Documents: Complete</option>
+     </select>
+
+     <select
       value={selectedStatus}
       onChange={(e) => setSelectedStatus(e.target.value)}
-      className="px-3 py-2 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+      className={selectCls}
      >
       <option value="All">Status: All</option>
       <option value="Active">Status: Active</option>
@@ -822,6 +833,10 @@ export const EmployeeVacationTablePage: React.FC<
         <th className="py-3.5 px-4">Leave Date</th>
         <th className="py-3.5 px-4">Returning Date</th>
         <th className="py-3.5 px-4">Joining Date</th>
+        <th className="py-3.5 px-4">Visa</th>
+        <th className="py-3.5 px-4">Guarantee Form</th>
+        <th className="py-3.5 px-4">Ticket</th>
+        <th className="py-3.5 px-4">Other</th>
         <th className="py-3.5 px-4 text-center">Total Vacation Days</th>
         <th className="py-3.5 px-4 text-center">Allowance</th>
         <th className="py-3.5 px-4 text-center">Used</th>
@@ -837,7 +852,7 @@ export const EmployeeVacationTablePage: React.FC<
           colSpan={TABLE_COLUMNS}
           className="py-12 text-center text-slate-500"
          >
-          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
+          <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-slate-500" />
           Loading employee vacation records...
          </td>
         </tr>
@@ -855,10 +870,9 @@ export const EmployeeVacationTablePage: React.FC<
          <tr
           key={employee._id}
           className={`transition ${getRowClasses(employee.formattedStatus)}`}
+          aria-disabled={employee.formattedStatus === "Inactive"}
          >
-          <td className="py-3.5 px-4 font-medium text-slate-600 dark:text-slate-300">
-           {employee.serial}
-          </td>
+          <td className="py-3.5 px-4 font-medium">{employee.serial}</td>
           <td className="py-3.5 px-4">
            <div className="flex items-center gap-3">
             {employee.avatarUrl ? (
@@ -868,71 +882,70 @@ export const EmployeeVacationTablePage: React.FC<
               className="w-9 h-9 rounded-full object-cover border border-slate-200 dark:border-slate-700"
              />
             ) : (
-             <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-xs">
+             <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold flex items-center justify-center text-xs">
               {employee.name.slice(0, 2).toUpperCase()}
              </div>
             )}
             <div>
-             <div className="font-semibold text-slate-900 dark:text-slate-100">
-              {employee.name}
-             </div>
+             <div className="font-semibold">{employee.name}</div>
              <div className="text-xs text-slate-500 dark:text-slate-400">
               {employee.employeeId} • {employee.jobTitle}
              </div>
             </div>
            </div>
           </td>
-          <td className="py-3.5 px-4 font-medium">
-           {show(employee.emdId)}
-          </td>
+          <td className="py-3.5 px-4 font-medium">{show(employee.emdId)}</td>
           <td className="py-3.5 px-4 font-medium">
            {show(employee.iqamaNumber)}
           </td>
           <td className="py-3.5 px-4">
-           {renderNationalityBadge(employee.formattedNationality)}
+           {renderPlainTag(employee.formattedNationality)}
           </td>
-          <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
-           {employee.group}
-          </td>
+          <td className="py-3.5 px-4 font-medium">{employee.group}</td>
           <td className="py-3.5 px-4">
-           {renderVacationTypeBadge(employee.vacationType)}
+           {renderPlainTag(employee.vacationType)}
           </td>
           <td className="py-3.5 px-4">
            {renderStatusBadge(employee.formattedStatus)}
           </td>
-          <td className="py-3.5 px-4 font-medium text-slate-700 dark:text-slate-300">
-           {employee.monthLabel}
-          </td>
-          <td className="py-3.5 px-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <td className="py-3.5 px-4 font-medium">{employee.monthLabel}</td>
+          <td className="py-3.5 px-4 text-xs font-medium">
            {show(employee.applyDate)}
           </td>
-          <td className="py-3.5 px-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <td className="py-3.5 px-4 text-xs font-medium">
            {show(employee.leaveDate)}
           </td>
-          <td className="py-3.5 px-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <td className="py-3.5 px-4 text-xs font-medium">
            {show(employee.returnDate)}
           </td>
-          <td className="py-3.5 px-4 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <td className="py-3.5 px-4 text-xs font-medium">
            {show(employee.joiningDate)}
           </td>
-          <td className="py-3.5 px-4 text-center font-semibold text-indigo-600 dark:text-indigo-400">
+          <td className="py-3.5 px-4">{renderDocButton(employee, "visa")}</td>
+          <td className="py-3.5 px-4">
+           {renderDocButton(employee, "guaranteeForm")}
+          </td>
+          <td className="py-3.5 px-4">
+           {renderDocButton(employee, "ticket")}
+          </td>
+          <td className="py-3.5 px-4">{renderDocButton(employee, "other")}</td>
+          <td className="py-3.5 px-4 text-center font-semibold">
            {employee.vacationDays}
            {typeof employee.vacationDays === "number" ? " d" : ""}
           </td>
           <td className="py-3.5 px-4 text-center font-medium">
            {employee.totalAllowance} d
           </td>
-          <td className="py-3.5 px-4 text-center text-amber-600 dark:text-amber-400 font-medium">
+          <td className="py-3.5 px-4 text-center font-medium">
            {employee.usedDays} d
           </td>
-          <td className="py-3.5 px-4 text-center text-blue-600 dark:text-blue-400 font-medium">
+          <td className="py-3.5 px-4 text-center font-medium">
            {employee.pendingDays} d
           </td>
-          <td className="py-3.5 px-4 text-center font-bold text-emerald-600 dark:text-emerald-400">
+          <td className="py-3.5 px-4 text-center font-bold">
            {employee.remainingDays} d
           </td>
-          {/* Full remark: wraps onto several lines, never cut with "..." */}
-          <td className="py-3.5 px-4 text-xs text-slate-600 dark:text-slate-300 min-w-[280px] max-w-[420px] whitespace-normal break-words">
+          <td className="py-3.5 px-4 text-xs min-w-[280px] max-w-[420px] whitespace-normal break-words">
            {show(employee.remark)}
           </td>
          </tr>
@@ -971,7 +984,7 @@ export const EmployeeVacationTablePage: React.FC<
          const v = e.target.value;
          setRowsPerPage(v === "All" ? "All" : Number(v));
         }}
-        className="px-2 py-1 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        className="px-2 py-1 border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 rounded-lg text-xs text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-400"
        >
         <option value={10}>10</option>
         <option value={50}>50</option>
