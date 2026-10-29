@@ -45,10 +45,10 @@
     "visaStatus": "",
     "guaranteeFormStatus": "",
     "ticketStatus": "",
-    "totalAllowance": 14,
-    "usedDays": 14,
-    "pendingDays": 0,
-    "remainingDays": 0,
+    "totalAllowance": "",
+    "usedDays": "",
+    "pendingDays": "",
+    "remainingDays":"",
     "remark": "not came bake"
   },
   {
@@ -71,10 +71,10 @@
     "visaStatus": "",
     "guaranteeFormStatus": "",
     "ticketStatus": "",
-    "totalAllowance": 14,
-    "usedDays": 14,
-    "pendingDays": 0,
-    "remainingDays": 0,
+    "totalAllowance":  "",
+    "usedDays":  "",
+    "pendingDays":  "",
+    "remainingDays": "",
     "remark": "Not Available in the System"
   },
   {
@@ -123,10 +123,10 @@
     "visaStatus": "",
     "guaranteeFormStatus": "",
     "ticketStatus": "",
-    "totalAllowance": 31,
-    "usedDays": 31,
-    "pendingDays": 0,
-    "remainingDays": 0,
+    "totalAllowance": "",
+    "usedDays": "",
+    "pendingDays": "",
+    "remainingDays": "",
     "remark": "On Vacation"
   },
   {
@@ -227,10 +227,10 @@
     "visaStatus": "",
     "guaranteeFormStatus": "",
     "ticketStatus": "",
-    "totalAllowance": 31,
-    "usedDays": 31,
-    "pendingDays": 0,
-    "remainingDays": 0,
+    "totalAllowance": "",
+    "usedDays": "",
+    "pendingDays": "",
+    "remainingDays": "",
     "remark": "Final Exit"
   },
   {

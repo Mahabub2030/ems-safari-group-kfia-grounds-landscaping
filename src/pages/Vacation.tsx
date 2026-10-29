@@ -111,6 +111,14 @@ const show = (v: unknown): string =>
 const fmtDays = (v: unknown): string =>
  v === undefined || v === null || v === "" ? DASH : `${v} d`;
 
+// One stable ID per record: emdId first, Mongo _id as fallback.
+// If one employee can have SEVERAL leave records, switch to the composite
+// version below so rows don't share the same key / saved links:
+//   const getId = (e: { emdId?: string; _id: string; leaveDate?: string }) =>
+//    `${e.emdId || e._id}_${e.leaveDate ?? ""}`;
+const getId = (e: { emdId?: string; _id: string }): string =>
+ e.emdId || e._id;
+
 const MONTHS: Record<string, number> = {
  jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
  jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
@@ -307,7 +315,8 @@ export const EmployeeVacationTablePage: React.FC<
    setAllEmployees(
     records
      .map(transformEmployeeData)
-     .map((e) => applyLinks(e, saved[e._id])),
+     // saved[e._id] keeps links that were added earlier under the old _id
+     .map((e) => applyLinks(e, saved[getId(e)] ?? saved[e._id])),
    );
   } catch (err: any) {
    console.error("Failed to read Vacations.json:", err);
@@ -336,6 +345,7 @@ export const EmployeeVacationTablePage: React.FC<
 
  // ------------------------------------------
  // ADD A DOCUMENT LINK ("Add" button click)
+ // `id` is the record ID from getId() (emdId, or _id as fallback)
  // ------------------------------------------
  const addDocLink = (id: string, key: DocKey) => {
   const input = window.prompt(`Paste the ${DOC_LABELS[key]} link (https://...)`);
@@ -343,7 +353,7 @@ export const EmployeeVacationTablePage: React.FC<
   if (!link) return; // cancelled or not a valid link: nothing changes
 
   setAllEmployees((prev) =>
-   prev.map((e) => (e._id === id ? applyLinks(e, { [key]: link }) : e)),
+   prev.map((e) => (getId(e) === id ? applyLinks(e, { [key]: link }) : e)),
   );
   try {
    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "{}");
@@ -680,7 +690,7 @@ export const EmployeeVacationTablePage: React.FC<
    <button
     type="button"
     disabled={isLocked(emp.formattedStatus)}
-    onClick={() => addDocLink(emp._id, key)}
+    onClick={() => addDocLink(getId(emp), key)}
     title={`Add ${label} link`}
     className="inline-flex items-center justify-center gap-1 min-w-[84px] px-2.5 py-1 rounded-md text-xs font-semibold border border-dashed border-slate-300 text-slate-500 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-400 dark:hover:bg-slate-700 transition disabled:cursor-not-allowed disabled:opacity-60"
    >
@@ -917,7 +927,7 @@ export const EmployeeVacationTablePage: React.FC<
        ) : (
         paginatedEmployees.map((employee) => (
          <tr
-          key={employee._id}
+          key={getId(employee)}
           className={`transition ${getRowClasses(employee.formattedStatus)}`}
           aria-disabled={employee.formattedStatus === "Inactive"}
          >

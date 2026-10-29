@@ -12,6 +12,7 @@ import {
   Pencil,
   Plus,
   RefreshCw,
+  Scissors,
   Search,
   Table as TableIcon,
   Trash2,
@@ -42,6 +43,9 @@ import {
   SelectValue,
 } from "../../components/ui/select";
 import initialDocuments from "../../data/Documents.json";
+import { PDFDocument } from "pdf-lib";
+import SplitPdfDialog, { type SplitResultPart } from "../SplitPdfDialog";
+
 
 const USE_API = false;
 const API_URL = "/api/employee-documents";
@@ -320,6 +324,10 @@ export default function EmployeeDocuments() {
   const [uploadError, setUploadError] = useState("");
   const [isUploading, setIsUploading] = useState(false);
 
+  // Split one combined PDF into several documents
+  const [splitDocId, setSplitDocId] = useState<string | null>(null);
+  const [splitFile, setSplitFile] = useState<File | null>(null);
+
   useEffect(() => {
     if (!USE_API) return;
     let cancelled = false;
@@ -413,7 +421,8 @@ export default function EmployeeDocuments() {
     isEditOpen ||
     isAddOpen ||
     isDeleteOpen ||
-    uploadTarget !== null;
+    uploadTarget !== null ||
+    splitDocId !== null;
 
   useEffect(() => {
     if (anyDialogOpen || viewMode !== "card") return;
@@ -568,6 +577,31 @@ export default function EmployeeDocuments() {
       })
     );
     closeUpload();
+  };
+
+  /* ---------- split one combined PDF into several documents ---------- */
+
+  const splitDoc = splitDocId
+    ? documents.find((doc) => doc.docId === splitDocId) ?? null
+    : null;
+
+  const handleSaveSplit = (parts: SplitResultPart[]) => {
+    if (!splitDoc) return;
+    setDocuments((previous) =>
+      previous.map((doc) => {
+        if (doc.docId !== splitDoc.docId) return doc;
+        const nextDocs = { ...doc.docs };
+        parts.forEach(({ key, dataUrl }) => {
+          nextDocs[key as DocKey] = {
+            docName: docLabel(key as DocKey, doc.nationality),
+            downloadUrl: dataUrl,
+          };
+        });
+        return { ...doc, docs: nextDocs };
+      })
+    );
+    setSplitDocId(null);
+    setSplitFile(null);
   };
 
   /* ---------- employee edit / add / delete ---------- */
@@ -1181,6 +1215,17 @@ export default function EmployeeDocuments() {
                               type="button"
                               size="sm"
                               variant="ghost"
+                              onClick={() => setSplitDocId(doc.docId)}
+                              title="Split a combined PDF into separate documents"
+                              className="h-7 gap-1 rounded-md px-2 text-[11px] text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
+                            >
+                              <Scissors className="h-3 w-3" />
+                              Split
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="ghost"
                               onClick={() => handleOpenEdit(doc)}
                               className="h-7 gap-1 rounded-md px-2 text-[11px] text-slate-600 hover:bg-blue-50 hover:text-blue-700"
                             >
@@ -1596,6 +1641,17 @@ export default function EmployeeDocuments() {
                           type="button"
                           size="sm"
                           variant="ghost"
+                          onClick={() => setSplitDocId(doc.docId)}
+                          title="Split a combined PDF into separate documents"
+                          className="h-7 gap-1 rounded-md px-2 text-[11px] text-slate-600 hover:bg-emerald-50 hover:text-emerald-700"
+                        >
+                          <Scissors className="h-3 w-3" />
+                          Split
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
                           onClick={() => handleOpenEdit(doc)}
                           className="h-7 gap-1 rounded-md px-2 text-[11px] text-slate-600 hover:bg-blue-50 hover:text-blue-700"
                         >
@@ -1760,9 +1816,28 @@ export default function EmployeeDocuments() {
               <Input
                 type="file"
                 accept="application/pdf,image/*"
-                onChange={(event) => {
-                  setUploadFile(event.target.files?.[0] ?? null);
+                onChange={async (event) => {
+                  const chosen = event.target.files?.[0] ?? null;
                   setUploadError("");
+                  // A PDF with more than one page is split automatically
+                  if (chosen && chosen.type === "application/pdf") {
+                    try {
+                      const pdf = await PDFDocument.load(
+                        await chosen.arrayBuffer(),
+                        { ignoreEncryption: true }
+                      );
+                      if (pdf.getPageCount() > 1) {
+                        const id = uploadTarget?.docId ?? null;
+                        closeUpload();
+                        setSplitFile(chosen);
+                        setSplitDocId(id);
+                        return;
+                      }
+                    } catch {
+                      // not readable: fall through to the normal upload
+                    }
+                  }
+                  setUploadFile(chosen);
                 }}
               />
               {uploadFile && (
@@ -1775,6 +1850,20 @@ export default function EmployeeDocuments() {
                 </button>
               )}
             </div>
+
+            {/* Client sent one combined PDF -> split it */}
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full gap-1.5"
+              onClick={() => {
+                const id = uploadTarget?.docId ?? null;
+                closeUpload();
+                setSplitDocId(id);
+              }}
+            >
+              <Scissors className="h-4 w-4" /> Client sent one PDF? Split it
+            </Button>
 
             {uploadError && (
               <p className="text-xs text-rose-600">{uploadError}</p>
@@ -1814,6 +1903,23 @@ export default function EmployeeDocuments() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Split a combined PDF */}
+      <SplitPdfDialog
+        open={splitDoc !== null}
+        employeeName={splitDoc?.employeeName ?? ""}
+        options={DOC_BUTTONS.map((item) => ({
+          key: item.key,
+          label: docLabel(item.key, splitDoc?.nationality),
+          exists: Boolean(splitDoc?.docs?.[item.key]),
+        }))}
+        initialFile={splitFile}
+        onClose={() => {
+          setSplitDocId(null);
+          setSplitFile(null);
+        }}
+        onSave={handleSaveSplit}
+      />
 
       {/* Document preview modal */}
       <Dialog open={previewModalOpen} onOpenChange={setPreviewModalOpen}>

@@ -1,6 +1,5 @@
 [
   {
-    "slNo": 1,
     "employeeId": "67621",
     "name": "Shoeib Abou Zied Mahmoud Awad",
     "email": "shoeib.abouzied@domain.com",
@@ -13,11 +12,10 @@
     "dacoExpiryDate": "2027-Apr-27",
     "workLocation": "Dammam",
     "nationality": "Egyptian",
-    "status": "",
+    "status": "ok",
     "remark": ""
   },
   {
-    "slNo": 2,
     "employeeId": "67666",
     "name": "Abdullah Aldarweesh",
     "email": "abdullah.aldarweesh@domain.com",
@@ -34,58 +32,54 @@
     "remark": ""
   },
   {
-    "slNo": 3,
     "employeeId": "67574",
     "name": "Reda Abdelmaged",
     "email": "",
-    "designation": "",
+    "designation": "Engineer",
     "idNumber": "2503732816",
     "dacoId": "DMM-012-7984",
-    "group": "",
-    "companyName": "",
+    "group": "Landscaping",
+    "companyName": "Nabatat Co. Company",
     "iqamaExpiryDate": "19-Jun-2027",
     "dacoExpiryDate": "19-Jun-2027",
-    "workLocation": "",
-    "nationality": "",
+    "workLocation": "Ground & Landscaping",
+    "nationality": "Egyptian",
     "status": "Available",
-    "remark": "Has ID"
+    "remark": ""
   },
   {
-    "slNo": 4,
     "employeeId": "67608",
     "name": "Mohamed Elsayed",
     "email": "",
-    "designation": "",
+    "designation": "Engineer",
     "idNumber": "2485302786",
     "dacoId": "DMM-011-6110",
-    "group": "",
+    "group": "Administrative / Management",
     "companyName": "",
-    "iqamaExpiryDate": "1448/08/21",
+    "iqamaExpiryDate": "29-Jan-2027",
     "dacoExpiryDate": "29-Jan-2027",
-    "workLocation": "",
-    "nationality": "",
+    "workLocation": "Ground & Landscaping",
+    "nationality": "Egyptian",
     "status": "Available",
     "remark": "Has ID"
   },
   {
-    "slNo": 5,
     "employeeId": "68168",
     "name": "Afrazier Nassal",
     "email": "",
-    "designation": "",
+    "designation": "Engineer",
     "idNumber": "2483842916",
     "dacoId": "DMM-011-8010",
-    "group": "",
-    "companyName": "",
+    "group": "Administrative / Management",
+    "companyName": "Nabatat Co. Company",
     "iqamaExpiryDate": "2026-10-25",
     "dacoExpiryDate": "25-Oct-2026",
-    "workLocation": "",
-    "nationality": "",
+    "workLocation": "Ground & Landscaping",
+    "nationality": "Filipino",
     "status": "Available",
     "remark": "Has ID"
   },
   {
-    "slNo": 6,
     "employeeId": "67620",
     "name": "Alex Garcia Garcia",
     "email": "",
@@ -102,49 +96,46 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 7,
     "employeeId": "67524",
     "name": "mohna alkhaldi",
     "email": "",
-    "designation": "",
+    "designation": "Administrator",
     "idNumber": "1092119575",
     "dacoId": "DMM-011-1798",
     "group": "",
     "companyName": "",
     "iqamaExpiryDate": "Saudi",
     "dacoExpiryDate": "",
-    "workLocation": "",
+    "workLocation": "Administrative / Management",
     "nationality": "Saudi",
     "status": "Available",
     "remark": "Has ID"
   },
   {
-    "slNo": 8,
     "employeeId": "65947",
     "name": "Sher Shah",
     "email": "",
-    "designation": "",
+    "designation": "Administrator",
     "idNumber": "2443400342",
     "dacoId": "DMM-011-4179",
-    "group": "",
-    "companyName": "",
-    "iqamaExpiryDate": "1448/06/12",
+    "group": "Administrative / Management",
+    "companyName": "Nabatat Co. Company",
+    "iqamaExpiryDate": "22-Nov-2026",
     "dacoExpiryDate": "22-Nov-2026",
-    "workLocation": "",
-    "nationality": "",
+    "workLocation": "Ground & Landscaping",
+    "nationality": "Pakistani",
     "status": "Available",
-    "remark": "Has ID"
+    "remark": ""
   },
   {
-    "slNo": 9,
     "employeeId": "67712",
     "name": "Eman AlNasser",
     "email": "",
-    "designation": "",
+    "designation": "Administrator",
     "idNumber": "1063800229",
     "dacoId": "DMM-011-1355",
-    "group": "",
-    "companyName": "",
+    "group": "Administrative / Management",
+    "companyName": "Nabatat Co. Company",
     "iqamaExpiryDate": "Saudi",
     "dacoExpiryDate": "",
     "workLocation": "",
@@ -153,24 +144,22 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 10,
     "employeeId": "67592",
     "name": "Mahabub Alam",
     "email": "",
-    "designation": "",
+    "designation": "Administrator",
     "idNumber": "2515496525",
     "dacoId": "DMM-011-0266",
-    "group": "",
-    "companyName": "",
-    "iqamaExpiryDate": "1448/11/17",
+    "group": "Administrative / Management",
+    "companyName": "Nabatat Co. Company",
+    "iqamaExpiryDate": "24-Apr-2027",
     "dacoExpiryDate": "24-Apr-2027",
-    "workLocation": "",
-    "nationality": "",
+    "workLocation": "Ground & Landscaping",
+    "nationality": "Bangladeshi",
     "status": "Available",
     "remark": "Has ID"
   },
   {
-    "slNo": 11,
     "employeeId": "67706",
     "name": "ALI ALMAHASNAH",
     "email": "",
@@ -187,7 +176,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 12,
     "employeeId": "67940",
     "name": "Nawaf Saeed Alghamgi",
     "email": "",
@@ -204,7 +192,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 13,
     "employeeId": "65959",
     "name": "Assauduzamman",
     "email": "",
@@ -221,7 +208,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 14,
     "employeeId": "68506",
     "name": "Ali alhaddad",
     "email": "",
@@ -238,7 +224,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 15,
     "employeeId": "67951",
     "name": "Antonio Jr Enario",
     "email": "",
@@ -255,7 +240,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 16,
     "employeeId": "67630",
     "name": "Mohamad Jinnat",
     "email": "",
@@ -272,7 +256,6 @@
     "remark": "No ID"
   },
   {
-    "slNo": 17,
     "employeeId": "67623",
     "name": "ALAMIN MIAH",
     "email": "",
@@ -289,7 +272,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 18,
     "employeeId": "67918",
     "name": "BAKIR RIFAEY",
     "email": "",
@@ -306,7 +288,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 19,
     "employeeId": "67566",
     "name": "IMRAN SABJI FAROSH",
     "email": "",
@@ -323,7 +304,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 20,
     "employeeId": "68507",
     "name": "Saeed Ahmed Mkohar",
     "email": "",
@@ -340,7 +320,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 21,
     "employeeId": "70782",
     "name": "YAZAN ABU OBAYD",
     "email": "",
@@ -357,7 +336,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 22,
     "employeeId": "67356",
     "name": "MD JOYNAL",
     "email": "",
@@ -374,7 +352,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 23,
     "employeeId": "67415",
     "name": "Hussain Saleh Alyosef",
     "email": "",
@@ -391,7 +368,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 24,
     "employeeId": "65577",
     "name": "ABDUL SALAM",
     "email": "",
@@ -408,7 +384,6 @@
     "remark": "Has ID"
   },
   {
-    "slNo": 25,
     "employeeId": "68568",
     "name": "Mohhamad Hasan ali Abarar",
     "email": "",
@@ -425,7 +400,6 @@
     "remark": "No ID"
   },
   {
-    "slNo": 26,
     "employeeId": "68574",
     "name": "SALAH UDDIN CHOWDRY",
     "email": "",
