@@ -14,6 +14,7 @@ import EmployeeDocuments from "@/pages/Documents/EmployeeDocuments";
 import EmployeeDetails from "@/pages/EmployeeDetails";
 import Expiration from "@/pages/Expirations";
 import Vacation from "@/pages/Vacation";
+import PdfUploadSplit from "@/pages/Pdfuploadsplit";
 
 export const router = createBrowserRouter([
   {
@@ -47,6 +48,10 @@ export const router = createBrowserRouter([
       {
         path: "AboutOperations",
         Component: AboutOperations,
+      },
+      {
+        path: "pdfuploadsplit",
+        Component: PdfUploadSplit,
       },
       {
         path: "Dashboard",
