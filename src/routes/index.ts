@@ -53,6 +53,7 @@ export const router = createBrowserRouter([
         path: "pdfuploadsplit",
         Component: PdfUploadSplit,
       },
+
       {
         path: "Dashboard",
         Component: Dashboard,
