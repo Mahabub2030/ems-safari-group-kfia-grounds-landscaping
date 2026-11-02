@@ -336,5 +336,31 @@
     "pendingDays": "",
     "remainingDays": "",
     "remark": ""
+  },
+  {
+    "_id": "14",
+    "serialNo": 14,
+    "employeeId": "68574",
+    "emdId": "68574",
+    "iqamaNumber": "",
+    "name":"SALAH UDDIN CHOWDRY",
+    "email": "",
+    "jobTitle": "Supervisor",
+    "group": "Pest Control",
+    "nationality": "Non-Saudi",
+    "vacationType": "Emergency",
+    "status": "Pending",
+    "applyDate": "02-Nov-2026",
+    "leaveDate": "10-Nov-2026",
+    "returnDate": "30-Nov-2026",
+    "joiningDate": "",
+    "visaStatus": "",
+    "guaranteeFormStatus": "",
+    "ticketStatus": "",
+    "totalAllowance": "",
+    "usedDays": "",
+    "pendingDays": "",
+    "remainingDays": "",
+    "remark": ""
   }
 ]
