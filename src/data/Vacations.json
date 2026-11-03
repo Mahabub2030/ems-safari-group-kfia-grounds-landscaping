@@ -253,10 +253,10 @@
     "visaStatus": "",
     "guaranteeFormStatus": "",
     "ticketStatus": "",
-    "totalAllowance": 14,
-    "usedDays": 14,
-    "pendingDays": 0,
-    "remainingDays": 0,
+    "totalAllowance": "",
+    "usedDays": "",
+    "pendingDays": "",
+    "remainingDays": "",
     "remark": ""
   },
   {
