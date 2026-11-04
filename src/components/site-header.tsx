@@ -13,7 +13,6 @@ const routeTitles: Record<string, string> = {
   "/Login": "Login",
   "/Register": "Register",
 }
-
 export function SiteHeader() {
   const location = useLocation()
   const pageTitle = routeTitles[location.pathname] ?? "Dashboard"
